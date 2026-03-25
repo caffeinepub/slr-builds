@@ -51,7 +51,9 @@ type AdminTab =
   | "users"
   | "chat"
   | "comments"
-  | "stats";
+  | "stats"
+  | "restart"
+  | "admins";
 
 export function AdminPage() {
   const { t } = useLang();
@@ -193,6 +195,8 @@ export function AdminPage() {
       icon: <MessageCircle size={16} />,
     },
     { key: "stats", label: "Статистика", icon: <BarChart3 size={16} /> },
+    { key: "restart", label: "Перезапуск", icon: <RefreshCw size={16} /> },
+    { key: "admins", label: "Администраторы", icon: <Shield size={16} /> },
   ];
 
   return (
@@ -284,8 +288,210 @@ export function AdminPage() {
           {tab === "chat" && <ChatModerationPanel />}
           {tab === "comments" && <CommentsModerationPanel />}
           {tab === "stats" && <StatsPanel />}
+          {tab === "restart" && <RestartPanel />}
+          {tab === "admins" && <AdminsPanel />}
         </div>
       </div>
+    </div>
+  );
+}
+
+function RestartPanel() {
+  const handleReload = () => {
+    if (
+      window.confirm(
+        "Перезагрузить сайт? Все несохранённые данные будут потеряны.",
+      )
+    ) {
+      window.location.reload();
+    }
+  };
+
+  const handleClearChat = () => {
+    if (window.confirm("Очистить весь чат? Это действие необратимо.")) {
+      toast.info(
+        "Функция очистки чата доступна через вкладку Чат → Очистить весь чат",
+      );
+    }
+  };
+
+  return (
+    <div className="space-y-6" data-ocid="admin.restart.panel">
+      <div className="flex items-center gap-2">
+        <RefreshCw size={16} className="text-primary" />
+        <h3 className="font-bold text-sm uppercase tracking-widest text-primary">
+          Управление сайтом
+        </h3>
+      </div>
+
+      <div className="p-4 border border-border rounded bg-card/50 space-y-2">
+        <p className="text-xs text-muted-foreground">
+          Инструменты для управления работой сайта. Используйте с осторожностью
+          — некоторые действия необратимы.
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        <div className="p-4 border border-primary/20 rounded bg-card/30">
+          <h4 className="font-bold text-sm mb-1 text-foreground">
+            Перезагрузка сайта
+          </h4>
+          <p className="text-xs text-muted-foreground mb-3">
+            Принудительно перезагружает страницу сайта. Полезно после обновления
+            данных.
+          </p>
+          <Button
+            onClick={handleReload}
+            className="gap-2 bg-primary hover:bg-primary/80"
+            data-ocid="admin.restart.primary_button"
+          >
+            <RefreshCw size={14} />
+            Перезагрузить сайт
+          </Button>
+        </div>
+
+        <div className="p-4 border border-destructive/30 rounded bg-destructive/5">
+          <h4 className="font-bold text-sm mb-1 text-destructive">
+            Очистить чат
+          </h4>
+          <p className="text-xs text-muted-foreground mb-3">
+            Удаляет все сообщения из общего чата. Это действие необратимо.
+          </p>
+          <Button
+            variant="destructive"
+            onClick={handleClearChat}
+            className="gap-2"
+            data-ocid="admin.restart.delete_button"
+          >
+            <Trash2 size={14} />
+            Очистить чат
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AdminsPanel() {
+  const { actor } = useActor();
+  const actorAny = actor as any;
+
+  const { data: users = [], isLoading } = useQuery({
+    queryKey: ["registeredUsers"],
+    queryFn: () => actorAny.getAllRegisteredUsers(),
+    enabled: !!actor && typeof actorAny.getAllRegisteredUsers === "function",
+  });
+
+  const handleAssignAdmin = async (user: any) => {
+    if (
+      !window.confirm(
+        `Назначить ${user.name || user.principal} администратором?`,
+      )
+    )
+      return;
+    try {
+      if (typeof actorAny.assignUserRole === "function") {
+        await actorAny.assignUserRole(user.principal, { admin: null });
+        toast.success("Роль администратора назначена");
+      } else {
+        toast.info("Функция назначения ролей ещё не подключена к бэкенду");
+      }
+    } catch (e) {
+      toast.error(`Ошибка: ${String(e).slice(0, 80)}`);
+    }
+  };
+
+  const handleRevokeAdmin = async (user: any) => {
+    if (
+      !window.confirm(
+        `Снять права администратора с ${user.name || user.principal}?`,
+      )
+    )
+      return;
+    try {
+      if (typeof actorAny.assignUserRole === "function") {
+        await actorAny.assignUserRole(user.principal, { user: null });
+        toast.success("Права администратора сняты");
+      } else {
+        toast.info("Функция управления ролями ещё не подключена к бэкенду");
+      }
+    } catch (e) {
+      toast.error(`Ошибка: ${String(e).slice(0, 80)}`);
+    }
+  };
+
+  return (
+    <div className="space-y-4" data-ocid="admin.admins.panel">
+      <div className="flex items-center gap-2">
+        <Shield size={16} className="text-primary" />
+        <h3 className="font-bold text-sm uppercase tracking-widest text-primary">
+          Управление администраторами ({users.length})
+        </h3>
+      </div>
+
+      <div className="p-3 border border-primary/20 rounded bg-primary/5 text-xs text-muted-foreground">
+        Здесь можно назначить или снять права администратора у
+        зарегистрированных пользователей. Для доступа к панели администратор
+        должен знать пароль.
+      </div>
+
+      {isLoading ? (
+        <div className="flex justify-center py-8">
+          <Loader2 className="animate-spin text-primary" />
+        </div>
+      ) : users.length === 0 ? (
+        <p
+          className="text-muted-foreground text-sm text-center py-8"
+          data-ocid="admin.admins.empty_state"
+        >
+          Нет зарегистрированных пользователей
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {(users as any[]).map((user: any, idx: number) => (
+            <div
+              key={user.principal?.toString() ?? idx}
+              className="flex items-center justify-between p-3 bg-secondary border border-border rounded"
+              data-ocid={`admin.admins.item.${idx + 1}`}
+            >
+              <div className="flex flex-col gap-0.5">
+                <span className="font-bold text-sm">
+                  {user.name && user.name !== "—" ? user.name : "Без имени"}
+                </span>
+                <span className="text-xs text-muted-foreground font-mono">
+                  {user.principal?.toString() ?? "—"}
+                </span>
+                {user.uid && (
+                  <span className="text-[10px] text-primary font-mono">
+                    UID: {user.uid}
+                  </span>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  className="bg-primary hover:bg-primary/80 text-xs h-7"
+                  onClick={() => handleAssignAdmin(user)}
+                  data-ocid="admin.admins.primary_button"
+                >
+                  <Shield size={12} className="mr-1" />
+                  Назначить
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-destructive/50 text-destructive hover:bg-destructive/10 text-xs h-7"
+                  onClick={() => handleRevokeAdmin(user)}
+                  data-ocid="admin.admins.delete_button"
+                >
+                  <X size={12} className="mr-1" />
+                  Снять
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

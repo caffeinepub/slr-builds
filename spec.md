@@ -1,35 +1,30 @@
 # SLR Builds
 
 ## Current State
-Full-stack clone of say-gg.ru. Admin panel exists with password gate (garenA11). Test data loading uses 4-step process (skills → heroes → items → builds), but `seedItems` (99 items) and `seedBuilds` (42 builds) still exceed ICP instruction limits in one call. All data is publicly readable via anonymous actor.
+Full-featured Russian gaming fan site (say-gg.ru clone) with dark/light theme toggle, admin panel with heroes/skills/items/branches/builds/users/chat/comments/stats tabs, profile modal with nickname and friends.
 
 ## Requested Changes (Diff)
 
 ### Add
-- `seedItemsA()` — items 1–50
-- `seedItemsB()` — items 51–99
-- `seedBuildsA()` — builds 1–21
-- `seedBuildsB()` — builds 22–42
-- 6-step progress UI in AdminPage seed button
-- Redesigned AdminPage with sidebar navigation (left panel) + content area
-- Guest access badge/indicator showing all content is publicly available
+- AdminPage: new tab "Перезапуск" — button to clear chat (via clearAllChat if exists, else navigate reload) and reload seed data
+- AdminPage: new tab "Администраторы" — show registered users list, assign/revoke admin role via assignCallerUserRole(principal, UserRole)
+- ProfileModal: avatar selector — grid of hero icons (from say-gg.ru imageUrl pattern) + default colored circle options; stored in localStorage keyed by `avatar_${principalText}`
+- ProfileModal: clan text field — stored in localStorage keyed by `clan_${principalText}`; shown in profile header
 
 ### Modify
-- `seedItems` renamed to `seedItemsA` in backend, d.ts, backend.ts, did files
-- `seedBuilds` renamed to `seedBuildsA` in all files
-- AdminPage seed mutation: now 6 steps with 800ms delays between each
-- AdminPage layout: redesigned with left sidebar tabs instead of horizontal scrolling tabs
-- Seed button shows detailed step progress (Шаг N/6: ...)
+- ThemeContext: remove toggleTheme, always return theme='dark'; simplify
+- Navbar: remove theme toggle button (Moon/Sun), remove isDark conditionals everywhere, use dark styles always
+- AdminPage SIDEBAR_TABS: add 'restart' and 'admins' tabs
+- ProfileModal: show avatar circle at top, add avatar picker modal, add clan field display and edit
 
 ### Remove
-- Old `seedItems()` and `seedBuilds()` single-call functions (replaced)
+- Theme toggle button from Navbar
+- Light theme styles (all `isDark ? ... : ...` conditionals — always use dark variant)
+- Moon/Sun icons import from Navbar
+- toggleTheme export from ThemeContext
 
 ## Implementation Plan
-1. ✅ Backend: split seed functions (done)
-2. ✅ Update backend.d.ts, backend.ts, did files (done)
-3. Frontend: redesign AdminPage
-   - Left sidebar with icon + label for each tab
-   - Seed button in header shows 6-step progress
-   - All panels remain functionally identical
-   - Guests see all heroes/items/builds/skills without login
-4. Validate build
+1. Simplify ThemeContext — remove toggle, always dark
+2. Update Navbar — remove toggle button, remove isDark, hardcode dark styles
+3. Update AdminPage — add 'restart' tab (clear chat + reload) and 'admins' tab (list users + assign role)
+4. Update ProfileModal — add avatar (localStorage) and clan (localStorage) fields with edit UI

@@ -6,9 +6,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, LogOut, Moon, Shield, Sun, User } from "lucide-react";
+import { ChevronDown, LogOut, Shield, User } from "lucide-react";
 import { useState } from "react";
-import { useTheme } from "../contexts/ThemeContext";
 import { useActor } from "../hooks/useActor";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import { OnlineCounter } from "./OnlineCounter";
@@ -22,20 +21,15 @@ interface Props {
 export function Navbar({ onNavigate, currentPage }: Props) {
   const { identity, login, clear, isLoggingIn } = useInternetIdentity();
   const { actor: _actor } = useActor();
-  const { theme, toggleTheme } = useTheme();
   const isLoggedIn = !!identity;
   const [showProfile, setShowProfile] = useState(false);
-
-  const isDark = theme === "dark";
 
   return (
     <>
       <nav
         className="sticky top-0 z-50 backdrop-blur-md"
         style={{
-          background: isDark
-            ? "oklch(0.14 0.04 252 / 0.97)"
-            : "oklch(0.97 0.008 252 / 0.97)",
+          background: "oklch(0.14 0.04 252 / 0.97)",
           borderBottom: "1px solid oklch(0.71 0.16 75 / 0.4)",
           boxShadow: "0 2px 20px oklch(0.71 0.16 75 / 0.08)",
         }}
@@ -66,23 +60,6 @@ export function Navbar({ onNavigate, currentPage }: Props) {
             {/* Online counter */}
             <OnlineCounter />
 
-            {/* Theme toggle */}
-            <button
-              type="button"
-              onClick={toggleTheme}
-              title={isDark ? "Светлая тема" : "Тёмная тема"}
-              data-ocid="nav.toggle"
-              className="flex items-center justify-center w-8 h-8 rounded-lg transition-all hover:scale-105"
-              style={{
-                border: "1px solid oklch(0.71 0.16 75 / 0.5)",
-                background: "oklch(0.71 0.16 75 / 0.1)",
-                color: "oklch(0.71 0.16 75)",
-                minHeight: "32px",
-              }}
-            >
-              {isDark ? <Sun size={14} /> : <Moon size={14} />}
-            </button>
-
             {isLoggedIn ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -104,9 +81,7 @@ export function Navbar({ onNavigate, currentPage }: Props) {
                   align="end"
                   className="rounded-xl"
                   style={{
-                    background: isDark
-                      ? "oklch(0.17 0.043 252)"
-                      : "oklch(0.95 0.01 252)",
+                    background: "oklch(0.17 0.043 252)",
                     border: "1px solid oklch(0.71 0.16 75 / 0.4)",
                   }}
                 >

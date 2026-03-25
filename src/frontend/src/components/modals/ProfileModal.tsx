@@ -28,11 +28,86 @@ interface Props {
   onClose: () => void;
 }
 
+const AVATAR_COLORS = [
+  { label: "Золото", value: "color:#B8960C" },
+  { label: "Красный", value: "color:#C0392B" },
+  { label: "Синий", value: "color:#1A6EBD" },
+  { label: "Зелёный", value: "color:#1A7A44" },
+  { label: "Фиолетовый", value: "color:#7B2D8B" },
+  { label: "Бирюза", value: "color:#1A7A7A" },
+];
+
+function getAvatarKey(principal: string) {
+  return `slr_avatar_${principal}`;
+}
+
+function getClanKey(principal: string) {
+  return `slr_clan_${principal}`;
+}
+
+function AvatarDisplay({
+  avatarVal,
+  initials,
+  size = 56,
+}: {
+  avatarVal: string;
+  initials: string;
+  size?: number;
+}) {
+  if (avatarVal.startsWith("hero:")) {
+    const num = avatarVal.slice(5);
+    return (
+      <img
+        src={`https://say-gg.ru/images/heroes/${num}.png`}
+        alt="avatar"
+        className="rounded-full object-cover border-2 border-primary"
+        style={{ width: size, height: size }}
+        onError={(e) => {
+          (e.target as HTMLImageElement).style.display = "none";
+        }}
+      />
+    );
+  }
+  if (avatarVal.startsWith("color:")) {
+    const color = avatarVal.slice(6);
+    return (
+      <div
+        className="rounded-full flex items-center justify-center font-bold border-2 border-primary text-white"
+        style={{
+          width: size,
+          height: size,
+          background: color,
+          fontSize: size * 0.35,
+        }}
+      >
+        {initials || "?"}
+      </div>
+    );
+  }
+  // initials default
+  return (
+    <div
+      className="rounded-full flex items-center justify-center font-bold border-2 border-primary"
+      style={{
+        width: size,
+        height: size,
+        background: "oklch(0.71 0.16 75)",
+        color: "oklch(0.14 0.04 252)",
+        fontSize: size * 0.35,
+      }}
+    >
+      {initials || "?"}
+    </div>
+  );
+}
+
 export function ProfileModal({ onClose }: Props) {
   const { t } = useLang();
   const { actor } = useActor();
   const { identity } = useInternetIdentity();
   const queryClient = useQueryClient();
+
+  const principal = identity?.getPrincipal().toString() ?? "";
 
   const [editingNick, setEditingNick] = useState(false);
   const [nickValue, setNickValue] = useState("");
@@ -41,6 +116,21 @@ export function ProfileModal({ onClose }: Props) {
   const [searchResult, setSearchResult] = useState<
     [string, string] | null | undefined
   >(undefined);
+
+  // Avatar state
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [avatarVal, setAvatarVal] = useState<string>(() =>
+    principal
+      ? (localStorage.getItem(getAvatarKey(principal)) ?? "initials")
+      : "initials",
+  );
+
+  // Clan state
+  const [editingClan, setEditingClan] = useState(false);
+  const [clanValue, setClanValue] = useState<string>(() =>
+    principal ? (localStorage.getItem(getClanKey(principal)) ?? "") : "",
+  );
+  const [clanInput, setClanInput] = useState("");
 
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["callerProfile"],
@@ -121,6 +211,13 @@ export function ProfileModal({ onClose }: Props) {
   };
 
   const currentName = profile?.name ?? "";
+  const initials = currentName
+    ? currentName
+        .split(" ")
+        .slice(0, 2)
+        .map((w) => w[0]?.toUpperCase() ?? "")
+        .join("")
+    : "?";
 
   const handleStartEdit = () => {
     setNickValue(currentName);
@@ -132,6 +229,24 @@ export function ProfileModal({ onClose }: Props) {
       navigator.clipboard.writeText(uid);
       toast.success(t("UID скопирован", "UID copied"));
     }
+  };
+
+  const handleSelectAvatar = (val: string) => {
+    setAvatarVal(val);
+    if (principal) localStorage.setItem(getAvatarKey(principal), val);
+    setShowAvatarPicker(false);
+  };
+
+  const handleSaveClan = () => {
+    setClanValue(clanInput);
+    if (principal) localStorage.setItem(getClanKey(principal), clanInput);
+    setEditingClan(false);
+    toast.success(t("Клан сохранён", "Clan saved"));
+  };
+
+  const handleStartClanEdit = () => {
+    setClanInput(clanValue);
+    setEditingClan(true);
   };
 
   return (
@@ -159,8 +274,104 @@ export function ProfileModal({ onClose }: Props) {
 
         {identity && (
           <>
+            {/* Avatar section */}
+            <div className="flex items-center gap-4 mt-4 mb-5">
+              <div className="relative">
+                <AvatarDisplay
+                  avatarVal={avatarVal}
+                  initials={initials}
+                  size={60}
+                />
+              </div>
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setShowAvatarPicker((v) => !v)}
+                  className="text-xs text-primary hover:underline transition-colors"
+                  data-ocid="profile.edit_button"
+                >
+                  {showAvatarPicker
+                    ? t("Закрыть", "Close")
+                    : t("Изменить аватар", "Change avatar")}
+                </button>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {currentName || t("(не задан)", "(not set)")}
+                </p>
+              </div>
+            </div>
+
+            {/* Avatar picker */}
+            {showAvatarPicker && (
+              <div
+                className="mb-4 p-3 border border-primary/30 rounded-none"
+                style={{ background: "oklch(0.12 0.03 252)" }}
+              >
+                <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
+                  {t("Иконка героя", "Hero icon")}
+                </p>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((num) => (
+                    <button
+                      type="button"
+                      key={num}
+                      onClick={() => handleSelectAvatar(`hero:${num}`)}
+                      className={`w-10 h-10 rounded-full overflow-hidden border-2 transition-all hover:scale-110 ${
+                        avatarVal === `hero:${num}`
+                          ? "border-primary"
+                          : "border-border"
+                      }`}
+                    >
+                      <img
+                        src={`https://say-gg.ru/images/heroes/${num}.png`}
+                        alt={`hero ${num}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.opacity = "0.3";
+                        }}
+                      />
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
+                  {t("Цвет", "Color")}
+                </p>
+                <div className="flex gap-2 flex-wrap">
+                  {AVATAR_COLORS.map((c) => (
+                    <button
+                      type="button"
+                      key={c.value}
+                      onClick={() => handleSelectAvatar(c.value)}
+                      title={c.label}
+                      className={`w-8 h-8 rounded-full border-2 transition-all hover:scale-110 ${
+                        avatarVal === c.value
+                          ? "border-primary"
+                          : "border-border"
+                      }`}
+                      style={{ background: c.value.slice(6) }}
+                    />
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => handleSelectAvatar("initials")}
+                    className={`w-8 h-8 rounded-full border-2 transition-all hover:scale-110 flex items-center justify-center text-xs font-bold ${
+                      avatarVal === "initials"
+                        ? "border-primary"
+                        : "border-border"
+                    }`}
+                    style={{
+                      background: "oklch(0.71 0.16 75)",
+                      color: "oklch(0.14 0.04 252)",
+                    }}
+                    title="Инициалы"
+                  >
+                    {initials}
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Nickname section */}
-            <div className="mt-4 mb-4">
+            <div className="mt-2 mb-4">
               <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
                 {t("Никнейм", "Nickname")}
               </p>
@@ -208,6 +419,57 @@ export function ProfileModal({ onClose }: Props) {
                   <button
                     type="button"
                     onClick={handleStartEdit}
+                    className="text-muted-foreground hover:text-primary transition-colors"
+                    data-ocid="profile.edit_button"
+                  >
+                    <Pencil size={14} />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Clan section */}
+            <div className="mb-4">
+              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
+                {t("Клан", "Clan")}
+              </p>
+              {editingClan ? (
+                <div className="flex gap-2">
+                  <Input
+                    value={clanInput}
+                    onChange={(e) => setClanInput(e.target.value)}
+                    className="bg-black border-primary/40 rounded-none h-8 text-sm"
+                    placeholder={t("Название клана", "Clan name")}
+                    maxLength={32}
+                    data-ocid="profile.input"
+                    autoFocus
+                  />
+                  <Button
+                    size="sm"
+                    className="bg-primary hover:bg-primary/80 rounded-none h-8"
+                    onClick={handleSaveClan}
+                    data-ocid="profile.save_button"
+                  >
+                    {t("Сохранить", "Save")}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="rounded-none h-8"
+                    onClick={() => setEditingClan(false)}
+                    data-ocid="profile.cancel_button"
+                  >
+                    {t("Отмена", "Cancel")}
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <span className="text-foreground text-sm">
+                    {clanValue || t("(не указан)", "(not set)")}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleStartClanEdit}
                     className="text-muted-foreground hover:text-primary transition-colors"
                     data-ocid="profile.edit_button"
                   >
