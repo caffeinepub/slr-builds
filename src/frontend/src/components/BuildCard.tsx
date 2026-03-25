@@ -28,6 +28,8 @@ interface Props {
   heroes: Hero[];
   skills: Skill[];
   "data-ocid"?: string;
+  defaultExpanded?: boolean;
+  onClose?: () => void;
 }
 
 function parseSkillName(name: string, lang: string): string {
@@ -43,12 +45,14 @@ export function BuildCard({
   heroes,
   skills,
   "data-ocid": dataOcid,
+  defaultExpanded,
+  onClose,
 }: Props) {
   const { t, lang } = useLang();
   const { actor } = useActor();
   const { identity } = useInternetIdentity();
   const queryClient = useQueryClient();
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(defaultExpanded ?? false);
   const [commentText, setCommentText] = useState("");
   const [voiceRecording, setVoiceRecording] = useState(false);
   const [voiceRecordSecs, setVoiceRecordSecs] = useState(0);
@@ -443,7 +447,10 @@ export function BuildCard({
                   size="icon"
                   variant="ghost"
                   className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground rounded-lg"
-                  onClick={() => setExpanded(false)}
+                  onClick={() => {
+                    setExpanded(false);
+                    onClose?.();
+                  }}
                   data-ocid="builds.close_button"
                 >
                   <X size={16} />
@@ -868,7 +875,10 @@ export function BuildCard({
                     color: "oklch(0.71 0.16 75)",
                     background: "oklch(0.71 0.16 75 / 0.05)",
                   }}
-                  onClick={() => setExpanded(false)}
+                  onClick={() => {
+                    setExpanded(false);
+                    onClose?.();
+                  }}
                 >
                   {t("Закрыть", "Close")}
                 </Button>

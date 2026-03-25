@@ -75,9 +75,10 @@ const serviceEntries = {
   'updateItem': IDL.Func([Item], [], []),
   'updateSkill': IDL.Func([Skill], [], []),
   // Chat
-  'sendChatMessage': IDL.Func([IDL.Text, IDL.Text], [IDL.Nat], []),
-  'sendVoiceChatMessage': IDL.Func([IDL.Text, IDL.Text], [IDL.Nat], []),
+  'sendChatMessage': IDL.Func([IDL.Text, IDL.Text, IDL.Text], [IDL.Nat], []),
+  'sendVoiceChatMessage': IDL.Func([IDL.Text, IDL.Text, IDL.Text], [IDL.Nat], []),
   'getChatMessages': IDL.Func([], [IDL.Vec(ChatMessage)], ['query']),
+  'getChatUserUID': IDL.Func([IDL.Text], [IDL.Opt(IDL.Text)], ['query']),
   // Online
   'onlineHeartbeat': IDL.Func([IDL.Text], [IDL.Nat], []),
   'getOnlineUsers': IDL.Func([], [IDL.Vec(OnlineUser)], ['query']),

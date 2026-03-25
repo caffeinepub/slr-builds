@@ -142,9 +142,10 @@ export interface backendInterface {
     updateItem(updatedItem: Item): Promise<void>;
     updateSkill(updatedSkill: Skill): Promise<void>;
     // Chat
-    sendChatMessage(authorName: string, text: string): Promise<bigint>;
-    sendVoiceChatMessage(authorName: string, audioData: string): Promise<bigint>;
+    sendChatMessage(authorName: string, senderUID: string, text: string): Promise<bigint>;
+    sendVoiceChatMessage(authorName: string, senderUID: string, audioData: string): Promise<bigint>;
     getChatMessages(): Promise<Array<ChatMessage>>;
+    getChatUserUID(name: string): Promise<string | null>;
     // Online
     onlineHeartbeat(displayName: string): Promise<bigint>;
     getOnlineUsers(): Promise<Array<OnlineUser>>;

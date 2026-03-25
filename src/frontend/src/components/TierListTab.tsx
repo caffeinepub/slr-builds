@@ -47,6 +47,7 @@ export function TierListTab({ heroes, items, branches }: Props) {
   const isLoggedIn = !!identity;
   const [poolTab, setPoolTab] = useState<PoolType>("heroes");
   const [saving, setSaving] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<TierItem | null>(null);
 
   const makePool = useCallback(
     (): TierItem[] => [
@@ -191,6 +192,17 @@ export function TierListTab({ heroes, items, branches }: Props) {
 
   const filteredPool = tiers.pool.filter((i) => i.type === poolTab);
 
+  const handlePoolItemClick = (item: TierItem) => {
+    setSelectedItem((prev) => (prev?.id === item.id ? null : item));
+  };
+
+  const handleTierRowClick = (tier: TierKey) => {
+    if (selectedItem) {
+      moveToTier(selectedItem, tier);
+      setSelectedItem(null);
+    }
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -223,6 +235,29 @@ export function TierListTab({ heroes, items, branches }: Props) {
         </div>
       </div>
 
+      {/* Instructions + selected item indicator */}
+      <div className="mb-3 flex items-center gap-3">
+        <p className="text-xs text-muted-foreground">
+          {selectedItem ? (
+            <span style={{ color: "oklch(0.71 0.16 75)" }}>
+              ✓ Выбран: <strong>{selectedItem.name}</strong> — нажмите на тир
+              чтобы добавить, или выберите другого
+            </span>
+          ) : (
+            "Кликните по иконке снизу → затем нажмите на тир чтобы добавить"
+          )}
+        </p>
+        {selectedItem && (
+          <button
+            type="button"
+            onClick={() => setSelectedItem(null)}
+            className="text-xs text-muted-foreground hover:text-foreground ml-auto"
+          >
+            Отмена
+          </button>
+        )}
+      </div>
+
       {/* Tier rows */}
       <div className="space-y-2 mb-8">
         {TIER_KEYS.map((tier) => (
@@ -232,6 +267,8 @@ export function TierListTab({ heroes, items, branches }: Props) {
             items={tiers[tier]}
             onDrop={(item) => moveToTier(item, tier)}
             onRemove={removeFromTier}
+            onRowClick={() => handleTierRowClick(tier)}
+            hasSelectedItem={!!selectedItem}
           />
         ))}
       </div>
@@ -261,7 +298,13 @@ export function TierListTab({ heroes, items, branches }: Props) {
         </div>
         <div className="flex flex-wrap gap-2">
           {filteredPool.map((item) => (
-            <PoolItem key={item.id} item={item} onDragStart={() => {}} />
+            <PoolItem
+              key={item.id}
+              item={item}
+              onDragStart={() => {}}
+              selected={selectedItem?.id === item.id}
+              onClick={() => handlePoolItemClick(item)}
+            />
           ))}
           {filteredPool.length === 0 && (
             <p
@@ -282,19 +325,37 @@ function TierRow({
   items,
   onDrop,
   onRemove,
+  onRowClick,
+  hasSelectedItem,
 }: {
   tier: TierKey;
   items: TierItem[];
   onDrop: (item: TierItem) => void;
   onRemove: (item: TierItem) => void;
+  onRowClick?: () => void;
+  hasSelectedItem?: boolean;
 }) {
   const [draggingOver, setDraggingOver] = useState(false);
 
   return (
     <div
       className={`flex items-stretch min-h-16 border ${
-        draggingOver ? "border-primary bg-primary/5" : "border-border"
+        draggingOver
+          ? "border-primary bg-primary/5"
+          : hasSelectedItem
+            ? "border-yellow-400/50 cursor-pointer hover:border-yellow-400"
+            : "border-border"
       } rounded overflow-hidden transition-colors`}
+      onClick={hasSelectedItem ? onRowClick : undefined}
+      onKeyDown={
+        hasSelectedItem
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") onRowClick?.();
+            }
+          : undefined
+      }
+      role={hasSelectedItem ? "button" : undefined}
+      tabIndex={hasSelectedItem ? 0 : undefined}
       onDragOver={(e) => {
         e.preventDefault();
         setDraggingOver(true);
@@ -332,18 +393,38 @@ function TierRow({
   );
 }
 
-function PoolItem({ item }: { item: TierItem; onDragStart: () => void }) {
+function PoolItem({
+  item,
+  selected,
+  onClick,
+}: {
+  item: TierItem;
+  onDragStart: () => void;
+  selected?: boolean;
+  onClick?: () => void;
+}) {
   return (
-    <div
+    <button
+      type="button"
       draggable
       onDragStart={(e) => {
         e.dataTransfer.setData("item", JSON.stringify(item));
       }}
-      className="cursor-grab select-none"
+      onClick={onClick}
+      className="cursor-pointer select-none rounded transition-all"
       title={item.name}
+      style={
+        selected
+          ? {
+              outline: "2px solid oklch(0.71 0.16 75)",
+              outlineOffset: "2px",
+              borderRadius: "6px",
+            }
+          : {}
+      }
     >
       <ImageTile item={item} size={48} />
-    </div>
+    </button>
   );
 }
 

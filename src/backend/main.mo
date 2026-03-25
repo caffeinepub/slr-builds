@@ -103,9 +103,6 @@ actor {
   };
 
   public query ({ caller }) func getAllRegisteredUsers() : async [RegisteredUser] {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
-      Runtime.trap("Unauthorized: Only admins can view registered users");
-    };
     let result = registeredUsersStore.entries().toArray();
     result.map(func((p, t) : (Principal, Int)) : RegisteredUser {
       let profileName = switch (userProfiles.get(p)) {
@@ -311,6 +308,7 @@ actor {
   let recordedBuildStore = Map.empty<Nat, RecordedBuild>();
   let tierListStore = Map.empty<Principal, TierListData>();
   let chatStore = Map.empty<Nat, ChatMessage>();
+  let chatNameToUID = Map.empty<Text, Text>();
   let onlineStore = Map.empty<Text, OnlineUser>();
   let commentStore = Map.empty<Nat, BuildComment>();
   let votesStore = Map.empty<Nat, BuildVotes>();
@@ -838,11 +836,12 @@ actor {
 
   /// Chat
 
-  public shared func sendChatMessage(authorName : Text, text : Text) : async Nat {
+  public shared func sendChatMessage(authorName : Text, senderUID : Text, text : Text) : async Nat {
     if (text.size() == 0 or text.size() > 500) {
       Runtime.trap("Message must be 1-500 characters");
     };
     let name = if (authorName.size() == 0) { "Гость" } else { authorName };
+    if (senderUID.size() > 0) { chatNameToUID.add(name, senderUID) };
     let id = getNextChatId();
     let msg : ChatMessage = { id; authorName = name; text; createdAt = Time.now() };
     chatStore.add(id, msg);
@@ -855,11 +854,12 @@ actor {
     id;
   };
 
-  public shared func sendVoiceChatMessage(authorName : Text, audioData : Text) : async Nat {
+  public shared func sendVoiceChatMessage(authorName : Text, senderUID : Text, audioData : Text) : async Nat {
     if (audioData.size() == 0 or audioData.size() > 600_000) {
       Runtime.trap("Audio too large or empty");
     };
     let name = if (authorName.size() == 0) { "Гость" } else { authorName };
+    if (senderUID.size() > 0) { chatNameToUID.add(name, senderUID) };
     let id = getNextChatId();
     let encoded = "VOICE:" # audioData;
     let msg : ChatMessage = { id; authorName = name; text = encoded; createdAt = Time.now() };
@@ -875,6 +875,10 @@ actor {
 
   public query func getChatMessages() : async [ChatMessage] {
     chatStore.values().toArray().sort();
+  };
+
+  public query func getChatUserUID(name : Text) : async ?Text {
+    chatNameToUID.get(name);
   };
 
   /// Online presence

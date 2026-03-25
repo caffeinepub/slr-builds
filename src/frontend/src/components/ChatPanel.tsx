@@ -1,7 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   MessageCircle,
@@ -78,7 +77,7 @@ export function ChatPanel() {
   const [showEmoji, setShowEmoji] = useState(false);
   const [recording, setRecording] = useState(false);
   const [recordSecs, setRecordSecs] = useState(0);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -93,6 +92,12 @@ export function ChatPanel() {
     enabled: !!actor && !!identity,
   });
 
+  const { data: myUID } = useQuery({
+    queryKey: ["myUID"],
+    queryFn: () => actor!.getMyUID(),
+    enabled: !!actor && !!identity,
+  });
+
   const displayName = profile?.name || shortPrincipal;
 
   const { data: messages = [] } = useQuery({
@@ -102,6 +107,15 @@ export function ChatPanel() {
     refetchInterval: 5000,
   });
 
+  // Scroll to bottom reliably using direct DOM manipulation
+  const scrollToBottom = () => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop =
+        messagesContainerRef.current.scrollHeight;
+    }
+  };
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: scrollToBottom is stable
   useEffect(() => {
     if (open && messages.length > 0) {
       const maxId = messages.reduce(
@@ -110,26 +124,36 @@ export function ChatPanel() {
       );
       setLastSeenId(maxId);
       setLastSeenIdState(maxId);
-      setTimeout(
-        () => bottomRef.current?.scrollIntoView({ behavior: "smooth" }),
-        80,
-      );
+      setTimeout(scrollToBottom, 60);
     }
   }, [open, messages]);
+
+  // Also scroll when opening
+  // biome-ignore lint/correctness/useExhaustiveDependencies: scrollToBottom is stable
+  useEffect(() => {
+    if (open) {
+      setTimeout(scrollToBottom, 100);
+    }
+  }, [open]);
 
   const unreadCount = messages.filter((m) => m.id > lastSeenId).length;
 
   const sendMutation = useMutation({
-    mutationFn: (msg: string) => actor!.sendChatMessage(displayName, msg),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["chatMessages"] }),
+    mutationFn: (msg: string) =>
+      actor!.sendChatMessage(displayName, myUID ?? "", msg),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["chatMessages"] });
+      setTimeout(scrollToBottom, 200);
+    },
   });
 
   const sendVoiceMutation = useMutation({
     mutationFn: (audioData: string) =>
-      actor!.sendVoiceChatMessage(displayName, audioData),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["chatMessages"] }),
+      actor!.sendVoiceChatMessage(displayName, myUID ?? "", audioData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["chatMessages"] });
+      setTimeout(scrollToBottom, 200);
+    },
     onError: () =>
       toast.error(t("Ошибка отправки голосового", "Failed to send voice")),
   });
@@ -239,7 +263,7 @@ export function ChatPanel() {
         >
           {/* Header */}
           <div
-            className="flex items-center justify-between px-3 py-2"
+            className="flex items-center justify-between px-3 py-2 shrink-0"
             style={{
               borderBottom: "1px solid oklch(0.71 0.16 75 / 0.3)",
               borderRadius: "1rem 1rem 0 0",
@@ -264,8 +288,12 @@ export function ChatPanel() {
             </div>
           </div>
 
-          {/* Messages */}
-          <ScrollArea className="flex-1 px-2 py-2">
+          {/* Messages - plain div with overflow-y-auto for reliable scrolling */}
+          <div
+            ref={messagesContainerRef}
+            className="flex-1 overflow-y-auto px-2 py-2"
+            style={{ minHeight: 0 }}
+          >
             {messages.length === 0 ? (
               <p className="text-center text-muted-foreground text-xs py-8">
                 {t("Нет сообщений", "No messages yet")}
@@ -290,7 +318,19 @@ export function ChatPanel() {
                         type="button"
                         title={t("Добавить в друзья", "Add friend")}
                         className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary"
-                        onClick={() => addFriendMutation.mutate(msg.authorName)}
+                        onClick={async () => {
+                          if (!actor) return;
+                          const uid = await actor.getChatUserUID(
+                            msg.authorName,
+                          );
+                          if (uid) {
+                            addFriendMutation.mutate(uid);
+                          } else {
+                            toast.error(
+                              t("Пользователь не найден", "User not found"),
+                            );
+                          }
+                        }}
                         data-ocid="chat.secondary_button"
                       >
                         <UserPlus size={11} />
@@ -315,7 +355,7 @@ export function ChatPanel() {
                     </div>
                   ) : (
                     <p
-                      className="text-xs text-foreground/90 px-2 py-1 rounded-lg"
+                      className="text-xs text-foreground/90 px-2 py-1 rounded-lg break-words"
                       style={{
                         background: "oklch(0.71 0.16 75 / 0.06)",
                         borderLeft: "2px solid oklch(0.71 0.16 75 / 0.4)",
@@ -327,13 +367,12 @@ export function ChatPanel() {
                 </div>
               ))
             )}
-            <div ref={bottomRef} />
-          </ScrollArea>
+          </div>
 
           {/* Emoji picker */}
           {showEmoji && (
             <div
-              className="grid grid-cols-10 gap-0.5 px-2 py-1"
+              className="grid grid-cols-10 gap-0.5 px-2 py-1 shrink-0"
               style={{
                 borderTop: "1px solid oklch(0.71 0.16 75 / 0.3)",
                 background: "oklch(0.19 0.046 252)",
@@ -355,7 +394,7 @@ export function ChatPanel() {
           {/* Recording indicator */}
           {recording && (
             <div
-              className="flex items-center gap-2 px-2 py-1"
+              className="flex items-center gap-2 px-2 py-1 shrink-0"
               style={{
                 background: "oklch(0.71 0.16 75 / 0.08)",
                 borderTop: "1px solid oklch(0.71 0.16 75 / 0.3)",
@@ -379,7 +418,7 @@ export function ChatPanel() {
 
           {/* Input */}
           <div
-            className="flex gap-1 p-2"
+            className="flex gap-1 p-2 shrink-0"
             style={{ borderTop: "1px solid oklch(0.71 0.16 75 / 0.3)" }}
           >
             <button

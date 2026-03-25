@@ -2,7 +2,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Crown, Loader2, Plus, Send, Star, Swords, Video } from "lucide-react";
+import {
+  Crown,
+  Loader2,
+  MessageSquare,
+  Plus,
+  Star,
+  Swords,
+  ThumbsDown,
+  ThumbsUp,
+  Video,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { Build, Skill, TopAuthor } from "../backend";
 import { BuildCard } from "../components/BuildCard";
@@ -21,6 +31,8 @@ function parseSkillName(name: string, lang: string): string {
   return name;
 }
 
+type TopSection = "top_builds" | "top_authors" | "top_comments";
+
 export function HomePage() {
   const { t, lang } = useLang();
   const { actor } = useActor();
@@ -31,6 +43,8 @@ export function HomePage() {
   const [selectedSkills, setSelectedSkills] = useState<bigint[]>([]);
   const [showCreateBuild, setShowCreateBuild] = useState(false);
   const [showRecordBuild, setShowRecordBuild] = useState(false);
+  const [topSection, setTopSection] = useState<TopSection>("top_builds");
+  const [selectedTopBuild, setSelectedTopBuild] = useState<Build | null>(null);
   const seeded = useRef(false);
 
   const { data: heroes = [], isLoading: heroesLoading } = useQuery({
@@ -68,17 +82,18 @@ export function HomePage() {
 
   const { data: topBuildsRaw = [] } = useQuery<Build[]>({
     queryKey: ["topBuilds"],
-    queryFn: () => actor!.getTopBuilds(5n),
+    queryFn: () => actor!.getTopBuilds(10n),
     enabled: !!actor,
   });
 
   const { data: topAuthors = [] } = useQuery<TopAuthor[]>({
     queryKey: ["topAuthors"],
-    queryFn: () => actor!.getTopAuthors(5n),
+    queryFn: () => actor!.getTopAuthors(10n),
     enabled: !!actor,
   });
 
-  const topBuilds = topBuildsRaw.length > 0 ? topBuildsRaw : builds.slice(0, 5);
+  const topBuilds =
+    topBuildsRaw.length > 0 ? topBuildsRaw : builds.slice(0, 10);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentional simplified deps
   useEffect(() => {
@@ -117,7 +132,6 @@ export function HomePage() {
     <div className="min-h-screen">
       {/* Hero banner */}
       <div className="relative overflow-hidden">
-        {/* Background image from say-gg.ru */}
         <div
           className="h-56 md:h-72"
           style={{
@@ -127,7 +141,6 @@ export function HomePage() {
             backgroundRepeat: "no-repeat",
           }}
         >
-          {/* Gradient overlays */}
           <div
             className="absolute inset-0"
             style={{
@@ -144,9 +157,7 @@ export function HomePage() {
           />
         </div>
 
-        {/* Overlay content */}
         <div className="absolute inset-0 flex flex-col items-center justify-center z-10 px-4">
-          {/* Logo */}
           <h1
             className="font-display font-bold text-4xl md:text-5xl uppercase tracking-widest mb-2 text-glow"
             style={{ color: "oklch(0.71 0.16 75)" }}
@@ -160,20 +171,26 @@ export function HomePage() {
             )}
           </p>
 
-          {/* Stats + action buttons */}
           <div className="flex flex-wrap items-center justify-center gap-3">
-            {/* Build count */}
-            <div
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold"
+            {/* Build count — clickable button */}
+            <button
+              type="button"
+              onClick={() => {
+                setTab("builds");
+                setTopSection("top_builds");
+              }}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all hover:scale-105 active:scale-95"
               style={{
                 background: "oklch(0.19 0.046 252 / 0.9)",
-                border: "1px solid oklch(0.71 0.16 75 / 0.3)",
+                border: "1px solid oklch(0.71 0.16 75 / 0.5)",
                 color: "oklch(0.93 0.008 252)",
+                boxShadow: "0 0 12px oklch(0.71 0.16 75 / 0.2)",
               }}
             >
-              <Swords size={14} className="text-primary" />
-              {t("Сборок:", "Builds:")} {builds.length}
-            </div>
+              <Swords size={14} style={{ color: "oklch(0.71 0.16 75)" }} />
+              <span style={{ color: "oklch(0.71 0.16 75)" }}>Сборок:</span>
+              <span className="font-mono">{builds.length}</span>
+            </button>
 
             {/* Telegram */}
             <a
@@ -194,13 +211,14 @@ export function HomePage() {
               <>
                 <Button
                   size="sm"
-                  className="gap-2 rounded-xl font-bold uppercase tracking-wide glow-gold"
+                  className="gap-2 rounded-xl font-bold uppercase tracking-wide"
                   style={{
                     background: "oklch(0.71 0.16 75)",
                     color: "oklch(0.14 0.04 252)",
+                    boxShadow: "0 0 16px oklch(0.71 0.16 75 / 0.4)",
                   }}
                   onClick={() => setShowCreateBuild(true)}
-                  data-ocid="builds.open_modal_button"
+                  data-ocid="builds.primary_button"
                 >
                   <Plus size={16} />
                   {t("Добавить сборку", "Add Build")}
@@ -236,19 +254,17 @@ export function HomePage() {
           }}
         >
           <span style={{ color: "oklch(0.71 0.16 75)" }} className="font-bold">
-            {t("SAY-GG — ", "SAY-GG — ")}
+            SAY-GG —{" "}
           </span>
-          {t(
-            "фан-сайт со сборками для Skill Legends Royale. Все сборки добавлены сообществом.",
-            "fan site with builds for Skill Legends Royale. All builds are community-contributed.",
-          )}
+          фан-сайт со сборками для Skill Legends Royale. Все сборки добавлены
+          сообществом.
         </div>
       </div>
 
       {/* Tabs + content */}
       <div className="container mx-auto px-4 py-4">
         {/* Tab switcher */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-4">
           <TabButton
             active={tab === "builds"}
             onClick={() => setTab("builds")}
@@ -268,81 +284,171 @@ export function HomePage() {
 
         {tab === "builds" && (
           <div>
-            {/* Top Builds and Top Authors */}
-            {(builds.length > 0 || topAuthors.length > 0) && (
-              <div className="mb-8 space-y-4">
-                {topBuilds.length > 0 && (
-                  <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <Crown
-                        size={14}
-                        style={{ color: "oklch(0.71 0.16 75)" }}
-                      />
-                      <h2
-                        className="font-display text-sm font-bold uppercase tracking-widest"
-                        style={{ color: "oklch(0.71 0.16 75)" }}
-                      >
-                        {t("ТОП СБОРОК", "TOP BUILDS")}
-                      </h2>
-                    </div>
-                    <div className="overflow-x-auto w-full">
-                      <div className="flex gap-3 pb-2">
-                        {topBuilds.map((b) => (
-                          <TopBuildCard
-                            key={b.id.toString()}
-                            build={b}
-                            heroes={heroes}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-                {topAuthors.length > 0 && (
-                  <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <Star size={14} className="text-primary" />
-                      <h2 className="font-display text-sm font-bold uppercase tracking-widest text-primary">
-                        {t("ТОП АВТОРОВ", "TOP AUTHORS")}
-                      </h2>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {topAuthors.map((a) => (
-                        <div
-                          key={a.authorId.toString()}
-                          className="flex items-center gap-2 px-3 py-1.5 rounded-xl"
-                          style={{
-                            background: "oklch(0.22 0.052 252)",
-                            border: "1px solid oklch(0.71 0.16 75 / 0.3)",
-                          }}
-                        >
-                          <div
-                            className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold"
-                            style={{
-                              background: "oklch(0.71 0.16 75 / 0.2)",
-                              border: "1px solid oklch(0.71 0.16 75 / 0.4)",
-                              color: "oklch(0.71 0.16 75)",
-                            }}
-                          >
-                            {a.authorName.slice(0, 2).toUpperCase()}
-                          </div>
-                          <span className="text-xs font-bold">
-                            {a.authorName}
-                          </span>
-                          <Badge
-                            className="text-[10px] px-1.5 py-0 h-4 rounded-full"
-                            style={{
-                              background: "oklch(0.71 0.16 75 / 0.2)",
-                              color: "oklch(0.71 0.16 75)",
-                              border: "1px solid oklch(0.71 0.16 75 / 0.3)",
-                            }}
-                          >
-                            ♥ {Number(a.totalLikes)}
-                          </Badge>
-                        </div>
+            {/* Top section nav buttons */}
+            <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
+              <TopNavBtn
+                active={topSection === "top_builds"}
+                onClick={() => setTopSection("top_builds")}
+              >
+                <Crown size={13} />
+                Топ сборки
+              </TopNavBtn>
+              <TopNavBtn
+                active={topSection === "top_authors"}
+                onClick={() => setTopSection("top_authors")}
+              >
+                <Star size={13} />
+                Топ авторы
+              </TopNavBtn>
+              <TopNavBtn
+                active={topSection === "top_comments"}
+                onClick={() => setTopSection("top_comments")}
+              >
+                <MessageSquare size={13} />
+                Топ по комментариям
+              </TopNavBtn>
+            </div>
+
+            {/* Top section content */}
+            {topSection === "top_builds" && (
+              <div className="mb-8">
+                {topBuilds.length > 0 ? (
+                  <div className="overflow-x-auto w-full">
+                    <div className="flex gap-3 pb-2">
+                      {topBuilds.map((b) => (
+                        <TopBuildCard
+                          key={b.id.toString()}
+                          build={b}
+                          heroes={heroes}
+                          onClick={() => setSelectedTopBuild(b)}
+                        />
                       ))}
                     </div>
                   </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground py-4">
+                    Нет данных. Загрузите тест-данные в админке.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {topSection === "top_authors" && (
+              <div className="mb-8">
+                {topAuthors.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    {topAuthors.map((a, idx) => (
+                      <div
+                        key={a.authorId.toString()}
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl"
+                        style={{
+                          background: "oklch(0.19 0.046 252)",
+                          border: `1px solid ${idx === 0 ? "oklch(0.71 0.16 75 / 0.7)" : "oklch(0.71 0.16 75 / 0.25)"}`,
+                        }}
+                      >
+                        <span
+                          className="text-lg font-black w-6 text-center"
+                          style={{
+                            color:
+                              idx === 0
+                                ? "oklch(0.71 0.16 75)"
+                                : idx === 1
+                                  ? "oklch(0.8 0.05 252)"
+                                  : "oklch(0.6 0.05 252)",
+                          }}
+                        >
+                          #{idx + 1}
+                        </span>
+                        <div
+                          className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold"
+                          style={{
+                            background: "oklch(0.71 0.16 75 / 0.15)",
+                            border: "1px solid oklch(0.71 0.16 75 / 0.4)",
+                            color: "oklch(0.71 0.16 75)",
+                          }}
+                        >
+                          {a.authorName.slice(0, 2).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold truncate">
+                            {a.authorName}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {Number(a.totalLikes)} ♥
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground py-4">
+                    Данных пока нет.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {topSection === "top_comments" && (
+              <div className="mb-8">
+                {topBuilds.length > 0 ? (
+                  <div className="space-y-2">
+                    {topBuilds.map((b, idx) => (
+                      <button
+                        key={b.id.toString()}
+                        type="button"
+                        onClick={() => setSelectedTopBuild(b)}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all hover:scale-[1.01]"
+                        style={{
+                          background: "oklch(0.19 0.046 252)",
+                          border: "1px solid oklch(0.71 0.16 75 / 0.25)",
+                        }}
+                      >
+                        <span
+                          className="text-base font-black w-6 text-center shrink-0"
+                          style={{ color: "oklch(0.71 0.16 75)" }}
+                        >
+                          #{idx + 1}
+                        </span>
+                        <div className="flex gap-1 shrink-0">
+                          {heroes
+                            .filter((h) => b.heroIds.includes(h.id))
+                            .slice(0, 2)
+                            .map((h) => (
+                              <img
+                                key={h.id.toString()}
+                                src={h.imageUrl}
+                                alt={h.name}
+                                width={28}
+                                height={28}
+                                className="w-7 h-7 rounded-full object-cover"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display =
+                                    "none";
+                                }}
+                              />
+                            ))}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p
+                            className="text-sm font-bold truncate"
+                            style={{ color: "oklch(0.71 0.16 75)" }}
+                          >
+                            {b.name}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <MessageSquare size={10} />
+                            Открыть
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground py-4">
+                    Нет данных.
+                  </p>
                 )}
               </div>
             )}
@@ -455,6 +561,17 @@ export function HomePage() {
           onClose={() => setShowRecordBuild(false)}
         />
       )}
+
+      {/* Selected top build expanded modal */}
+      {selectedTopBuild && (
+        <BuildCard
+          build={selectedTopBuild}
+          heroes={heroes}
+          skills={skills}
+          defaultExpanded
+          onClose={() => setSelectedTopBuild(null)}
+        />
+      )}
     </div>
   );
 }
@@ -487,6 +604,40 @@ function TabButton({
               background: "oklch(0.19 0.046 252)",
               color: "oklch(0.55 0.02 252)",
               border: "1px solid oklch(0.71 0.16 75 / 0.2)",
+            }
+      }
+    >
+      {children}
+    </button>
+  );
+}
+
+function TopNavBtn({
+  children,
+  active,
+  onClick,
+}: {
+  children: React.ReactNode;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wide whitespace-nowrap transition-all"
+      style={
+        active
+          ? {
+              background: "oklch(0.71 0.16 75 / 0.2)",
+              border: "1px solid oklch(0.71 0.16 75)",
+              color: "oklch(0.71 0.16 75)",
+              boxShadow: "0 0 10px oklch(0.71 0.16 75 / 0.3)",
+            }
+          : {
+              background: "oklch(0.19 0.046 252)",
+              border: "1px solid oklch(0.71 0.16 75 / 0.2)",
+              color: "oklch(0.55 0.02 252)",
             }
       }
     >
@@ -550,7 +701,6 @@ function SkillChip({
       <span className="text-[9px] leading-tight line-clamp-2">
         {displayName}
       </span>
-      {/* Dot indicator below */}
       {selected && (
         <div
           className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full"
@@ -564,15 +714,32 @@ function SkillChip({
 function TopBuildCard({
   build,
   heroes,
+  onClick,
 }: {
   build: Build;
   heroes: { id: bigint; name: string; imageUrl: string }[];
+  onClick: () => void;
 }) {
+  const { actor } = useActor();
   const buildHeroes = heroes.filter((h) => build.heroIds.includes(h.id));
 
+  const { data: votes } = useQuery({
+    queryKey: ["buildVotes", build.id.toString()],
+    queryFn: () => actor!.getBuildVotes(build.id),
+    enabled: !!actor,
+  });
+
+  const { data: comments = [] } = useQuery({
+    queryKey: ["comments", build.id.toString()],
+    queryFn: () => actor!.getBuildComments(build.id),
+    enabled: !!actor,
+  });
+
   return (
-    <div
-      className="shrink-0 w-36 rounded-xl p-3 transition-all hover:scale-105 cursor-pointer"
+    <button
+      type="button"
+      onClick={onClick}
+      className="shrink-0 w-40 rounded-xl p-3 text-left transition-all hover:scale-105 active:scale-95 cursor-pointer"
       style={{
         background: "oklch(0.19 0.046 252)",
         border: "1px solid oklch(0.71 0.16 75 / 0.35)",
@@ -595,17 +762,26 @@ function TopBuildCard({
         ))}
       </div>
       <p
-        className="text-xs font-bold line-clamp-2 leading-tight"
+        className="text-xs font-bold line-clamp-2 leading-tight mb-2"
         style={{ color: "oklch(0.71 0.16 75)" }}
       >
         {build.name}
       </p>
-      <div className="flex items-center gap-1 mt-1">
-        <Send size={9} className="text-primary" />
-        <span className="text-[9px] text-muted-foreground">
-          ♥ {Number(build.costLegendary)}
+      {/* Stats */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="flex items-center gap-0.5 text-[10px] text-green-400">
+          <ThumbsUp size={9} />
+          {Number(votes?.likes ?? 0)}
+        </span>
+        <span className="flex items-center gap-0.5 text-[10px] text-red-400">
+          <ThumbsDown size={9} />
+          {Number(votes?.dislikes ?? 0)}
+        </span>
+        <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
+          <MessageSquare size={9} />
+          {comments.length}
         </span>
       </div>
-    </div>
+    </button>
   );
 }

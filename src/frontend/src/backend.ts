@@ -248,8 +248,9 @@ export interface backendInterface {
     updateItem(updatedItem: Item): Promise<void>;
     updateSkill(updatedSkill: Skill): Promise<void>;
     // Chat
-    sendChatMessage(authorName: string, text: string): Promise<bigint>;
-    sendVoiceChatMessage(authorName: string, audioData: string): Promise<bigint>;
+    sendChatMessage(authorName: string, senderUID: string, text: string): Promise<bigint>;
+    getChatUserUID(name: string): Promise<string | null>;
+    sendVoiceChatMessage(authorName: string, senderUID: string, audioData: string): Promise<bigint>;
     getChatMessages(): Promise<Array<ChatMessage>>;
     // Online
     onlineHeartbeat(displayName: string): Promise<bigint>;
@@ -896,13 +897,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async sendChatMessage(arg0: string, arg1: string): Promise<bigint> {
-        const result = await (this.actor as any).sendChatMessage(arg0, arg1);
+    async sendChatMessage(arg0: string, arg1: string, arg2: string): Promise<bigint> {
+        const result = await (this.actor as any).sendChatMessage(arg0, arg1, arg2);
         return result;
     }
-    async sendVoiceChatMessage(arg0: string, arg1: string): Promise<bigint> {
-        const result = await (this.actor as any).sendVoiceChatMessage(arg0, arg1);
+    async sendVoiceChatMessage(arg0: string, arg1: string, arg2: string): Promise<bigint> {
+        const result = await (this.actor as any).sendVoiceChatMessage(arg0, arg1, arg2);
         return result;
+    }
+    async getChatUserUID(name: string): Promise<string | null> {
+        const result = await (this.actor as any).getChatUserUID(name);
+        if (Array.isArray(result)) {
+            return result.length > 0 ? result[0] : null;
+        }
+        return result ?? null;
     }
     async getChatMessages(): Promise<Array<any>> {
         const result = await (this.actor as any).getChatMessages();
