@@ -1,6 +1,6 @@
-import { type ReactNode, createContext, useContext, useState } from "react";
+import { type ReactNode, createContext, useContext } from "react";
 
-type Lang = "ru" | "en";
+type Lang = "ru";
 
 type T = {
   lang: Lang;
@@ -11,8 +11,9 @@ type T = {
 const LangContext = createContext<T | undefined>(undefined);
 
 export function LangProvider({ children }: { children: ReactNode }) {
-  const [lang, setLang] = useState<Lang>("ru");
-  const t = (ru: string, en: string) => (lang === "ru" ? ru : en);
+  const lang: Lang = "ru";
+  const setLang = (_l: Lang) => {};
+  const t = (ru: string, _en: string) => ru;
   return (
     <LangContext.Provider value={{ lang, setLang, t }}>
       {children}

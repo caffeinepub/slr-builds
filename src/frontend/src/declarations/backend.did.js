@@ -62,7 +62,12 @@ const serviceEntries = {
   'isCallerAdmin': IDL.Func([], [IDL.Bool], ['query']),
   'saveCallerUserProfile': IDL.Func([UserProfile], [], []),
   'saveTierList': IDL.Func([IDL.Text], [], []),
+  // Seed functions - split to avoid ICP instruction limit
   'seedTestData': IDL.Func([], [], []),
+  'seedSkillsAndBranches': IDL.Func([], [], []),
+  'seedHeroes': IDL.Func([], [], []),
+  'seedItems': IDL.Func([], [], []),
+  'seedBuilds': IDL.Func([], [], []),
   'toggleBuildVisibility': IDL.Func([IDL.Nat], [], []),
   'updateBranch': IDL.Func([Branch], [], []),
   'updateBuild': IDL.Func([Build], [], []),
@@ -102,5 +107,5 @@ const serviceEntries = {
 
 export const idlService = IDL.Service(serviceEntries);
 export const idlInitArgs = [];
-export const idlFactory = ({ IDL }) => IDL.Service(serviceEntries);
-export const init = ({ IDL }) => { return []; };
+export const idlFactory = ({ IDL: _IDL }) => IDL.Service(serviceEntries);
+export const init = ({ IDL: _IDL }) => [];

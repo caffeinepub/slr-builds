@@ -122,7 +122,7 @@ actor {
 
   /// Friends
 
-  let friendsStore = Map.empty<Principal, [Text]>(); // principal -> list of UIDs
+  let friendsStore = Map.empty<Principal, [Text]>();
 
   public shared ({ caller }) func addFriend(uid : Text) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
@@ -136,7 +136,7 @@ actor {
           case (null) { [] };
         };
         if (current.any(func(u) { u == uid })) {
-          return; // already a friend
+          return;
         };
         friendsStore.add(caller, Array.tabulate(current.size() + 1, func(i) { if (i < current.size()) { current[i] } else { uid } }));
       };
@@ -238,8 +238,6 @@ actor {
     data : Text;
   };
 
-  /// Chat types
-
   public type ChatMessage = {
     id : Nat;
     authorName : Text;
@@ -247,14 +245,10 @@ actor {
     createdAt : Int;
   };
 
-  /// Online presence types
-
   public type OnlineUser = {
     displayName : Text;
     lastSeen : Int;
   };
-
-  /// Comments
 
   public type BuildComment = {
     id : Nat;
@@ -264,8 +258,6 @@ actor {
     text : Text;
     createdAt : Int;
   };
-
-  /// Votes
 
   public type BuildVotes = {
     likes : Nat;
@@ -321,8 +313,8 @@ actor {
   let chatStore = Map.empty<Nat, ChatMessage>();
   let onlineStore = Map.empty<Text, OnlineUser>();
   let commentStore = Map.empty<Nat, BuildComment>();
-  let votesStore = Map.empty<Nat, BuildVotes>();      // buildId -> votes
-  let userVoteStore = Map.empty<Text, Bool>();         // "principalText#buildId" -> true=like false=dislike
+  let votesStore = Map.empty<Nat, BuildVotes>();
+  let userVoteStore = Map.empty<Text, Bool>();
 
   /// ID management
 
@@ -542,7 +534,7 @@ actor {
     branchStore.remove(branchId);
   };
 
-  /// Builds (user CRUD, admins manage all)
+  /// Builds
 
   public shared ({ caller }) func createBuild(newBuild : Build) : async Nat {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
@@ -599,11 +591,7 @@ actor {
   public query func countPublicBuildsBySkill(skillId : Nat) : async Nat {
     var count = 0;
     for (build in buildStore.values()) {
-      if (
-        build.isPublic and build.requiredSkillIds.any(
-          func(id) { id == skillId }
-        )
-      ) {
+      if (build.isPublic and build.requiredSkillIds.any(func(id) { id == skillId })) {
         count += 1;
       };
     };
@@ -625,9 +613,7 @@ actor {
     if (not (Principal.equal(current.authorId, caller) or AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("Unauthorized: Only the author or admin can toggle visibility");
     };
-    let updatedBuild : Build = {
-      current with isPublic = not current.isPublic;
-    };
+    let updatedBuild : Build = { current with isPublic = not current.isPublic };
     buildStore.add(buildId, updatedBuild);
   };
 
@@ -673,12 +659,7 @@ actor {
       Runtime.trap("Unauthorized: Only users can create recorded builds");
     };
     let id = getNextRecordedBuildId();
-    let newRecordedBuild : RecordedBuild = {
-      recordedBuild with
-      id;
-      authorId = caller;
-      createdAt = Time.now();
-    };
+    let newRecordedBuild : RecordedBuild = { recordedBuild with id; authorId = caller; createdAt = Time.now() };
     recordedBuildStore.add(id, newRecordedBuild);
     id;
   };
@@ -785,7 +766,7 @@ actor {
     };
   };
 
-  /// Build Votes (likes / dislikes)
+  /// Build Votes
 
   public shared ({ caller }) func toggleBuildLike(buildId : Nat) : async BuildVotes {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
@@ -799,12 +780,10 @@ actor {
     let existingVote = userVoteStore.get(key);
     let updated : BuildVotes = switch (existingVote) {
       case (?true) {
-        // already liked -> remove like
         userVoteStore.remove(key);
         { likes = if (current.likes > 0) { current.likes - 1 } else { 0 }; dislikes = current.dislikes };
       };
       case (?false) {
-        // was dislike -> switch to like
         userVoteStore.add(key, true);
         { likes = current.likes + 1; dislikes = if (current.dislikes > 0) { current.dislikes - 1 } else { 0 } };
       };
@@ -857,7 +836,7 @@ actor {
     userVoteStore.get(key);
   };
 
-  /// Chat — open to all (including anonymous)
+  /// Chat
 
   public shared func sendChatMessage(authorName : Text, text : Text) : async Nat {
     if (text.size() == 0 or text.size() > 500) {
@@ -913,64 +892,47 @@ actor {
     onlineStore.values().toArray().filter(func(u) { u.lastSeen > cutoff });
   };
 
-  /// Seed initial test data from Skill Legends Royale (say-gg.ru)
+  /// Seed test data — split into 4 functions to avoid ICP instruction limit
 
-  public shared func seedTestData() : async () {
-
-    let skills = [
-      { id = 1; name = "РАНА / WOUND"; rarity = "basic"; imageUrl = "https://say-gg.ru/static/branches/wound.png" },
-      { id = 2; name = "ЗАМОРОЗКА / FREEZE"; rarity = "rare"; imageUrl = "https://say-gg.ru/static/branches/freeze.png" },
-      { id = 3; name = "ЯРОСТЬ / RAGE"; rarity = "legendary"; imageUrl = "https://say-gg.ru/static/branches/rage.png" },
-      { id = 4; name = "ИСЦЕЛЕНИЕ / HEAL"; rarity = "rare"; imageUrl = "https://say-gg.ru/static/branches/heal.png" },
-      { id = 5; name = "ЯД / POISON"; rarity = "basic"; imageUrl = "https://say-gg.ru/static/branches/poison.png" },
-      { id = 6; name = "ЩИТ / SHIELD"; rarity = "rare"; imageUrl = "https://say-gg.ru/static/branches/shield.png" },
-      { id = 7; name = "КРИТ / CRIT"; rarity = "legendary"; imageUrl = "https://say-gg.ru/static/branches/crit.png" },
-      { id = 8; name = "СПРАЙТ / SPRITE"; rarity = "basic"; imageUrl = "https://say-gg.ru/static/branches/sprite.png" },
-      { id = 9; name = "ХП / HP"; rarity = "basic"; imageUrl = "https://say-gg.ru/static/branches/hp.png" },
-      { id = 10; name = "УЛЬТ / ULT"; rarity = "legendary"; imageUrl = "https://say-gg.ru/static/branches/ultimate.png" },
-      { id = 11; name = "АТАКА / ATTACK"; rarity = "rare"; imageUrl = "https://say-gg.ru/static/branches/attack.png" },
-      { id = 12; name = "ДОДЖ / DODGE"; rarity = "rare"; imageUrl = "https://say-gg.ru/static/branches/dodge.png" },
-      { id = 13; name = "УСКОРЕНИЕ / HASTE"; rarity = "basic"; imageUrl = "https://say-gg.ru/static/branches/haste.png" },
+  public shared func seedSkillsAndBranches() : async () {
+    let skillsData = [
+      { id = 1; name = "RANA / WOUND"; rarity = "basic"; imageUrl = "https://say-gg.ru/static/branches/wound.png" },
+      { id = 2; name = "ZAMOROZKA / FREEZE"; rarity = "rare"; imageUrl = "https://say-gg.ru/static/branches/freeze.png" },
+      { id = 3; name = "YAROST / RAGE"; rarity = "legendary"; imageUrl = "https://say-gg.ru/static/branches/rage.png" },
+      { id = 4; name = "ISCELENIE / HEAL"; rarity = "rare"; imageUrl = "https://say-gg.ru/static/branches/heal.png" },
+      { id = 5; name = "YAD / POISON"; rarity = "basic"; imageUrl = "https://say-gg.ru/static/branches/poison.png" },
+      { id = 6; name = "SCHIT / SHIELD"; rarity = "rare"; imageUrl = "https://say-gg.ru/static/branches/shield.png" },
+      { id = 7; name = "KRIT / CRIT"; rarity = "legendary"; imageUrl = "https://say-gg.ru/static/branches/crit.png" },
+      { id = 8; name = "SPRAJT / SPRITE"; rarity = "basic"; imageUrl = "https://say-gg.ru/static/branches/sprite.png" },
+      { id = 9; name = "HP / HP"; rarity = "basic"; imageUrl = "https://say-gg.ru/static/branches/hp.png" },
+      { id = 10; name = "ULT / ULT"; rarity = "legendary"; imageUrl = "https://say-gg.ru/static/branches/ultimate.png" },
+      { id = 11; name = "ATAKA / ATTACK"; rarity = "rare"; imageUrl = "https://say-gg.ru/static/branches/attack.png" },
+      { id = 12; name = "DODJ / DODGE"; rarity = "rare"; imageUrl = "https://say-gg.ru/static/branches/dodge.png" },
+      { id = 13; name = "USKORENIE / HASTE"; rarity = "basic"; imageUrl = "https://say-gg.ru/static/branches/haste.png" },
     ];
     skillStore.clear();
-    for (skill in skills.values()) {
-      skillStore.add(skill.id, skill);
-    };
-
-    let branches = [
-      { id = 1; name = "РАНА / WOUND"; imageUrl = "https://say-gg.ru/static/branches/wound.png" },
-      { id = 2; name = "ЗАМОРОЗКА / FREEZE"; imageUrl = "https://say-gg.ru/static/branches/freeze.png" },
-      { id = 3; name = "ЯРОСТЬ / RAGE"; imageUrl = "https://say-gg.ru/static/branches/rage.png" },
-      { id = 4; name = "ИСЦЕЛЕНИЕ / HEAL"; imageUrl = "https://say-gg.ru/static/branches/heal.png" },
-      { id = 5; name = "ЯД / POISON"; imageUrl = "https://say-gg.ru/static/branches/poison.png" },
-      { id = 6; name = "ЩИТ / SHIELD"; imageUrl = "https://say-gg.ru/static/branches/shield.png" },
-      { id = 7; name = "КРИТ / CRIT"; imageUrl = "https://say-gg.ru/static/branches/crit.png" },
-      { id = 8; name = "СПРАЙТ / SPRITE"; imageUrl = "https://say-gg.ru/static/branches/sprite.png" },
-      { id = 9; name = "ХП / HP"; imageUrl = "https://say-gg.ru/static/branches/hp.png" },
-      { id = 10; name = "УЛЬТ / ULT"; imageUrl = "https://say-gg.ru/static/branches/ultimate.png" },
-      { id = 11; name = "АТАКА / ATTACK"; imageUrl = "https://say-gg.ru/static/branches/attack.png" },
-      { id = 12; name = "ДОДЖ / DODGE"; imageUrl = "https://say-gg.ru/static/branches/dodge.png" },
-      { id = 13; name = "УСКОРЕНИЕ / HASTE"; imageUrl = "https://say-gg.ru/static/branches/haste.png" },
-    ];
+    for (s in skillsData.values()) { skillStore.add(s.id, s) };
     branchStore.clear();
-    for (branch in branches.values()) {
-      branchStore.add(branch.id, branch);
+    for (s in skillsData.values()) {
+      branchStore.add(s.id, { id = s.id; name = s.name; imageUrl = s.imageUrl });
     };
+  };
 
+  public shared func seedHeroes() : async () {
     let heroNames : [Text] = [
-      "Гаррак", "Железный Страж", "Синий Клинок", "Огр", "Красный Воин",
-      "Тёмный Призрак", "Белый Берсерк", "Пурпурный Маг", "Гоблин Воин", "Дикарь",
-      "Труппа", "Старый Маг", "Рыжий Гном", "Крестоносец", "Серый Рыцарь",
-      "Золотой Воин", "Красный Страж", "Гоблин Разбойник", "Пингвин", "Тёмный Ассассин",
-      "Белый Медведь", "Рыжая Тень", "Паук", "Нага", "Плотоядный",
-      "Двуглавый", "Призрак", "Эльф Лучница", "Гоблин Механик", "Древний Тролль",
-      "Красный Демон", "Минотавр", "Лесная Фея", "Рыцарь", "Древолик",
-      "Тёмный Лорд", "Пиратка", "Тёмный Волшебник", "Ящер", "Оборотень",
-      "Викинг", "Гремлин", "Серый Волк", "Кузнец", "Синий Зверь",
-      "Виноградник", "Гоблинша", "Панда", "Пират", "Пурпурный Гоблин",
-      "Воин Огня", "Теневой Убийца", "Гоблин Алхимик", "Крысолов", "Анубис",
-      "Зелёный Гоблин", "Синий Дракон", "Ледяная Дева", "Упырь", "Кристальный Голем",
-      "Стальной Ковбой", "Изобретатель", "Огненная Демоница", "Белый Рыцарь", "Мор"
+      "Garrak", "Iron Guard", "Blue Blade", "Ogre", "Red Warrior",
+      "Dark Ghost", "White Berserker", "Purple Mage", "Goblin Warrior", "Savage",
+      "Troupe", "Old Mage", "Red Dwarf", "Crusader", "Grey Knight",
+      "Golden Warrior", "Red Guard", "Goblin Rogue", "Penguin", "Dark Assassin",
+      "White Bear", "Ginger Shadow", "Spider", "Naga", "Carnivore",
+      "Two-Headed", "Phantom", "Elf Archer", "Goblin Mechanic", "Ancient Troll",
+      "Red Demon", "Minotaur", "Forest Fairy", "Knight", "Treant",
+      "Dark Lord", "Pirate Girl", "Dark Wizard", "Lizard", "Werewolf",
+      "Viking", "Gremlin", "Grey Wolf", "Blacksmith", "Blue Beast",
+      "Vineyard", "Goblin Lady", "Panda", "Pirate", "Purple Goblin",
+      "Fire Warrior", "Shadow Killer", "Goblin Alchemist", "Rat Catcher", "Anubis",
+      "Green Goblin", "Blue Dragon", "Ice Maiden", "Ghoul", "Crystal Golem",
+      "Steel Cowboy", "Inventor", "Fire Demoness", "White Knight", "Plague"
     ];
     heroStore.clear();
     var heroIdx = 0;
@@ -980,61 +942,65 @@ actor {
       heroStore.add(heroId, { id = heroId; name = heroNames[heroIdx]; imageUrl; tier = "" });
       heroIdx += 1;
     };
+  };
 
+  public shared func seedItems() : async () {
     itemStore.clear();
     var itemId = 1;
     while (itemId <= 99) {
       let imageUrl = "https://say-gg.ru/static/items/" # itemId.toText() # ".jpg";
-      itemStore.add(itemId, { id = itemId; name = "Предмет " # itemId.toText(); imageUrl });
+      itemStore.add(itemId, { id = itemId; name = "Item " # itemId.toText(); imageUrl });
       itemId += 1;
     };
+  };
 
+  public shared func seedBuilds() : async () {
     buildStore.clear();
-    let seedBuilds : [(Nat, Text, [Nat], [Nat], [Nat], Text, Nat, Nat, Nat, Nat)] = [
-      (1,  "ЛУЧНИЦА ХЕЙСТ КРИТ УЛЬТ",              [9,13],  [7,13,10,11], [4,9],    "Лучница с ускорением, критом и ультом. Быстрый урон с дальней дистанции.",  2, 2, 2, 7),
-      (2,  "СПРАЙТЫ УРОН",                          [6,8],   [8,11,7],     [4,6],    "Спрайты усиливают атаку — огромный DPS.",                                   0, 2, 3, 6),
-      (3,  "ПРЕБАТТЛ ЛОББИ",                        [1,3],   [13,11,8],    [2,6],    "Быстрый старт через атаку и ускорение до битвы.",                           0, 2, 3, 5),
-      (4,  "МАГ КРИТ PANDA",                        [12,10], [7,10,11],    [4,6,9],  "Маг с критом — максимальный урон без защиты.",                              2, 2, 2, 8),
-      (5,  "СПРАЙТ ПРИСТ",                          [8,46],  [8,4,9],      [3,7],    "Спрайт-жрец: живучесть через исцеление и ХП.",                              0, 2, 4, 10),
-      (6,  "СНАЙПЕР УЛЬТ",                          [13,1],  [10,7,13],    [4,6],    "Снайпер наносит ульт-урон через крит и ускорение.",                          2, 2, 1, 7),
-      (7,  "КРАТОС",                                [1,30],  [3,11,7],     [4,9],    "Кратос: ярость, атака, крит. Агрессивный стиль первого места.",              2, 3, 1, 7),
-      (8,  "EVIL BRAKER ULT + MAG CRIT + DODGE",   [16,12], [10,7,12],    [4,9],    "Злобный Ломатель: ульт, крит и уклон. Контратакует любого врага.",           2, 3, 1, 8),
-      (9,  "ЯРОСТЬ",                                [7,4],   [3,11,1],     [4,6],    "Чистая ярость: рана и атака для быстрой победы.",                            1, 2, 2, 7),
-      (10, "ПУДЖ-МЕДИКАЛ",                          [2,21],  [4,9,6],      [3,7],    "Пудж-медик: живёт вечно за счёт щита, ХП и исцеления.",                     1, 3, 3, 12),
-      (11, "КРИТ-ДОДЖ",                             [5,18],  [7,12,11],    [4,9],    "Критует и уклоняется — классический DPS-уклонист.",                         2, 3, 1, 8),
-      (12, "ВАНГВАРДНАЯ АТАКА",                     [30,52], [11,13,3],    [4,6],    "Авангардная атака с ускорением и яростью.",                               1, 2, 3, 7),
-      (13, "ОГР УЛЬТ КРИТ",                         [11,1],  [10,7,9],     [5,1],    "Огр: ульт с критом и ХП. Живёт долго и бьёт сильно.",                       2, 2, 2, 9),
-      (14, "ФРОСТ ЛОРД УЛЬТ",                       [3,24],  [2,10,6],     [3,7],    "Фрост Лорд замораживает и ультует. Контроль + выживание.",                   2, 3, 1, 11),
-      (15, "СПРАЙТ ФРИЗ АТАКА, ЯД+ФРИЗ",           [8,2],   [8,2,11],     [4,9],    "Спрайт+фриз+атака. Яд и фриз дают огромный DoT.",                        1, 2, 3, 8),
-      (16, "ПЕРЕЦ ЯРОСТЬ, РАНЫ",                    [14,9],  [3,1,11],     [4,6],    "Перец в ярости с ранами — быстрый агрессивный стиль.",                    1, 2, 2, 7),
-      (17, "ЖИВУЧЕСТЬ+ТАЙМКУРС",                    [2,21],  [4,9,6],      [3,7,1],  "Максимальная живучесть: щит+ХП+исцеление. Выиграй по времени.",              1, 3, 4, 14),
-      (18, "AXE_COMBO_ULT",                         [19,30], [10,11,3],    [4,6],    "Топорщик: комбо ульт+ярость. Мощный взрыв урона.",                         2, 2, 2, 7),
-      (19, "РАКЕТЫ ХЕЙСТ",                          [25,19], [13,11,7],    [4,6],    "Ракетчик с ускорением: быстрые критические удары.",                          1, 2, 3, 7),
-      (20, "РАНЫ-ЩИТЫ-ЦИКЛИЧНОСТЬ",                 [9,45],  [1,6,9],      [3,7],    "Цикл: рана+щит+ХП. Переживи врага и победи.",                             0, 2, 4, 11),
-      (21, "ФРИЗ ПРОКИ КРИТ",                       [3,24],  [2,7,11],     [4,9],    "Заморози, затем проки крит. Контроль+урон.",                            2, 3, 1, 8),
-      (22, "ПИНГВИН, ЯРОСТЬ + УЛЬТ+ ФРИЗ",          [10,3],  [3,10,2],     [4,6],    "Пингвин: ярость+ульт+заморозка. Замораживает и уничтожает.",              2, 2, 2, 8),
-      (23, "МЕРТВЫЕ СПРАЙТЫ",                       [8,6],   [8,5,1],      [4,6],    "Спрайты смерти: яд+рана усиливают DoT до предела.",                         0, 1, 4, 6),
-      (24, "ХП",                                    [2,45],  [9,4,6],      [3,7],    "Максимум ХП: щит+исцеление держат тебя живым.",                           1, 3, 3, 12),
-      (25, "АСТРАЛ УЛЬТ",                           [15,20], [10,8,13],    [1,5],    "Астрал: спрайт+ускорение дают ульт каждый раунд.",                       2, 2, 2, 7),
-      (26, "АТАК КРИТ",                             [1,11],  [11,7,13],    [4,6],    "Атака+крит+ускорение — стабильный урон каждый раунд.",                   1, 2, 3, 8),
-      (27, "ЭКЗОДИЯ",                               [23,1],  [3,7,10,2],   [4,9],    "Экзодия: ярость+крит+ульт+заморозка. Самая мощная комбо-сборка.",          3, 3, 1, 7),
-      (28, "ДОДЖ",                                  [5,12],  [12,11,13],   [4,9],    "Чистый уклонист: додж+атака+ускорение. Почти неуязвим.",                  1, 3, 2, 8),
-      (29, "МАТХЕР",                                [22,1],  [3,11,7],     [2,4],    "Матхер: ярость+атака+крит без заморозки и исцеления.",                  2, 2, 2, 7),
-      (30, "ОВЕРЛОРД СПРАЙТЫ УЛЬТ",                 [20,8],  [8,10,3],     [4,9],    "Оверлорд+спрайты+ульт — взрывной урон.",                             2, 2, 2, 8),
-      (31, "БЕРСЕРК, СТИЛИТ ХП",                    [4,9],   [3,9,11],     [2,6],    "Берсерк стилит ХП: ярость+ХП баланс атаки/выживания.",              1, 2, 3, 9),
-      (32, "SIN ONESHOT",                           [18,1],  [7,10,3],     [4,6,9],  "Грех: ваншот через крит+ульт+ярость. Один удар убивает.",                 3, 2, 1, 6),
-      (33, "DUKE DODGE",                            [5,12],  [12,3,11],    [4,9],    "Герцог: уклон+ярость+атака. Быстрый и неуловимый.",                       1, 3, 1, 7),
-      (34, "ПАУК ХЕЙСТ",                            [6,25],  [13,5,1],     [2,6],    "Паук+ускорение: яд+рана за счёт скорости.",                             0, 1, 4, 6),
-      (35, "ФРОСТ МАГИЧКА, КРИТ УЛЬТ",              [8,24],  [2,7,10],     [3,9],    "Фрост-магичка: крит+ульт+заморозка. Контроль и мощь.",                   2, 3, 1, 9),
-      (36, "ДРУАДА ДЕФ ЧЕРЕЗ УЛЬТ, ЩИТЫ",          [17,46], [10,6,4],     [3,7],    "Друад: защита через ульт+щиты+исцеление. Оборона.",               2, 3, 1, 12),
-      (37, "ONE BRANCH DODGE",                      [5],     [12],         [],       "Только додж.",                                                          0, 1, 1, 6),
-      (38, "ONE BRANCH SPRITE",                     [8],     [8],          [],       "Только спрайт.",                                                         0, 0, 2, 5),
-      (39, "ONE BRANCH ATACK",                      [1],     [11],         [],       "Только атака.",                                                          0, 1, 1, 5),
-      (40, "FROST NOVA LORD",                       [3,24],  [2,9,6],      [3,7],    "Фрост Нова Лорд: заморозка+ХП+щит. Мощный контролёр.",              1, 3, 2, 11),
-      (41, "СНАЙПЕР АТАКА КРИТ",                    [13,26], [11,7,13],    [4,6],    "Снайпер: атака+крит+ускорение. Стабильный дальний урон.",               1, 2, 3, 8),
-      (42, "ФЬЮРИ ЯРОСТЬ",                          [7,33],  [3,12,11],    [4,9],    "Фьюри: ярость+уклон+атака. Агрессивный быстрый стиль.",                 1, 2, 2, 7),
+    let seedBuildsData : [(Nat, Text, [Nat], [Nat], [Nat], Text, Nat, Nat, Nat, Nat)] = [
+      (1,  "Archer Haste Crit Ult",        [9,13],  [7,13,10,11], [4,9],    "Archer with haste, crit and ult. Fast ranged damage.",       2, 2, 2, 7),
+      (2,  "Sprite DPS",                   [6,8],   [8,11,7],     [4,6],    "Sprites boost attack - massive DPS.",                        0, 2, 3, 6),
+      (3,  "Pre-Battle Lobby",             [1,3],   [13,11,8],    [2,6],    "Fast start via attack and haste before battle.",             0, 2, 3, 5),
+      (4,  "Mage Crit Panda",              [12,10], [7,10,11],    [4,6,9],  "Mage with crit - max damage no defense.",                    2, 2, 2, 8),
+      (5,  "Sprite Priest",                [8,46],  [8,4,9],      [3,7],    "Sprite priest: survivability via heal and HP.",               0, 2, 4, 10),
+      (6,  "Sniper Ult",                   [13,1],  [10,7,13],    [4,6],    "Sniper delivers ult damage via crit and haste.",              2, 2, 1, 7),
+      (7,  "Kratos",                       [1,30],  [3,11,7],     [4,9],    "Kratos: rage, attack, crit. Aggressive first place style.",   2, 3, 1, 7),
+      (8,  "Evil Breaker Ult Crit Dodge",  [16,12], [10,7,12],    [4,9],    "Evil Breaker: ult, crit and dodge. Counters any enemy.",     2, 3, 1, 8),
+      (9,  "Rage Build",                   [7,4],   [3,11,1],     [4,6],    "Pure rage: wound and attack for fast victory.",               1, 2, 2, 7),
+      (10, "Pudge Medical",                [2,21],  [4,9,6],      [3,7],    "Pudge medic: lives forever via shield, HP and heal.",         1, 3, 3, 12),
+      (11, "Crit Dodge",                   [5,18],  [7,12,11],    [4,9],    "Crits and dodges - classic DPS evasion build.",               2, 3, 1, 8),
+      (12, "Vanguard Attack",              [30,52], [11,13,3],    [4,6],    "Vanguard attack with haste and rage.",                       1, 2, 3, 7),
+      (13, "Ogre Ult Crit",               [11,1],  [10,7,9],     [5,1],    "Ogre: ult with crit and HP. Lives long and hits hard.",       2, 2, 2, 9),
+      (14, "Frost Lord Ult",              [3,24],  [2,10,6],     [3,7],    "Frost Lord freezes and ults. Control + survival.",           2, 3, 1, 11),
+      (15, "Sprite Freeze Attack",        [8,2],   [8,2,11],     [4,9],    "Sprite+freeze+attack. Poison and freeze give huge DoT.",      1, 2, 3, 8),
+      (16, "Rage Wounds",                 [14,9],  [3,1,11],     [4,6],    "Rage with wounds - fast aggressive style.",                   1, 2, 2, 7),
+      (17, "Tankiness Timecurse",         [2,21],  [4,9,6],      [3,7,1],  "Max survivability: shield+HP+heal. Win by outlasting.",      1, 3, 4, 14),
+      (18, "Axe Combo Ult",               [19,30], [10,11,3],    [4,6],    "Axeman: combo ult+rage. Powerful damage burst.",              2, 2, 2, 7),
+      (19, "Rocket Haste",                [25,19], [13,11,7],    [4,6],    "Rocketeer with haste: fast critical strikes.",                1, 2, 3, 7),
+      (20, "Wound Shield Cycle",          [9,45],  [1,6,9],      [3,7],    "Cycle: wound+shield+HP. Outlive the enemy and win.",          0, 2, 4, 11),
+      (21, "Freeze Proc Crit",            [3,24],  [2,7,11],     [4,9],    "Freeze then proc crit. Control + damage.",                    2, 3, 1, 8),
+      (22, "Penguin Rage Ult Freeze",     [10,3],  [3,10,2],     [4,6],    "Penguin: rage+ult+freeze. Freezes and destroys.",             2, 2, 2, 8),
+      (23, "Dead Sprites",                [8,6],   [8,5,1],      [4,6],    "Death sprites: poison+wound push DoT to the limit.",          0, 1, 4, 6),
+      (24, "Max HP",                      [2,45],  [9,4,6],      [3,7],    "Maximum HP: shield+heal keep you alive.",                     1, 3, 3, 12),
+      (25, "Astral Ult",                  [15,20], [10,8,13],    [1,5],    "Astral: sprite+haste give ult every round.",                  2, 2, 2, 7),
+      (26, "Attack Crit",                 [1,11],  [11,7,13],    [4,6],    "Attack+crit+haste - stable damage every round.",              1, 2, 3, 8),
+      (27, "Exodia",                      [23,1],  [3,7,10,2],   [4,9],    "Exodia: rage+crit+ult+freeze. Most powerful combo.",          3, 3, 1, 7),
+      (28, "Dodge Master",               [5,12],  [12,11,13],   [4,9],    "Pure evasion: dodge+attack+haste. Near invulnerable.",        1, 3, 2, 8),
+      (29, "Mather",                      [22,1],  [3,11,7],     [2,4],    "Mather: rage+attack+crit no freeze or heal.",                 2, 2, 2, 7),
+      (30, "Overlord Sprites Ult",        [20,8],  [8,10,3],     [4,9],    "Overlord+sprites+ult - explosive damage.",                    2, 2, 2, 8),
+      (31, "Berserker HP",                [4,9],   [3,9,11],     [2,6],    "Berserker steals HP: rage+HP balance of attack/survival.",   1, 2, 3, 9),
+      (32, "Sin Oneshot",                 [18,1],  [7,10,3],     [4,6,9],  "Sin: oneshot via crit+ult+rage. One hit kills.",              3, 2, 1, 6),
+      (33, "Duke Dodge",                  [5,12],  [12,3,11],    [4,9],    "Duke: dodge+rage+attack. Fast and elusive.",                  1, 3, 1, 7),
+      (34, "Spider Haste",                [6,25],  [13,5,1],     [2,6],    "Spider+haste: poison+wound through speed.",                   0, 1, 4, 6),
+      (35, "Frost Mage Crit Ult",         [8,24],  [2,7,10],     [3,9],    "Frost mage: crit+ult+freeze. Control and power.",             2, 3, 1, 9),
+      (36, "Druid Defense Shields",       [17,46], [10,6,4],     [3,7],    "Druid: defense via ult+shields+heal. Fortress build.",        0, 3, 3, 13),
+      (37, "Naga Combo",                  [6,28],  [11,5,13],    [4,9],    "Naga: attack+poison+haste. Gradual lethal damage.",           0, 2, 4, 8),
+      (38, "Harem Ult",                   [9,20],  [10,8,3],     [5,1],    "Harem ult: sprite+rage+ult. Maximum burst damage.",           2, 2, 2, 7),
+      (39, "Black Knight",                [11,34], [3,12,7],     [4,9],    "Black Knight: rage+crit+dodge. Unstoppable death knight.",    2, 3, 1, 8),
+      (40, "Mage Pudge Life",             [11,2],  [4,9,6],      [3,7],    "Mage-Pudge: max survivability via shield+HP+heal.",           1, 3, 3, 11),
+      (41, "Vineyard Poison Freeze",      [46,6],  [5,2,9],      [3,7],    "Vineyard: poison+freeze+HP. Slow and certain death.",         0, 2, 4, 12),
+      (42, "Pandemonium",                 [32,1],  [3,7,10,12],  [4,9],    "Pandemonium: rage+crit+ult+dodge. Chaos unleashed.",          3, 3, 2, 8),
     ];
-    for ((bId, bName, bHeroIds, bReqSkills, bForbSkills, bHint, bCostLeg, bCostRare, bCostBasic, bRounds) in seedBuilds.values()) {
+    for ((bId, bName, bHeroIds, bReqSkills, bForbSkills, bHint, bCostLeg, bCostRare, bCostBasic, bRounds) in seedBuildsData.values()) {
       let b : Build = {
         id = bId;
         name = bName;
@@ -1052,5 +1018,13 @@ actor {
       };
       buildStore.add(bId, b);
     };
+  };
+
+  /// Legacy combined seed - calls the 4 functions sequentially
+  public shared func seedTestData() : async () {
+    await seedSkillsAndBranches();
+    await seedHeroes();
+    await seedItems();
+    await seedBuilds();
   };
 };

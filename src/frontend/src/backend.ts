@@ -237,6 +237,10 @@ export interface backendInterface {
      * / Seed initial test data
      */
     seedTestData(): Promise<void>;
+    seedSkillsAndBranches(): Promise<void>;
+    seedHeroes(): Promise<void>;
+    seedItems(): Promise<void>;
+    seedBuilds(): Promise<void>;
     toggleBuildVisibility(buildId: bigint): Promise<void>;
     updateBranch(updatedBranch: Branch): Promise<void>;
     updateBuild(build: Build): Promise<void>;
@@ -749,6 +753,62 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.seedTestData();
+            return result;
+        }
+    }
+    async seedSkillsAndBranches(): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.seedSkillsAndBranches();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.seedSkillsAndBranches();
+            return result;
+        }
+    }
+    async seedHeroes(): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.seedHeroes();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.seedHeroes();
+            return result;
+        }
+    }
+    async seedItems(): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.seedItems();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.seedItems();
+            return result;
+        }
+    }
+    async seedBuilds(): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.seedBuilds();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.seedBuilds();
             return result;
         }
     }

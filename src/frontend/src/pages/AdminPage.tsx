@@ -62,13 +62,35 @@ export function AdminPage() {
     setIsAuthed(false);
   };
 
+  const [seedStep, setSeedStep] = useState(0);
+
   const seedMutation = useMutation({
-    mutationFn: () => actor!.seedTestData(),
+    mutationFn: async () => {
+      setSeedStep(1);
+      await actor!.seedSkillsAndBranches();
+      setSeedStep(2);
+      await actor!.seedHeroes();
+      setSeedStep(3);
+      await actor!.seedItems();
+      setSeedStep(4);
+      await actor!.seedBuilds();
+      setSeedStep(0);
+    },
     onSuccess: () => {
-      toast.success(t("Тестовые данные загружены", "Test data seeded"));
+      toast.success(
+        t(
+          "Тестовые данные загружены (42 сборки, 65 героев, 99 предметов)",
+          "Test data seeded (42 builds, 65 heroes, 99 items)",
+        ),
+      );
       queryClient.invalidateQueries();
     },
-    onError: () => toast.error(t("Ошибка", "Error")),
+    onError: (err) => {
+      setSeedStep(0);
+      toast.error(
+        `${t("Ошибка загрузки данных", "Error seeding data")}: ${String(err).slice(0, 100)}`,
+      );
+    },
   });
 
   if (!identity) {
@@ -148,7 +170,17 @@ export function AdminPage() {
             ) : (
               <Database size={14} />
             )}
-            {t("Загрузить тест данные", "Seed Test Data")}
+            {seedMutation.isPending
+              ? seedStep === 1
+                ? t("Загрузка навыков...", "Loading skills...")
+                : seedStep === 2
+                  ? t("Загрузка героев...", "Loading heroes...")
+                  : seedStep === 3
+                    ? t("Загрузка предметов...", "Loading items...")
+                    : seedStep === 4
+                      ? t("Загрузка сборок...", "Loading builds...")
+                      : t("Загрузка...", "Loading...")
+              : t("Загрузить тест данные", "Seed Test Data")}
           </Button>
           <Button
             onClick={handleLogout}

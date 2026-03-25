@@ -168,7 +168,6 @@ export function BuildCard({
       voiceMediaRecorderRef.current = mr;
       setVoiceRecording(true);
       setVoiceRecordSecs(0);
-      // Notify user how to finish recording and turn off microphone
       toast.info(
         t(
           "Чтобы отправить — нажмите кнопку ещё раз и выключите микрофон",
@@ -225,15 +224,41 @@ export function BuildCard({
       <button
         type="button"
         data-ocid={dataOcid}
-        className="group relative bg-card border border-border hover:border-primary/50 rounded transition-all duration-200 overflow-hidden hover:glow-red cursor-pointer text-left w-full"
+        className="group relative cursor-pointer text-left w-full transition-all duration-200"
+        style={{
+          background: "oklch(0.19 0.046 252)",
+          border: "1px solid oklch(0.71 0.16 75 / 0.25)",
+          borderRadius: "0.75rem",
+          overflow: "hidden",
+        }}
+        onMouseEnter={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.borderColor =
+            "oklch(0.71 0.16 75 / 0.7)";
+          (e.currentTarget as HTMLButtonElement).style.boxShadow =
+            "0 0 20px oklch(0.71 0.16 75 / 0.15)";
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.borderColor =
+            "oklch(0.71 0.16 75 / 0.25)";
+          (e.currentTarget as HTMLButtonElement).style.boxShadow = "";
+        }}
         onClick={() => setExpanded(true)}
       >
         {/* Top accent bar */}
-        <div className="h-0.5 w-full bg-gradient-to-r from-primary to-accent" />
+        <div
+          className="h-0.5 w-full"
+          style={{
+            background:
+              "linear-gradient(to right, oklch(0.71 0.16 75), oklch(0.62 0.14 80))",
+          }}
+        />
 
         <div className="p-4">
           {/* Name */}
-          <h3 className="font-display font-bold text-base uppercase tracking-wide text-foreground mb-3 line-clamp-1">
+          <h3
+            className="font-display font-bold text-base uppercase tracking-wide mb-3 line-clamp-1"
+            style={{ color: "oklch(0.71 0.16 75)" }}
+          >
             {build.name}
           </h3>
 
@@ -247,7 +272,11 @@ export function BuildCard({
                 {buildHeroes.map((h) => (
                   <span
                     key={h.id.toString()}
-                    className="flex items-center gap-1 text-xs bg-secondary border border-border px-2 py-0.5 rounded text-foreground"
+                    className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-lg text-foreground"
+                    style={{
+                      background: "oklch(0.22 0.052 252)",
+                      border: "1px solid oklch(0.71 0.16 75 / 0.2)",
+                    }}
                   >
                     {h.imageUrl && (
                       <img
@@ -280,7 +309,7 @@ export function BuildCard({
                   <Badge
                     key={s.id.toString()}
                     variant="outline"
-                    className="flex items-center gap-1 text-xs border-green-400/30 text-green-400 px-1.5 py-0"
+                    className="flex items-center gap-1 text-xs border-green-400/30 text-green-400 px-1.5 py-0 rounded-lg"
                   >
                     {s.imageUrl && (
                       <img
@@ -313,7 +342,7 @@ export function BuildCard({
                   <Badge
                     key={s.id.toString()}
                     variant="outline"
-                    className="flex items-center gap-1 text-xs border-destructive/30 text-destructive px-1.5 py-0"
+                    className="flex items-center gap-1 text-xs border-destructive/30 text-destructive px-1.5 py-0 rounded-lg"
                   >
                     {s.imageUrl && (
                       <img
@@ -338,8 +367,11 @@ export function BuildCard({
           {(build.costLegendary > 0n ||
             build.costRare > 0n ||
             build.costBasic > 0n) && (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground mt-3 pt-3 border-t border-border">
-              <Coins size={10} className="text-accent" />
+            <div
+              className="flex items-center gap-1 text-xs text-muted-foreground mt-3 pt-3"
+              style={{ borderTop: "1px solid oklch(0.71 0.16 75 / 0.15)" }}
+            >
+              <Coins size={10} className="text-primary" />
               {build.costLegendary > 0n && (
                 <span className="text-yellow-400">
                   {build.costLegendary.toString()}L
@@ -354,7 +386,7 @@ export function BuildCard({
                 <span className="ml-1">{build.costBasic.toString()}B</span>
               )}
               {build.rounds > 0n && (
-                <span className="ml-1 text-accent">
+                <span className="ml-1 text-primary">
                   {t("Раундов", "Rounds")}: {build.rounds.toString()}
                 </span>
               )}
@@ -374,25 +406,43 @@ export function BuildCard({
       {expanded && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ backgroundColor: "rgba(0,0,0,0.85)" }}
+          style={{ backgroundColor: "oklch(0.10 0.03 252 / 0.9)" }}
         >
           <div
-            className="relative w-full max-w-lg bg-black border border-primary/60 rounded overflow-y-auto max-h-[90vh]"
-            style={{ boxShadow: "0 0 40px rgba(220,38,38,0.4)" }}
+            className="relative w-full max-w-lg overflow-y-auto max-h-[90vh]"
+            style={{
+              background: "oklch(0.17 0.043 252)",
+              border: "1px solid oklch(0.71 0.16 75 / 0.5)",
+              borderRadius: "1rem",
+              boxShadow: "0 0 60px oklch(0.71 0.16 75 / 0.2)",
+            }}
           >
             {/* Accent top bar */}
-            <div className="h-1 w-full bg-gradient-to-r from-primary via-accent to-primary" />
+            <div
+              className="h-1 w-full"
+              style={{
+                background:
+                  "linear-gradient(to right, oklch(0.71 0.16 75), oklch(0.62 0.14 80), oklch(0.71 0.16 75))",
+                borderRadius: "1rem 1rem 0 0",
+              }}
+            />
 
             <div className="p-6">
               {/* Header */}
               <div className="flex items-start justify-between mb-5">
-                <h2 className="font-display text-xl font-bold uppercase tracking-widest text-primary text-glow pr-4">
+                <h2
+                  className="font-display text-xl font-bold uppercase tracking-widest pr-4"
+                  style={{
+                    color: "oklch(0.71 0.16 75)",
+                    textShadow: "0 0 10px oklch(0.71 0.16 75 / 0.5)",
+                  }}
+                >
                   {build.name}
                 </h2>
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+                  className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground rounded-lg"
                   onClick={() => setExpanded(false)}
                   data-ocid="builds.close_button"
                 >
@@ -402,7 +452,10 @@ export function BuildCard({
 
               {/* Hint */}
               {build.hint && (
-                <p className="text-sm text-muted-foreground italic mb-5 border-l-2 border-primary/40 pl-3">
+                <p
+                  className="text-sm text-muted-foreground italic mb-5 pl-3"
+                  style={{ borderLeft: "2px solid oklch(0.71 0.16 75 / 0.4)" }}
+                >
                   {build.hint}
                 </p>
               )}
@@ -410,14 +463,21 @@ export function BuildCard({
               {/* Heroes */}
               {buildHeroes.length > 0 && (
                 <div className="mb-5">
-                  <p className="text-xs font-bold uppercase tracking-widest text-primary mb-2">
+                  <p
+                    className="text-xs font-bold uppercase tracking-widest mb-2"
+                    style={{ color: "oklch(0.71 0.16 75)" }}
+                  >
                     {t("Герои", "Heroes")}
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {buildHeroes.map((h) => (
                       <div
                         key={h.id.toString()}
-                        className="flex items-center gap-2 bg-secondary border border-border px-2 py-1 rounded"
+                        className="flex items-center gap-2 px-2 py-1 rounded-lg"
+                        style={{
+                          background: "oklch(0.22 0.052 252)",
+                          border: "1px solid oklch(0.71 0.16 75 / 0.2)",
+                        }}
                       >
                         {h.imageUrl && (
                           <img
@@ -451,7 +511,7 @@ export function BuildCard({
                       <Badge
                         key={s.id.toString()}
                         variant="outline"
-                        className="flex items-center gap-1 border-green-400/30 text-green-400 text-xs"
+                        className="flex items-center gap-1 border-green-400/30 text-green-400 text-xs rounded-lg"
                       >
                         {s.imageUrl && (
                           <img
@@ -485,7 +545,7 @@ export function BuildCard({
                       <Badge
                         key={s.id.toString()}
                         variant="outline"
-                        className="flex items-center gap-1 border-destructive/30 text-destructive text-xs"
+                        className="flex items-center gap-1 border-destructive/30 text-destructive text-xs rounded-lg"
                       >
                         {s.imageUrl && (
                           <img
@@ -511,9 +571,12 @@ export function BuildCard({
               {(build.costLegendary > 0n ||
                 build.costRare > 0n ||
                 build.costBasic > 0n) && (
-                <div className="mt-4 pt-4 border-t border-border">
+                <div
+                  className="mt-4 pt-4"
+                  style={{ borderTop: "1px solid oklch(0.71 0.16 75 / 0.15)" }}
+                >
                   <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
-                    <Coins size={12} className="inline mr-1 text-accent" />
+                    <Coins size={12} className="inline mr-1 text-primary" />
                     {t("Стоимость", "Cost")}
                   </p>
                   <div className="flex gap-3 text-sm">
@@ -533,7 +596,7 @@ export function BuildCard({
                       </span>
                     )}
                     {build.rounds > 0n && (
-                      <span className="text-accent">
+                      <span className="text-primary">
                         {build.rounds.toString()} {t("раундов", "rounds")}
                       </span>
                     )}
@@ -541,18 +604,31 @@ export function BuildCard({
                 </div>
               )}
 
-              {/* Votes section */}
-              <div className="mt-5 pt-4 border-t border-border">
+              {/* Votes */}
+              <div
+                className="mt-5 pt-4"
+                style={{ borderTop: "1px solid oklch(0.71 0.16 75 / 0.15)" }}
+              >
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={() => likeMutation.mutate()}
                     disabled={!identity || likeMutation.isPending}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-none text-sm font-bold transition-all ${
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold transition-all"
+                    style={
                       myVote === true
-                        ? "border-primary text-primary glow-red bg-primary/10"
-                        : "border-border text-muted-foreground hover:border-green-400/60 hover:text-green-400"
-                    }`}
+                        ? {
+                            border: "1px solid oklch(0.71 0.16 75)",
+                            color: "oklch(0.71 0.16 75)",
+                            background: "oklch(0.71 0.16 75 / 0.1)",
+                            boxShadow: "0 0 8px oklch(0.71 0.16 75 / 0.3)",
+                          }
+                        : {
+                            border: "1px solid oklch(0.71 0.16 75 / 0.25)",
+                            color: "oklch(0.55 0.02 252)",
+                            background: "transparent",
+                          }
+                    }
                     data-ocid="builds.toggle"
                   >
                     <ThumbsUp size={14} />
@@ -562,11 +638,20 @@ export function BuildCard({
                     type="button"
                     onClick={() => dislikeMutation.mutate()}
                     disabled={!identity || dislikeMutation.isPending}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-none text-sm font-bold transition-all ${
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold transition-all"
+                    style={
                       myVote === false
-                        ? "border-primary text-primary glow-red bg-primary/10"
-                        : "border-border text-muted-foreground hover:border-destructive/60 hover:text-destructive"
-                    }`}
+                        ? {
+                            border: "1px solid oklch(0.55 0.22 20)",
+                            color: "oklch(0.55 0.22 20)",
+                            background: "oklch(0.55 0.22 20 / 0.1)",
+                          }
+                        : {
+                            border: "1px solid oklch(0.71 0.16 75 / 0.25)",
+                            color: "oklch(0.55 0.02 252)",
+                            background: "transparent",
+                          }
+                    }
                     data-ocid="builds.secondary_button"
                   >
                     <ThumbsDown size={14} />
@@ -580,9 +665,15 @@ export function BuildCard({
                 </div>
               </div>
 
-              {/* Comments section */}
-              <div className="mt-5 pt-4 border-t border-border">
-                <p className="text-xs font-bold uppercase tracking-widest text-primary mb-3 flex items-center gap-1">
+              {/* Comments */}
+              <div
+                className="mt-5 pt-4"
+                style={{ borderTop: "1px solid oklch(0.71 0.16 75 / 0.15)" }}
+              >
+                <p
+                  className="text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-1"
+                  style={{ color: "oklch(0.71 0.16 75)" }}
+                >
                   <MessageSquare size={12} />
                   {t("Комментарии", "Comments")} ({comments.length})
                 </p>
@@ -601,10 +692,17 @@ export function BuildCard({
                       {comments.map((c) => (
                         <div
                           key={c.id.toString()}
-                          className="bg-secondary border border-border p-2 rounded-none"
+                          className="p-2 rounded-lg"
+                          style={{
+                            background: "oklch(0.22 0.052 252)",
+                            border: "1px solid oklch(0.71 0.16 75 / 0.15)",
+                          }}
                         >
                           <div className="flex items-center justify-between mb-1">
-                            <span className="text-[10px] font-bold text-primary">
+                            <span
+                              className="text-[10px] font-bold"
+                              style={{ color: "oklch(0.71 0.16 75)" }}
+                            >
                               {c.authorName}
                             </span>
                             <div className="flex items-center gap-1">
@@ -649,9 +747,21 @@ export function BuildCard({
                 {identity ? (
                   <div className="space-y-1">
                     {voiceRecording && (
-                      <div className="flex items-center gap-2 px-2 py-1 bg-primary/10 border border-primary/30 rounded-none">
-                        <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                        <span className="text-xs text-primary font-mono">
+                      <div
+                        className="flex items-center gap-2 px-2 py-1 rounded-lg"
+                        style={{
+                          background: "oklch(0.71 0.16 75 / 0.08)",
+                          border: "1px solid oklch(0.71 0.16 75 / 0.3)",
+                        }}
+                      >
+                        <div
+                          className="w-2 h-2 rounded-full animate-pulse"
+                          style={{ background: "oklch(0.71 0.16 75)" }}
+                        />
+                        <span
+                          className="text-xs font-mono"
+                          style={{ color: "oklch(0.71 0.16 75)" }}
+                        >
                           {formatVoiceTime(voiceRecordSecs)} / 1:00
                         </span>
                         <span className="text-xs text-muted-foreground ml-auto">
@@ -671,13 +781,19 @@ export function BuildCard({
                         disabled={addVoiceCommentMutation.isPending}
                         title={
                           voiceRecording
-                            ? t(
-                                "Остановить и отправить (выключить микрофон)",
-                                "Stop and send (turn off microphone)",
-                              )
+                            ? t("Остановить и отправить", "Stop and send")
                             : t("Голосовой комментарий", "Voice comment")
                         }
-                        className={`h-8 w-8 flex items-center justify-center shrink-0 transition-colors border border-primary/40 ${voiceRecording ? "text-primary animate-pulse bg-primary/10" : "text-muted-foreground hover:text-primary bg-black"}`}
+                        className="h-8 w-8 flex items-center justify-center shrink-0 transition-colors rounded-lg"
+                        style={{
+                          border: "1px solid oklch(0.71 0.16 75 / 0.4)",
+                          background: voiceRecording
+                            ? "oklch(0.71 0.16 75 / 0.1)"
+                            : "transparent",
+                          color: voiceRecording
+                            ? "oklch(0.71 0.16 75)"
+                            : "oklch(0.55 0.02 252)",
+                        }}
                       >
                         {addVoiceCommentMutation.isPending ? (
                           <Loader2 size={12} className="animate-spin" />
@@ -703,7 +819,11 @@ export function BuildCard({
                             : t("Ваш комментарий...", "Your comment...")
                         }
                         disabled={voiceRecording}
-                        className="text-xs h-8 bg-black border-primary/40 focus:border-primary rounded-none flex-1"
+                        className="text-xs h-8 flex-1 rounded-lg"
+                        style={{
+                          background: "oklch(0.22 0.052 252)",
+                          border: "1px solid oklch(0.71 0.16 75 / 0.3)",
+                        }}
                         data-ocid="builds.input"
                       />
                       <Button
@@ -716,7 +836,11 @@ export function BuildCard({
                           addCommentMutation.isPending ||
                           voiceRecording
                         }
-                        className="h-8 bg-primary hover:bg-primary/80 rounded-none glow-red text-xs"
+                        className="h-8 rounded-lg text-xs font-bold"
+                        style={{
+                          background: "oklch(0.71 0.16 75)",
+                          color: "oklch(0.14 0.04 252)",
+                        }}
                         data-ocid="builds.submit_button"
                       >
                         {addCommentMutation.isPending ? (
@@ -734,11 +858,16 @@ export function BuildCard({
                 )}
               </div>
 
-              {/* Close at bottom */}
+              {/* Close */}
               <div className="mt-6 flex justify-end">
                 <Button
                   variant="outline"
-                  className="border-primary/40 text-primary hover:bg-primary/10"
+                  className="rounded-xl"
+                  style={{
+                    border: "1px solid oklch(0.71 0.16 75 / 0.4)",
+                    color: "oklch(0.71 0.16 75)",
+                    background: "oklch(0.71 0.16 75 / 0.05)",
+                  }}
                   onClick={() => setExpanded(false)}
                 >
                   {t("Закрыть", "Close")}

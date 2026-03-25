@@ -8,7 +8,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown, LogOut, Shield, User } from "lucide-react";
 import { useState } from "react";
-import { useLang } from "../contexts/LangContext";
 import { useActor } from "../hooks/useActor";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import { OnlineCounter } from "./OnlineCounter";
@@ -20,7 +19,6 @@ interface Props {
 }
 
 export function Navbar({ onNavigate, currentPage }: Props) {
-  const { lang, setLang, t } = useLang();
   const { identity, login, clear, isLoggingIn } = useInternetIdentity();
   const { actor: _actor } = useActor();
   const isLoggedIn = !!identity;
@@ -28,7 +26,14 @@ export function Navbar({ onNavigate, currentPage }: Props) {
 
   return (
     <>
-      <nav className="sticky top-0 z-50 border-b border-border bg-black/95 backdrop-blur">
+      <nav
+        className="sticky top-0 z-50 backdrop-blur-md"
+        style={{
+          background: "oklch(0.14 0.04 252 / 0.97)",
+          borderBottom: "1px solid oklch(0.71 0.16 75 / 0.4)",
+          boxShadow: "0 2px 20px oklch(0.71 0.16 75 / 0.08)",
+        }}
+      >
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           {/* Logo */}
           <button
@@ -37,7 +42,7 @@ export function Navbar({ onNavigate, currentPage }: Props) {
             className="font-display font-bold text-xl uppercase tracking-widest text-glow text-primary"
             data-ocid="nav.link"
           >
-            SLR <span className="text-foreground">BUILDS</span>
+            SAY<span className="text-foreground">-GG</span>
           </button>
 
           {/* Nav links */}
@@ -46,7 +51,7 @@ export function Navbar({ onNavigate, currentPage }: Props) {
               active={currentPage === "home"}
               onClick={() => onNavigate("home")}
             >
-              {t("СБОРКИ", "BUILDS")}
+              СБОРКИ
             </NavLink>
           </div>
 
@@ -55,23 +60,17 @@ export function Navbar({ onNavigate, currentPage }: Props) {
             {/* Online counter */}
             <OnlineCounter />
 
-            {/* Lang toggle */}
-            <button
-              type="button"
-              onClick={() => setLang(lang === "ru" ? "en" : "ru")}
-              className="text-xs font-bold uppercase text-muted-foreground hover:text-foreground transition-colors px-2 py-1 border border-border rounded-none"
-              data-ocid="nav.toggle"
-            >
-              {lang === "ru" ? "EN" : "RU"}
-            </button>
-
             {isLoggedIn ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="gap-1 border-primary/50 text-foreground rounded-none"
+                    className="gap-1 rounded-xl text-foreground"
+                    style={{
+                      border: "1px solid oklch(0.71 0.16 75 / 0.5)",
+                      background: "oklch(0.71 0.16 75 / 0.1)",
+                    }}
                     data-ocid="nav.open_modal_button"
                   >
                     <User size={14} />
@@ -80,19 +79,25 @@ export function Navbar({ onNavigate, currentPage }: Props) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
-                  className="bg-black border-primary/40 rounded-none"
+                  className="rounded-xl"
+                  style={{
+                    background: "oklch(0.17 0.043 252)",
+                    border: "1px solid oklch(0.71 0.16 75 / 0.4)",
+                  }}
                 >
                   <DropdownMenuItem
                     onClick={() => setShowProfile(true)}
                     data-ocid="nav.link"
                   >
                     <User size={14} className="mr-2" />
-                    {t("Профиль / Мои сборки", "Profile / My Builds")}
+                    Профиль / Мои сборки
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-primary/20" />
+                  <DropdownMenuSeparator
+                    style={{ background: "oklch(0.71 0.16 75 / 0.2)" }}
+                  />
                   <DropdownMenuItem onClick={() => onNavigate("admin")}>
                     <Shield size={14} className="mr-2" />
-                    {t("Админ панель", "Admin Panel")}
+                    Админ панель
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={clear}
@@ -100,7 +105,7 @@ export function Navbar({ onNavigate, currentPage }: Props) {
                     data-ocid="nav.delete_button"
                   >
                     <LogOut size={14} className="mr-2" />
-                    {t("Выйти", "Logout")}
+                    Выйти
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -109,12 +114,14 @@ export function Navbar({ onNavigate, currentPage }: Props) {
                 onClick={login}
                 disabled={isLoggingIn}
                 size="sm"
-                className="bg-primary hover:bg-primary/80 text-primary-foreground font-bold uppercase tracking-wide glow-red rounded-none gap-2"
+                className="font-bold uppercase tracking-wide rounded-xl glow-gold gap-2"
+                style={{
+                  background: "oklch(0.71 0.16 75)",
+                  color: "oklch(0.14 0.04 252)",
+                }}
                 data-ocid="nav.primary_button"
               >
-                {isLoggingIn
-                  ? t("Вход...", "Logging in...")
-                  : t("Войти", "Login")}
+                {isLoggingIn ? "Вход..." : "Войти"}
               </Button>
             )}
           </div>
@@ -142,7 +149,13 @@ function NavLink({
     >
       {children}
       {active && (
-        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary glow-red" />
+        <span
+          className="absolute bottom-0 left-0 right-0 h-0.5"
+          style={{
+            background: "oklch(0.71 0.16 75)",
+            boxShadow: "0 0 8px oklch(0.71 0.16 75 / 0.8)",
+          }}
+        />
       )}
     </button>
   );

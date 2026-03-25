@@ -102,7 +102,6 @@ export function ChatPanel() {
     refetchInterval: 5000,
   });
 
-  // When chat is opened, mark all messages as seen
   useEffect(() => {
     if (open && messages.length > 0) {
       const maxId = messages.reduce(
@@ -175,9 +174,7 @@ export function ChatPanel() {
         if (e.data.size > 0) audioChunksRef.current.push(e.data);
       };
       mr.onstop = async () => {
-        for (const t of stream.getTracks()) {
-          t.stop();
-        }
+        for (const trk of stream.getTracks()) trk.stop();
         const blob = new Blob(audioChunksRef.current, { type: mr.mimeType });
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -230,12 +227,25 @@ export function ChatPanel() {
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
       {open && (
         <div
-          className="w-80 flex flex-col rounded-none bg-black neon-border"
-          style={{ height: "460px" }}
+          className="w-80 flex flex-col"
+          style={{
+            height: "460px",
+            borderRadius: "1rem",
+            background: "oklch(0.17 0.043 252)",
+            border: "1px solid oklch(0.71 0.16 75 / 0.5)",
+            boxShadow: "0 0 30px oklch(0.71 0.16 75 / 0.15)",
+          }}
           data-ocid="chat.panel"
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-3 py-2 border-b border-primary/30">
+          <div
+            className="flex items-center justify-between px-3 py-2"
+            style={{
+              borderBottom: "1px solid oklch(0.71 0.16 75 / 0.3)",
+              borderRadius: "1rem 1rem 0 0",
+              background: "oklch(0.19 0.046 252)",
+            }}
+          >
             <span className="text-xs font-bold uppercase tracking-widest neon-text">
               {t("Чат", "Chat")}
             </span>
@@ -264,7 +274,10 @@ export function ChatPanel() {
               messages.map((msg) => (
                 <div key={msg.id.toString()} className="mb-2 group">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-[10px] font-bold text-primary">
+                    <span
+                      className="text-[10px] font-bold"
+                      style={{ color: "oklch(0.71 0.16 75)" }}
+                    >
                       {msg.authorName}
                     </span>
                     <span className="text-[9px] text-muted-foreground">
@@ -285,7 +298,13 @@ export function ChatPanel() {
                     )}
                   </div>
                   {msg.text.startsWith("VOICE:") ? (
-                    <div className="bg-white/5 px-2 py-2 border-l-2 border-primary/40">
+                    <div
+                      className="px-2 py-2 rounded-lg"
+                      style={{
+                        background: "oklch(0.71 0.16 75 / 0.06)",
+                        borderLeft: "2px solid oklch(0.71 0.16 75 / 0.4)",
+                      }}
+                    >
                       <audio
                         controls
                         style={{ height: "28px", width: "100%" }}
@@ -295,7 +314,13 @@ export function ChatPanel() {
                       </audio>
                     </div>
                   ) : (
-                    <p className="text-xs text-foreground/90 bg-white/5 px-2 py-1 rounded-none border-l-2 border-primary/40">
+                    <p
+                      className="text-xs text-foreground/90 px-2 py-1 rounded-lg"
+                      style={{
+                        background: "oklch(0.71 0.16 75 / 0.06)",
+                        borderLeft: "2px solid oklch(0.71 0.16 75 / 0.4)",
+                      }}
+                    >
                       {msg.text}
                     </p>
                   )}
@@ -307,13 +332,19 @@ export function ChatPanel() {
 
           {/* Emoji picker */}
           {showEmoji && (
-            <div className="grid grid-cols-10 gap-0.5 px-2 py-1 border-t border-primary/30 bg-black">
+            <div
+              className="grid grid-cols-10 gap-0.5 px-2 py-1"
+              style={{
+                borderTop: "1px solid oklch(0.71 0.16 75 / 0.3)",
+                background: "oklch(0.19 0.046 252)",
+              }}
+            >
               {EMOJIS.map((emoji) => (
                 <button
                   key={emoji}
                   type="button"
                   onClick={() => handleEmojiClick(emoji)}
-                  className="text-base hover:bg-primary/20 rounded p-0.5 transition-colors"
+                  className="text-base rounded p-0.5 transition-colors hover:bg-primary/20"
                 >
                   {emoji}
                 </button>
@@ -323,9 +354,21 @@ export function ChatPanel() {
 
           {/* Recording indicator */}
           {recording && (
-            <div className="flex items-center gap-2 px-2 py-1 bg-primary/10 border-t border-primary/30">
-              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              <span className="text-xs text-primary font-mono">
+            <div
+              className="flex items-center gap-2 px-2 py-1"
+              style={{
+                background: "oklch(0.71 0.16 75 / 0.08)",
+                borderTop: "1px solid oklch(0.71 0.16 75 / 0.3)",
+              }}
+            >
+              <div
+                className="w-2 h-2 rounded-full animate-pulse"
+                style={{ background: "oklch(0.71 0.16 75)" }}
+              />
+              <span
+                className="text-xs font-mono"
+                style={{ color: "oklch(0.71 0.16 75)" }}
+              >
                 {formatTime(recordSecs)} / 1:00
               </span>
               <span className="text-xs text-muted-foreground ml-auto">
@@ -335,12 +378,13 @@ export function ChatPanel() {
           )}
 
           {/* Input */}
-          <div className="flex gap-1 p-2 border-t border-primary/30">
+          <div
+            className="flex gap-1 p-2"
+            style={{ borderTop: "1px solid oklch(0.71 0.16 75 / 0.3)" }}
+          >
             <button
               type="button"
-              onClick={() => {
-                setShowEmoji((v) => !v);
-              }}
+              onClick={() => setShowEmoji((v) => !v)}
               disabled={recording}
               className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors shrink-0"
               title={t("Смайлы", "Emojis")}
@@ -351,11 +395,12 @@ export function ChatPanel() {
               type="button"
               onClick={recording ? stopRecording : startRecording}
               disabled={sendVoiceMutation.isPending}
-              className={`h-8 w-8 flex items-center justify-center transition-colors shrink-0 ${
-                recording
-                  ? "text-primary animate-pulse"
-                  : "text-muted-foreground hover:text-primary"
-              }`}
+              className="h-8 w-8 flex items-center justify-center transition-colors shrink-0"
+              style={{
+                color: recording
+                  ? "oklch(0.71 0.16 75)"
+                  : "oklch(0.55 0.02 252)",
+              }}
               title={
                 recording ? t("Остановить", "Stop") : t("Голосовое", "Voice")
               }
@@ -373,7 +418,11 @@ export function ChatPanel() {
                     : t("Сообщение...", "Message...")
                 }
                 disabled={recording}
-                className="text-xs h-8 bg-black border-primary/40 focus:border-primary rounded-none pr-10"
+                className="text-xs h-8 rounded-lg pr-10"
+                style={{
+                  background: "oklch(0.22 0.052 252)",
+                  border: "1px solid oklch(0.71 0.16 75 / 0.3)",
+                }}
                 data-ocid="chat.input"
               />
               <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-muted-foreground">
@@ -385,7 +434,11 @@ export function ChatPanel() {
               size="sm"
               onClick={handleSend}
               disabled={!text.trim() || sendMutation.isPending || recording}
-              className="h-8 w-8 p-0 bg-primary hover:bg-primary/80 glow-red rounded-none"
+              className="h-8 w-8 p-0 rounded-lg"
+              style={{
+                background: "oklch(0.71 0.16 75)",
+                color: "oklch(0.14 0.04 252)",
+              }}
               data-ocid="chat.submit_button"
             >
               <Send size={12} />
@@ -398,12 +451,26 @@ export function ChatPanel() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative w-12 h-12 bg-black neon-border flex items-center justify-center hover:bg-primary/10 transition-colors rounded-none"
+        className="relative w-12 h-12 flex items-center justify-center transition-all hover:scale-105"
+        style={{
+          background: "oklch(0.19 0.046 252)",
+          border: "1px solid oklch(0.71 0.16 75 / 0.6)",
+          borderRadius: "50%",
+          boxShadow: "0 0 12px oklch(0.71 0.16 75 / 0.3)",
+          color: "oklch(0.71 0.16 75)",
+        }}
         data-ocid="chat.open_modal_button"
       >
-        <MessageCircle size={20} className="text-primary" />
+        <MessageCircle size={20} />
         {unreadCount > 0 && (
-          <Badge className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-[9px] px-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full glow-red">
+          <Badge
+            className="absolute -top-2 -right-2 text-[9px] px-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full"
+            style={{
+              background: "oklch(0.71 0.16 75)",
+              color: "oklch(0.14 0.04 252)",
+              boxShadow: "0 0 8px oklch(0.71 0.16 75 / 0.6)",
+            }}
+          >
             {unreadCount > 99 ? "99+" : unreadCount}
           </Badge>
         )}
