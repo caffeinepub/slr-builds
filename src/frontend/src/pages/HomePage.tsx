@@ -80,23 +80,28 @@ export function HomePage() {
 
   const topBuilds = topBuildsRaw.length > 0 ? topBuildsRaw : builds.slice(0, 5);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional simplified deps
   useEffect(() => {
-    if (actor && !seeded.current && heroes.length === 0 && !heroesLoading) {
+    if (!actor || seeded.current || heroesLoading) return;
+    if (heroes.length > 0) {
       seeded.current = true;
-      (async () => {
-        try {
-          await actor.seedSkillsAndBranches();
-          await actor.seedHeroes();
-          await actor.seedItems();
-          await actor.seedBuilds();
-          queryClient.invalidateQueries();
-        } catch (err) {
-          console.error("Auto-seed failed:", err);
-          seeded.current = false;
-        }
-      })();
+      return;
     }
-  }, [actor, heroes.length, heroesLoading, queryClient]);
+    seeded.current = true;
+    const runSeed = async () => {
+      try {
+        await actor.seedSkillsAndBranches();
+        await actor.seedHeroes();
+        await actor.seedItems();
+        await actor.seedBuilds();
+        queryClient.invalidateQueries();
+      } catch (err) {
+        console.error("Auto-seed failed:", err);
+        seeded.current = false;
+      }
+    };
+    runSeed();
+  }, [actor, heroesLoading]);
 
   const toggleSkill = (id: bigint) => {
     setSelectedSkills((prev) =>

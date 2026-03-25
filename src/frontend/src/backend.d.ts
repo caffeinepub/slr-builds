@@ -131,6 +131,10 @@ export interface backendInterface {
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     saveTierList(data: string): Promise<void>;
     seedTestData(): Promise<void>;
+    seedSkillsAndBranches(): Promise<void>;
+    seedHeroes(): Promise<void>;
+    seedItems(): Promise<void>;
+    seedBuilds(): Promise<void>;
     toggleBuildVisibility(buildId: bigint): Promise<void>;
     updateBranch(updatedBranch: Branch): Promise<void>;
     updateBuild(build: Build): Promise<void>;

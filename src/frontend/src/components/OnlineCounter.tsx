@@ -27,7 +27,7 @@ export function OnlineCounter() {
   const { data: profile } = useQuery({
     queryKey: ["callerProfile"],
     queryFn: () => actor!.getCallerUserProfile(),
-    enabled: !!actor,
+    enabled: !!actor && !!identity,
   });
 
   const displayName = profile?.name || shortPrincipal;

@@ -26,7 +26,6 @@ import { toast } from "sonner";
 import type { Branch, Hero, Item, Skill } from "../backend";
 import { useLang } from "../contexts/LangContext";
 import { useActor } from "../hooks/useActor";
-import { useInternetIdentity } from "../hooks/useInternetIdentity";
 
 const ADMIN_AUTH_KEY = "slr_admin_auth";
 const ADMIN_PASSWORD = "garenA11";
@@ -36,7 +35,6 @@ type AdminTab = "heroes" | "skills" | "items" | "branches" | "builds" | "users";
 export function AdminPage() {
   const { t } = useLang();
   const { actor } = useActor();
-  const { identity } = useInternetIdentity();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<AdminTab>("heroes");
 
@@ -66,14 +64,17 @@ export function AdminPage() {
 
   const seedMutation = useMutation({
     mutationFn: async () => {
+      if (!actor) {
+        throw new Error("Актор не загружен");
+      }
       setSeedStep(1);
-      await actor!.seedSkillsAndBranches();
+      await actor.seedSkillsAndBranches();
       setSeedStep(2);
-      await actor!.seedHeroes();
+      await actor.seedHeroes();
       setSeedStep(3);
-      await actor!.seedItems();
+      await actor.seedItems();
       setSeedStep(4);
-      await actor!.seedBuilds();
+      await actor.seedBuilds();
       setSeedStep(0);
     },
     onSuccess: () => {
@@ -92,17 +93,6 @@ export function AdminPage() {
       );
     },
   });
-
-  if (!identity) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh] text-muted-foreground">
-        {t(
-          "Войдите чтобы получить доступ",
-          "Please log in to access this page",
-        )}
-      </div>
-    );
-  }
 
   if (!isAuthed) {
     return (
