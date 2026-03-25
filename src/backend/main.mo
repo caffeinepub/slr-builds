@@ -23,7 +23,28 @@ actor {
   };
 
   let userProfiles = Map.empty<Principal, UserProfile>();
-  let registeredUsersStore = Map.empty<Principal, Int>(); // principal -> registeredAt timestamp
+  let registeredUsersStore = Map.empty<Principal, Int>();
+  let uidByPrincipal = Map.empty<Principal, Text>();
+  let principalByUid = Map.empty<Text, Principal>();
+  var uidCounter : Nat = 1000;
+
+  func generateUid() : Text {
+    let n = uidCounter;
+    uidCounter += 1;
+    let chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let base = 32;
+    var result = "";
+    var v = n;
+    var i = 0;
+    while (i < 6) {
+      let idx = v % base;
+      let c = Text.fromChar(chars.toArray()[idx]);
+      result := c # result;
+      v := v / base;
+      i += 1;
+    };
+    result;
+  };
 
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
@@ -44,15 +65,40 @@ actor {
       Runtime.trap("Unauthorized: Only users can save profiles");
     };
     userProfiles.add(caller, profile);
-    // Track registered users
     if (not registeredUsersStore.containsKey(caller)) {
       registeredUsersStore.add(caller, Time.now());
+    };
+    if (not uidByPrincipal.containsKey(caller)) {
+      let uid = generateUid();
+      uidByPrincipal.add(caller, uid);
+      principalByUid.add(uid, caller);
+    };
+  };
+
+  public query ({ caller }) func getMyUID() : async ?Text {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      return null;
+    };
+    uidByPrincipal.get(caller);
+  };
+
+  public query func getUserByUID(uid : Text) : async ?(Text, Text) {
+    switch (principalByUid.get(uid)) {
+      case (null) { null };
+      case (?p) {
+        let name = switch (userProfiles.get(p)) {
+          case (?prof) { prof.name };
+          case (null) { "—" };
+        };
+        ?(uid, name);
+      };
     };
   };
 
   public type RegisteredUser = {
     principal : Principal;
     name : Text;
+    uid : Text;
     registeredAt : Int;
   };
 
@@ -66,7 +112,72 @@ actor {
         case (?profile) { profile.name };
         case (null) { "—" };
       };
-      { principal = p; name = profileName; registeredAt = t };
+      let uid = switch (uidByPrincipal.get(p)) {
+        case (?u) { u };
+        case (null) { "—" };
+      };
+      { principal = p; name = profileName; uid; registeredAt = t };
+    });
+  };
+
+  /// Friends
+
+  let friendsStore = Map.empty<Principal, [Text]>(); // principal -> list of UIDs
+
+  public shared ({ caller }) func addFriend(uid : Text) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized");
+    };
+    switch (principalByUid.get(uid)) {
+      case (null) { Runtime.trap("User not found") };
+      case (?_targetPrincipal) {
+        let current = switch (friendsStore.get(caller)) {
+          case (?list) { list };
+          case (null) { [] };
+        };
+        if (current.any(func(u) { u == uid })) {
+          return; // already a friend
+        };
+        friendsStore.add(caller, Array.tabulate(current.size() + 1, func(i) { if (i < current.size()) { current[i] } else { uid } }));
+      };
+    };
+  };
+
+  public shared ({ caller }) func removeFriend(uid : Text) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized");
+    };
+    let current = switch (friendsStore.get(caller)) {
+      case (?list) { list };
+      case (null) { [] };
+    };
+    friendsStore.add(caller, current.filter(func(u) { u != uid }));
+  };
+
+  public type FriendEntry = {
+    uid : Text;
+    name : Text;
+  };
+
+  public query ({ caller }) func getMyFriends() : async [FriendEntry] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      return [];
+    };
+    let uids = switch (friendsStore.get(caller)) {
+      case (?list) { list };
+      case (null) { [] };
+    };
+    uids.map(func(uid : Text) : FriendEntry {
+      let name = switch (principalByUid.get(uid)) {
+        case (null) { "—" };
+        case (?p) {
+          switch (userProfiles.get(p)) {
+            case (?prof) { prof.name };
+            case (null) { "—" };
+          };
+        };
+      };
+      { uid; name };
     });
   };
 
@@ -143,6 +254,24 @@ actor {
     lastSeen : Int;
   };
 
+  /// Comments
+
+  public type BuildComment = {
+    id : Nat;
+    buildId : Nat;
+    authorId : Principal;
+    authorName : Text;
+    text : Text;
+    createdAt : Int;
+  };
+
+  /// Votes
+
+  public type BuildVotes = {
+    likes : Nat;
+    dislikes : Nat;
+  };
+
   module Build {
     public func compare(build1 : Build, build2 : Build) : Order.Order {
       Nat.compare(build1.id, build2.id);
@@ -158,6 +287,12 @@ actor {
   module ChatMessage {
     public func compare(m1 : ChatMessage, m2 : ChatMessage) : Order.Order {
       Nat.compare(m1.id, m2.id);
+    };
+  };
+
+  module BuildComment {
+    public func compare(c1 : BuildComment, c2 : BuildComment) : Order.Order {
+      Nat.compare(c1.id, c2.id);
     };
   };
 
@@ -185,6 +320,9 @@ actor {
   let tierListStore = Map.empty<Principal, TierListData>();
   let chatStore = Map.empty<Nat, ChatMessage>();
   let onlineStore = Map.empty<Text, OnlineUser>();
+  let commentStore = Map.empty<Nat, BuildComment>();
+  let votesStore = Map.empty<Nat, BuildVotes>();      // buildId -> votes
+  let userVoteStore = Map.empty<Text, Bool>();         // "principalText#buildId" -> true=like false=dislike
 
   /// ID management
 
@@ -245,6 +383,15 @@ actor {
   func getNextChatId() : Nat {
     if (chatStore.isEmpty()) { return 1 };
     let keys = chatStore.keys();
+    switch (keys.reverse().next()) {
+      case (?maxId) { maxId + 1 };
+      case (null) { 1 };
+    };
+  };
+
+  func getNextCommentId() : Nat {
+    if (commentStore.isEmpty()) { return 1 };
+    let keys = commentStore.keys();
     switch (keys.reverse().next()) {
       case (?maxId) { maxId + 1 };
       case (null) { 1 };
@@ -484,6 +631,41 @@ actor {
     buildStore.add(buildId, updatedBuild);
   };
 
+  public type TopAuthor = {
+    authorId : Principal;
+    authorName : Text;
+    totalLikes : Nat;
+  };
+
+  public query func getTopBuilds(limit : Nat) : async [Build] {
+    let public_ = buildStore.values().toArray().filter(func(b) { b.isPublic });
+    let sorted = public_.sort(func(a, b) {
+      let va = switch (votesStore.get(a.id)) { case (?v) { v.likes }; case (null) { 0 } };
+      let vb = switch (votesStore.get(b.id)) { case (?v) { v.likes }; case (null) { 0 } };
+      if (vb > va) { #less } else if (vb < va) { #greater } else { #equal };
+    });
+    if (limit >= sorted.size()) { sorted } else { Array.tabulate(limit, func(i) { sorted[i] }) };
+  };
+
+  public query func getTopAuthors(limit : Nat) : async [TopAuthor] {
+    let authorLikes = Map.empty<Principal, Nat>();
+    for (build in buildStore.values()) {
+      let likes = switch (votesStore.get(build.id)) { case (?v) { v.likes }; case (null) { 0 } };
+      let current = switch (authorLikes.get(build.authorId)) { case (?n) { n }; case (null) { 0 } };
+      authorLikes.add(build.authorId, current + likes);
+    };
+    let entries = authorLikes.entries().toArray();
+    let sorted = entries.sort(func((_, a), (_, b)) {
+      if (b > a) { #less } else if (b < a) { #greater } else { #equal };
+    });
+    let take = if (limit >= sorted.size()) { sorted.size() } else { limit };
+    Array.tabulate(take, func(i) {
+      let (p, total) = sorted[i];
+      let name = switch (userProfiles.get(p)) { case (?prof) { prof.name }; case (null) { "—" } };
+      { authorId = p; authorName = name; totalLikes = total };
+    });
+  };
+
   /// Recorded builds
 
   public shared ({ caller }) func createRecordedBuild(recordedBuild : RecordedBuild) : async Nat {
@@ -555,7 +737,127 @@ actor {
     tierListStore.clear();
   };
 
-  /// Chat — open to all (including anonymous)
+  /// Build Comments
+
+  public shared ({ caller }) func addBuildComment(buildId : Nat, authorName : Text, text : Text) : async Nat {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can comment");
+    };
+    if (text.size() == 0 or text.size() > 1000) {
+      Runtime.trap("Comment must be 1-1000 characters");
+    };
+    let name = if (authorName.size() == 0) { "Анон" } else { authorName };
+    let id = getNextCommentId();
+    let comment : BuildComment = { id; buildId; authorId = caller; authorName = name; text; createdAt = Time.now() };
+    commentStore.add(id, comment);
+    id;
+  };
+
+  public shared ({ caller }) func addVoiceBuildComment(buildId : Nat, authorName : Text, audioData : Text) : async Nat {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can comment");
+    };
+    if (audioData.size() == 0 or audioData.size() > 600_000) {
+      Runtime.trap("Audio too large or empty");
+    };
+    let name = if (authorName.size() == 0) { "Анон" } else { authorName };
+    let id = getNextCommentId();
+    let encoded = "VOICE:" # audioData;
+    let comment : BuildComment = { id; buildId; authorId = caller; authorName = name; text = encoded; createdAt = Time.now() };
+    commentStore.add(id, comment);
+    id;
+  };
+
+  public query func getBuildComments(buildId : Nat) : async [BuildComment] {
+    commentStore.values().toArray().filter(func(c) { c.buildId == buildId }).sort();
+  };
+
+  public shared ({ caller }) func deleteBuildComment(commentId : Nat) : async () {
+    let comment = commentStore.get(commentId);
+    switch (comment) {
+      case (null) { Runtime.trap("Comment not found") };
+      case (?c) {
+        if (not (Principal.equal(c.authorId, caller) or AccessControl.isAdmin(accessControlState, caller))) {
+          Runtime.trap("Unauthorized");
+        };
+        commentStore.remove(commentId);
+      };
+    };
+  };
+
+  /// Build Votes (likes / dislikes)
+
+  public shared ({ caller }) func toggleBuildLike(buildId : Nat) : async BuildVotes {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized");
+    };
+    let key = caller.toText() # "#" # buildId.toText();
+    let current = switch (votesStore.get(buildId)) {
+      case (?v) { v };
+      case (null) { { likes = 0; dislikes = 0 } };
+    };
+    let existingVote = userVoteStore.get(key);
+    let updated : BuildVotes = switch (existingVote) {
+      case (?true) {
+        // already liked -> remove like
+        userVoteStore.remove(key);
+        { likes = if (current.likes > 0) { current.likes - 1 } else { 0 }; dislikes = current.dislikes };
+      };
+      case (?false) {
+        // was dislike -> switch to like
+        userVoteStore.add(key, true);
+        { likes = current.likes + 1; dislikes = if (current.dislikes > 0) { current.dislikes - 1 } else { 0 } };
+      };
+      case (null) {
+        userVoteStore.add(key, true);
+        { likes = current.likes + 1; dislikes = current.dislikes };
+      };
+    };
+    votesStore.add(buildId, updated);
+    updated;
+  };
+
+  public shared ({ caller }) func toggleBuildDislike(buildId : Nat) : async BuildVotes {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized");
+    };
+    let key = caller.toText() # "#" # buildId.toText();
+    let current = switch (votesStore.get(buildId)) {
+      case (?v) { v };
+      case (null) { { likes = 0; dislikes = 0 } };
+    };
+    let existingVote = userVoteStore.get(key);
+    let updated : BuildVotes = switch (existingVote) {
+      case (?false) {
+        userVoteStore.remove(key);
+        { likes = current.likes; dislikes = if (current.dislikes > 0) { current.dislikes - 1 } else { 0 } };
+      };
+      case (?true) {
+        userVoteStore.add(key, false);
+        { likes = if (current.likes > 0) { current.likes - 1 } else { 0 }; dislikes = current.dislikes + 1 };
+      };
+      case (null) {
+        userVoteStore.add(key, false);
+        { likes = current.likes; dislikes = current.dislikes + 1 };
+      };
+    };
+    votesStore.add(buildId, updated);
+    updated;
+  };
+
+  public query func getBuildVotes(buildId : Nat) : async BuildVotes {
+    switch (votesStore.get(buildId)) {
+      case (?v) { v };
+      case (null) { { likes = 0; dislikes = 0 } };
+    };
+  };
+
+  public query ({ caller }) func getMyVoteOnBuild(buildId : Nat) : async ?Bool {
+    let key = caller.toText() # "#" # buildId.toText();
+    userVoteStore.get(key);
+  };
+
+  /// Chat — open to all (including anonymous)
 
   public shared func sendChatMessage(authorName : Text, text : Text) : async Nat {
     if (text.size() == 0 or text.size() > 500) {
@@ -565,7 +867,24 @@ actor {
     let id = getNextChatId();
     let msg : ChatMessage = { id; authorName = name; text; createdAt = Time.now() };
     chatStore.add(id, msg);
-    // Keep only last 200 messages
+    if (chatStore.size() > 200) {
+      switch (chatStore.keys().next()) {
+        case (?oldestId) { chatStore.remove(oldestId) };
+        case (null) {};
+      };
+    };
+    id;
+  };
+
+  public shared func sendVoiceChatMessage(authorName : Text, audioData : Text) : async Nat {
+    if (audioData.size() == 0 or audioData.size() > 600_000) {
+      Runtime.trap("Audio too large or empty");
+    };
+    let name = if (authorName.size() == 0) { "Гость" } else { authorName };
+    let id = getNextChatId();
+    let encoded = "VOICE:" # audioData;
+    let msg : ChatMessage = { id; authorName = name; text = encoded; createdAt = Time.now() };
+    chatStore.add(id, msg);
     if (chatStore.size() > 200) {
       switch (chatStore.keys().next()) {
         case (?oldestId) { chatStore.remove(oldestId) };
@@ -579,7 +898,7 @@ actor {
     chatStore.values().toArray().sort();
   };
 
-  /// Online presence — poll-based
+  /// Online presence
 
   public shared func onlineHeartbeat(displayName : Text) : async Nat {
     let name = if (displayName.size() == 0) { "Гость" } else { displayName };
@@ -590,7 +909,6 @@ actor {
 
   public query func getOnlineUsers() : async [OnlineUser] {
     let now = Time.now();
-    // 3 minutes = 180 billion nanoseconds
     let cutoff : Int = now - 180_000_000_000;
     onlineStore.values().toArray().filter(func(u) { u.lastSeen > cutoff });
   };
@@ -599,7 +917,6 @@ actor {
 
   public shared func seedTestData() : async () {
 
-    // Skills (13)
     let skills = [
       { id = 1; name = "РАНА / WOUND"; rarity = "basic"; imageUrl = "https://say-gg.ru/static/branches/wound.png" },
       { id = 2; name = "ЗАМОРОЗКА / FREEZE"; rarity = "rare"; imageUrl = "https://say-gg.ru/static/branches/freeze.png" },
@@ -620,7 +937,6 @@ actor {
       skillStore.add(skill.id, skill);
     };
 
-    // Branches (13)
     let branches = [
       { id = 1; name = "РАНА / WOUND"; imageUrl = "https://say-gg.ru/static/branches/wound.png" },
       { id = 2; name = "ЗАМОРОЗКА / FREEZE"; imageUrl = "https://say-gg.ru/static/branches/freeze.png" },
@@ -641,73 +957,20 @@ actor {
       branchStore.add(branch.id, branch);
     };
 
-    // 65 Heroes named by avatar appearance from say-gg.ru
     let heroNames : [Text] = [
-      "Гаррак",        // 1  - зелёный орк с огнём
-      "Железный Страж", // 2  - тёмный броневой рыцарь
-      "Синий Клинок",  // 3  - синий ниндзя/ассасин
-      "Огр",           // 4  - зелёный огр
-      "Красный Воин",  // 5  - красная броня с рогами
-      "Тёмный Призрак", // 6  - фиолетовый призрак в капюшоне
-      "Белый Берсерк", // 7  - белые волосы, #1
-      "Пурпурный Маг", // 8  - фиолетовый маг
-      "Гоблин Воин",   // 9  - зелёный гоблин в броне #1
-      "Дикарь",        // 10 - варвар в шкурах
-      "Труппа",        // 11 - толстый розовый монстр
-      "Старый Маг",    // 12 - старик в зелёной шляпе
-      "Рыжий Гном",    // 13 - гном с рыжей бородой
-      "Крестоносец",   // 14 - тёмный рыцарь с красным крестом
-      "Серый Рыцарь",  // 15 - серый рыцарь в доспехах
-      "Золотой Воин",  // 16 - золотая броня
-      "Красный Страж", // 17 - красный воин перекатывается
-      "Гоблин Разбойник", // 18 - зелёный гоблин #3
-      "Пингвин",       // 19 - пингвин в броне
-      "Тёмный Ассасин", // 20 - зелёные волосы, тёмный
-      "Белый Медведь", // 21 - белый медведь с дубиной
-      "Рыжая Тень",    // 22 - рыжеволосая тёмная фигура
-      "Паук",          // 23 - тёмный паук #4
-      "Нага",          // 24 - синий мускулистый змей
-      "Плотоядный",    // 25 - фиолетовый колючий монстр
-      "Двуглавый",     // 26 - двухголовое существо
-      "Призрак",       // 27 - белый пушистый призрак
-      "Эльф Лучница",  // 28 - синяя эльф с луком
-      "Гоблин Механик", // 29 - зелёный гоблин-инженер
-      "Древний Тролль", // 30 - тролль с растением на голове
-      "Красный Демон", // 31 - красный демон
-      "Минотавр",      // 32 - коричневый минотавр
-      "Лесная Фея",    // 33 - зелёная девушка-фея
-      "Рыцарь",        // 34 - синий рыцарь
-      "Древолик",      // 35 - существо из брёвен
-      "Тёмный Лорд",   // 36 - тёмный лорд в капюшоне
-      "Пиратка",       // 37 - красно-чёрная пиратка #3
-      "Тёмный Волшебник", // 38 - маг с синим шаром
-      "Ящер",          // 39 - синий чешуйчатый монстр
-      "Оборотень",     // 40 - серый оборотень
-      "Викинг",        // 41 - викинг с золотой бородой
-      "Гремлин",       // 42 - маленькое фиолетовое существо
-      "Серый Волк",    // 43 - серый волк #6
-      "Кузнец",        // 44 - гном с молотом
-      "Синий Зверь",   // 45 - синий демон/зверь
-      "Виноградник",   // 46 - зелёное лозовое существо
-      "Гоблинша",      // 47 - зелёная девушка-гоблин
-      "Панда",         // 48 - панда-монах
-      "Пират",         // 49 - красный пират
-      "Пурпурный Гоблин", // 50 - фиолетовый гоблин
-      "Воин Огня",     // 51 - оранжевый броневой воин
-      "Теневой Убийца", // 52 - фиолетовый скрытый убийца
-      "Гоблин Алхимик", // 53 - гоблин с рюкзаком
-      "Крысолов",      // 54 - серый крыс-солдат
-      "Анубис",        // 55 - шакалоголовый бог в золоте
-      "Зелёный Гоблин", // 56 - зелёный гоблин в капюшоне
-      "Синий Дракон",  // 57 - синий дракон
-      "Ледяная Дева",  // 58 - белая/синяя ледяная девушка
-      "Упырь",         // 59 - коричневый зомби/вампир (закрыт)
-      "Кристальный Голем", // 60 - фиолетовый кристальный голем
-      "Стальной Ковбой", // 61 - тёмный ковбой-робот
-      "Изобретатель",  // 62 - маленький изобретатель с очками
-      "Огненная Демоница", // 63 - красная девушка-демон с огнём
-      "Белый Рыцарь",  // 64 - белый рыцарь
-      "Мор"            // 65 - фиолетовый чумной доктор #1
+      "Гаррак", "Железный Страж", "Синий Клинок", "Огр", "Красный Воин",
+      "Тёмный Призрак", "Белый Берсерк", "Пурпурный Маг", "Гоблин Воин", "Дикарь",
+      "Труппа", "Старый Маг", "Рыжий Гном", "Крестоносец", "Серый Рыцарь",
+      "Золотой Воин", "Красный Страж", "Гоблин Разбойник", "Пингвин", "Тёмный Ассассин",
+      "Белый Медведь", "Рыжая Тень", "Паук", "Нага", "Плотоядный",
+      "Двуглавый", "Призрак", "Эльф Лучница", "Гоблин Механик", "Древний Тролль",
+      "Красный Демон", "Минотавр", "Лесная Фея", "Рыцарь", "Древолик",
+      "Тёмный Лорд", "Пиратка", "Тёмный Волшебник", "Ящер", "Оборотень",
+      "Викинг", "Гремлин", "Серый Волк", "Кузнец", "Синий Зверь",
+      "Виноградник", "Гоблинша", "Панда", "Пират", "Пурпурный Гоблин",
+      "Воин Огня", "Теневой Убийца", "Гоблин Алхимик", "Крысолов", "Анубис",
+      "Зелёный Гоблин", "Синий Дракон", "Ледяная Дева", "Упырь", "Кристальный Голем",
+      "Стальной Ковбой", "Изобретатель", "Огненная Демоница", "Белый Рыцарь", "Мор"
     ];
     heroStore.clear();
     var heroIdx = 0;
@@ -718,7 +981,6 @@ actor {
       heroIdx += 1;
     };
 
-    // 99 Items
     itemStore.clear();
     var itemId = 1;
     while (itemId <= 99) {
@@ -727,7 +989,6 @@ actor {
       itemId += 1;
     };
 
-    // 42 Real builds from say-gg.ru
     buildStore.clear();
     let seedBuilds : [(Nat, Text, [Nat], [Nat], [Nat], Text, Nat, Nat, Nat, Nat)] = [
       (1,  "ЛУЧНИЦА ХЕЙСТ КРИТ УЛЬТ",              [9,13],  [7,13,10,11], [4,9],    "Лучница с ускорением, критом и ультом. Быстрый урон с дальней дистанции.",  2, 2, 2, 7),

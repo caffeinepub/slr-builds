@@ -3,6 +3,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown, LogOut, Shield, User } from "lucide-react";
@@ -11,7 +12,7 @@ import { useLang } from "../contexts/LangContext";
 import { useActor } from "../hooks/useActor";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import { OnlineCounter } from "./OnlineCounter";
-import { MyBuildsModal } from "./modals/MyBuildsModal";
+import { ProfileModal } from "./modals/ProfileModal";
 
 interface Props {
   onNavigate: (page: "home" | "admin") => void;
@@ -23,7 +24,7 @@ export function Navbar({ onNavigate, currentPage }: Props) {
   const { identity, login, clear, isLoggingIn } = useInternetIdentity();
   const { actor: _actor } = useActor();
   const isLoggedIn = !!identity;
-  const [showMyBuilds, setShowMyBuilds] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
 
   return (
     <>
@@ -39,7 +40,7 @@ export function Navbar({ onNavigate, currentPage }: Props) {
             SLR <span className="text-foreground">BUILDS</span>
           </button>
 
-          {/* Nav links — admin link intentionally excluded here, accessible via dropdown only */}
+          {/* Nav links */}
           <div className="hidden md:flex items-center gap-8">
             <NavLink
               active={currentPage === "home"}
@@ -81,9 +82,14 @@ export function Navbar({ onNavigate, currentPage }: Props) {
                   align="end"
                   className="bg-black border-primary/40 rounded-none"
                 >
-                  <DropdownMenuItem onClick={() => setShowMyBuilds(true)}>
-                    {t("Мои сборки", "My Builds")}
+                  <DropdownMenuItem
+                    onClick={() => setShowProfile(true)}
+                    data-ocid="nav.link"
+                  >
+                    <User size={14} className="mr-2" />
+                    {t("Профиль / Мои сборки", "Profile / My Builds")}
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-primary/20" />
                   <DropdownMenuItem onClick={() => onNavigate("admin")}>
                     <Shield size={14} className="mr-2" />
                     {t("Админ панель", "Admin Panel")}
@@ -115,7 +121,7 @@ export function Navbar({ onNavigate, currentPage }: Props) {
         </div>
       </nav>
 
-      {showMyBuilds && <MyBuildsModal onClose={() => setShowMyBuilds(false)} />}
+      {showProfile && <ProfileModal onClose={() => setShowProfile(false)} />}
     </>
   );
 }

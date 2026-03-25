@@ -20,28 +20,34 @@ export function OnlineCounter() {
   const { actor } = useActor();
   const { identity } = useInternetIdentity();
 
-  const displayName = identity
+  const shortPrincipal = identity
     ? `${identity.getPrincipal().toString().slice(0, 8)}...`
     : t("Гость", "Guest");
 
-  const actorAny = actor as any;
+  const { data: profile } = useQuery({
+    queryKey: ["callerProfile"],
+    queryFn: () => actor!.getCallerUserProfile(),
+    enabled: !!actor,
+  });
+
+  const displayName = profile?.name || shortPrincipal;
 
   const { data: onlineUsers = [] } = useQuery<OnlineUser[]>({
     queryKey: ["onlineUsers"],
-    queryFn: () => actorAny.getOnlineUsers(),
-    enabled: !!actor && typeof actorAny.getOnlineUsers === "function",
+    queryFn: () => actor!.getOnlineUsers(),
+    enabled: !!actor,
     refetchInterval: 30000,
   });
 
   // Heartbeat every 60s
   useEffect(() => {
-    if (!actor || typeof actorAny.heartbeat !== "function") return;
-    actorAny.onlineHeartbeat(displayName).catch(() => {});
+    if (!actor) return;
+    actor.onlineHeartbeat(displayName).catch(() => {});
     const id = setInterval(() => {
-      actorAny.onlineHeartbeat(displayName).catch(() => {});
+      actor.onlineHeartbeat(displayName).catch(() => {});
     }, 60000);
     return () => clearInterval(id);
-  }, [actor, actorAny, displayName]);
+  }, [actor, displayName]);
 
   const count = onlineUsers.length;
 

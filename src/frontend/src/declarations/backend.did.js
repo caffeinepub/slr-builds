@@ -17,9 +17,16 @@ export const RecordedBuild = IDL.Record({
   'id': IDL.Nat, 'heroId': IDL.Nat, 'title': IDL.Text, 'authorId': IDL.Principal, 'createdAt': IDL.Int,
 });
 export const UserProfile = IDL.Record({ 'name': IDL.Text });
-export const RegisteredUser = IDL.Record({ 'principal': IDL.Principal, 'name': IDL.Text, 'registeredAt': IDL.Int });
+export const RegisteredUser = IDL.Record({ 'principal': IDL.Principal, 'name': IDL.Text, 'uid': IDL.Text, 'registeredAt': IDL.Int });
 export const ChatMessage = IDL.Record({ 'id': IDL.Nat, 'authorName': IDL.Text, 'text': IDL.Text, 'createdAt': IDL.Int });
 export const OnlineUser = IDL.Record({ 'displayName': IDL.Text, 'lastSeen': IDL.Int });
+export const BuildComment = IDL.Record({
+  'id': IDL.Nat, 'buildId': IDL.Nat, 'authorId': IDL.Principal,
+  'authorName': IDL.Text, 'text': IDL.Text, 'createdAt': IDL.Int,
+});
+export const BuildVotes = IDL.Record({ 'likes': IDL.Nat, 'dislikes': IDL.Nat });
+export const FriendEntry = IDL.Record({ 'uid': IDL.Text, 'name': IDL.Text });
+export const TopAuthor = IDL.Record({ 'authorId': IDL.Principal, 'authorName': IDL.Text, 'totalLikes': IDL.Nat });
 
 const serviceEntries = {
   '_initializeAccessControlWithSecret': IDL.Func([IDL.Text], [], []),
@@ -62,11 +69,35 @@ const serviceEntries = {
   'updateHero': IDL.Func([Hero], [], []),
   'updateItem': IDL.Func([Item], [], []),
   'updateSkill': IDL.Func([Skill], [], []),
+  // Chat
   'sendChatMessage': IDL.Func([IDL.Text, IDL.Text], [IDL.Nat], []),
+  'sendVoiceChatMessage': IDL.Func([IDL.Text, IDL.Text], [IDL.Nat], []),
   'getChatMessages': IDL.Func([], [IDL.Vec(ChatMessage)], ['query']),
-  'getAllRegisteredUsers': IDL.Func([], [IDL.Vec(RegisteredUser)], ['query']),
+  // Online
   'onlineHeartbeat': IDL.Func([IDL.Text], [IDL.Nat], []),
   'getOnlineUsers': IDL.Func([], [IDL.Vec(OnlineUser)], ['query']),
+  // Admin
+  'getAllRegisteredUsers': IDL.Func([], [IDL.Vec(RegisteredUser)], ['query']),
+  // UID
+  'getMyUID': IDL.Func([], [IDL.Opt(IDL.Text)], ['query']),
+  'getUserByUID': IDL.Func([IDL.Text], [IDL.Opt(IDL.Tuple(IDL.Text, IDL.Text))], ['query']),
+  // Friends
+  'addFriend': IDL.Func([IDL.Text], [], []),
+  'removeFriend': IDL.Func([IDL.Text], [], []),
+  'getMyFriends': IDL.Func([], [IDL.Vec(FriendEntry)], ['query']),
+  // Comments
+  'addBuildComment': IDL.Func([IDL.Nat, IDL.Text, IDL.Text], [IDL.Nat], []),
+  'addVoiceBuildComment': IDL.Func([IDL.Nat, IDL.Text, IDL.Text], [IDL.Nat], []),
+  'getBuildComments': IDL.Func([IDL.Nat], [IDL.Vec(BuildComment)], ['query']),
+  'deleteBuildComment': IDL.Func([IDL.Nat], [], []),
+  // Votes
+  'toggleBuildLike': IDL.Func([IDL.Nat], [BuildVotes], []),
+  'toggleBuildDislike': IDL.Func([IDL.Nat], [BuildVotes], []),
+  'getBuildVotes': IDL.Func([IDL.Nat], [BuildVotes], ['query']),
+  'getMyVoteOnBuild': IDL.Func([IDL.Nat], [IDL.Opt(IDL.Bool)], ['query']),
+  // Top lists
+  'getTopBuilds': IDL.Func([IDL.Nat], [IDL.Vec(Build)], ['query']),
+  'getTopAuthors': IDL.Func([IDL.Nat], [IDL.Vec(TopAuthor)], ['query']),
 };
 
 export const idlService = IDL.Service(serviceEntries);

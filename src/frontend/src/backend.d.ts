@@ -64,37 +64,47 @@ export interface OnlineUser {
     displayName: string;
     lastSeen: bigint;
 }
+export interface RegisteredUser {
+    principal: Principal;
+    name: string;
+    uid: string;
+    registeredAt: bigint;
+}
+export interface BuildComment {
+    id: bigint;
+    buildId: bigint;
+    authorId: Principal;
+    authorName: string;
+    text: string;
+    createdAt: bigint;
+}
+export interface BuildVotes {
+    likes: bigint;
+    dislikes: bigint;
+}
+export interface FriendEntry {
+    uid: string;
+    name: string;
+}
+export interface TopAuthor {
+    authorId: Principal;
+    authorName: string;
+    totalLikes: bigint;
+}
 export enum UserRole {
     admin = "admin",
     user = "user",
     guest = "guest"
 }
 export interface backendInterface {
-    /**
-     * / Branch CRUD (admin-only)
-     */
+    _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
     addBranch(branch: Branch): Promise<bigint>;
-    /**
-     * / Hero CRUD (admin-only)
-     */
     addHero(hero: Hero): Promise<bigint>;
-    /**
-     * / Item CRUD (admin-only)
-     */
     addItem(item: Item): Promise<bigint>;
-    /**
-     * / Skill CRUD (admin-only)
-     */
     addSkill(skill: Skill): Promise<bigint>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     countPublicBuildsBySkill(skillId: bigint): Promise<bigint>;
-    /**
-     * / Builds (user CRUD, admins manage all)
-     */
     createBuild(newBuild: Build): Promise<bigint>;
-    /**
-     * / Recorded builds
-     */
     createRecordedBuild(recordedBuild: RecordedBuild): Promise<bigint>;
     deleteAllTierLists(): Promise<void>;
     deleteBranch(branchId: bigint): Promise<void>;
@@ -119,13 +129,7 @@ export interface backendInterface {
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
-    /**
-     * / Tier list management
-     */
     saveTierList(data: string): Promise<void>;
-    /**
-     * / Seed initial test data
-     */
     seedTestData(): Promise<void>;
     toggleBuildVisibility(buildId: bigint): Promise<void>;
     updateBranch(updatedBranch: Branch): Promise<void>;
@@ -133,14 +137,33 @@ export interface backendInterface {
     updateHero(updatedHero: Hero): Promise<void>;
     updateItem(updatedItem: Item): Promise<void>;
     updateSkill(updatedSkill: Skill): Promise<void>;
-    /**
-     * / Chat
-     */
+    // Chat
     sendChatMessage(authorName: string, text: string): Promise<bigint>;
+    sendVoiceChatMessage(authorName: string, audioData: string): Promise<bigint>;
     getChatMessages(): Promise<Array<ChatMessage>>;
-    /**
-     * / Online presence
-     */
+    // Online
     onlineHeartbeat(displayName: string): Promise<bigint>;
     getOnlineUsers(): Promise<Array<OnlineUser>>;
+    // Admin
+    getAllRegisteredUsers(): Promise<Array<RegisteredUser>>;
+    // UID
+    getMyUID(): Promise<string | null>;
+    getUserByUID(uid: string): Promise<[string, string] | null>;
+    // Friends
+    addFriend(uid: string): Promise<void>;
+    removeFriend(uid: string): Promise<void>;
+    getMyFriends(): Promise<Array<FriendEntry>>;
+    // Comments
+    addBuildComment(buildId: bigint, authorName: string, text: string): Promise<bigint>;
+    addVoiceBuildComment(buildId: bigint, authorName: string, audioData: string): Promise<bigint>;
+    getBuildComments(buildId: bigint): Promise<Array<BuildComment>>;
+    deleteBuildComment(commentId: bigint): Promise<void>;
+    // Votes
+    toggleBuildLike(buildId: bigint): Promise<BuildVotes>;
+    toggleBuildDislike(buildId: bigint): Promise<BuildVotes>;
+    getBuildVotes(buildId: bigint): Promise<BuildVotes>;
+    getMyVoteOnBuild(buildId: bigint): Promise<boolean | null>;
+    // Top lists
+    getTopBuilds(limit: bigint): Promise<Array<Build>>;
+    getTopAuthors(limit: bigint): Promise<Array<TopAuthor>>;
 }

@@ -141,6 +141,43 @@ export enum UserRole {
     user = "user",
     guest = "guest"
 }
+export interface ChatMessage {
+    id: bigint;
+    authorName: string;
+    text: string;
+    createdAt: bigint;
+}
+export interface OnlineUser {
+    displayName: string;
+    lastSeen: bigint;
+}
+export interface RegisteredUser {
+    principal: import("@icp-sdk/core/principal").Principal;
+    name: string;
+    uid: string;
+    registeredAt: bigint;
+}
+export interface BuildComment {
+    id: bigint;
+    buildId: bigint;
+    authorId: import("@icp-sdk/core/principal").Principal;
+    authorName: string;
+    text: string;
+    createdAt: bigint;
+}
+export interface BuildVotes {
+    likes: bigint;
+    dislikes: bigint;
+}
+export interface FriendEntry {
+    uid: string;
+    name: string;
+}
+export interface TopAuthor {
+    authorId: import("@icp-sdk/core/principal").Principal;
+    authorName: string;
+    totalLikes: bigint;
+}
 export interface backendInterface {
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
     /**
@@ -206,6 +243,35 @@ export interface backendInterface {
     updateHero(updatedHero: Hero): Promise<void>;
     updateItem(updatedItem: Item): Promise<void>;
     updateSkill(updatedSkill: Skill): Promise<void>;
+    // Chat
+    sendChatMessage(authorName: string, text: string): Promise<bigint>;
+    sendVoiceChatMessage(authorName: string, audioData: string): Promise<bigint>;
+    getChatMessages(): Promise<Array<ChatMessage>>;
+    // Online
+    onlineHeartbeat(displayName: string): Promise<bigint>;
+    getOnlineUsers(): Promise<Array<OnlineUser>>;
+    // Admin
+    getAllRegisteredUsers(): Promise<Array<RegisteredUser>>;
+    // UID
+    getMyUID(): Promise<string | null>;
+    getUserByUID(uid: string): Promise<[string, string] | null>;
+    // Friends
+    addFriend(uid: string): Promise<void>;
+    removeFriend(uid: string): Promise<void>;
+    getMyFriends(): Promise<Array<FriendEntry>>;
+    // Comments
+    addBuildComment(buildId: bigint, authorName: string, text: string): Promise<bigint>;
+    addVoiceBuildComment(buildId: bigint, authorName: string, audioData: string): Promise<bigint>;
+    getBuildComments(buildId: bigint): Promise<Array<BuildComment>>;
+    deleteBuildComment(commentId: bigint): Promise<void>;
+    // Votes
+    toggleBuildLike(buildId: bigint): Promise<BuildVotes>;
+    toggleBuildDislike(buildId: bigint): Promise<BuildVotes>;
+    getBuildVotes(buildId: bigint): Promise<BuildVotes>;
+    getMyVoteOnBuild(buildId: bigint): Promise<boolean | null>;
+    // Top lists
+    getTopBuilds(limit: bigint): Promise<Array<Build>>;
+    getTopAuthors(limit: bigint): Promise<Array<TopAuthor>>;
 }
 import type { UserProfile as _UserProfile, UserRole as _UserRole } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
@@ -774,6 +840,10 @@ export class Backend implements backendInterface {
         const result = await (this.actor as any).sendChatMessage(arg0, arg1);
         return result;
     }
+    async sendVoiceChatMessage(arg0: string, arg1: string): Promise<bigint> {
+        const result = await (this.actor as any).sendVoiceChatMessage(arg0, arg1);
+        return result;
+    }
     async getChatMessages(): Promise<Array<any>> {
         const result = await (this.actor as any).getChatMessages();
         return result;
@@ -788,6 +858,63 @@ export class Backend implements backendInterface {
     }
     async getAllRegisteredUsers(): Promise<Array<any>> {
         const result = await (this.actor as any).getAllRegisteredUsers();
+        return result;
+    }
+    async getMyUID(): Promise<string | null> {
+        const result = await (this.actor as any).getMyUID();
+        return result.length === 0 ? null : result[0];
+    }
+    async getUserByUID(uid: string): Promise<[string, string] | null> {
+        const result = await (this.actor as any).getUserByUID(uid);
+        return result.length === 0 ? null : result[0];
+    }
+    async addFriend(uid: string): Promise<void> {
+        await (this.actor as any).addFriend(uid);
+    }
+    async removeFriend(uid: string): Promise<void> {
+        await (this.actor as any).removeFriend(uid);
+    }
+    async getMyFriends(): Promise<Array<any>> {
+        const result = await (this.actor as any).getMyFriends();
+        return result;
+    }
+    async addBuildComment(buildId: bigint, authorName: string, text: string): Promise<bigint> {
+        const result = await (this.actor as any).addBuildComment(buildId, authorName, text);
+        return result;
+    }
+    async addVoiceBuildComment(buildId: bigint, authorName: string, audioData: string): Promise<bigint> {
+        const result = await (this.actor as any).addVoiceBuildComment(buildId, authorName, audioData);
+        return result;
+    }
+    async getBuildComments(buildId: bigint): Promise<Array<any>> {
+        const result = await (this.actor as any).getBuildComments(buildId);
+        return result;
+    }
+    async deleteBuildComment(commentId: bigint): Promise<void> {
+        await (this.actor as any).deleteBuildComment(commentId);
+    }
+    async toggleBuildLike(buildId: bigint): Promise<any> {
+        const result = await (this.actor as any).toggleBuildLike(buildId);
+        return result;
+    }
+    async toggleBuildDislike(buildId: bigint): Promise<any> {
+        const result = await (this.actor as any).toggleBuildDislike(buildId);
+        return result;
+    }
+    async getBuildVotes(buildId: bigint): Promise<any> {
+        const result = await (this.actor as any).getBuildVotes(buildId);
+        return result;
+    }
+    async getMyVoteOnBuild(buildId: bigint): Promise<boolean | null> {
+        const result = await (this.actor as any).getMyVoteOnBuild(buildId);
+        return result.length === 0 ? null : result[0];
+    }
+    async getTopBuilds(limit: bigint): Promise<Array<any>> {
+        const result = await (this.actor as any).getTopBuilds(limit);
+        return result;
+    }
+    async getTopAuthors(limit: bigint): Promise<Array<any>> {
+        const result = await (this.actor as any).getTopAuthors(limit);
         return result;
     }
 }

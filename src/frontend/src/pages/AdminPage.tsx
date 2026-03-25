@@ -1083,6 +1083,11 @@ function UsersPanel() {
                 <span className="text-xs text-muted-foreground font-mono">
                   {user.principal?.toString() ?? "—"}
                 </span>
+                {user.uid && (
+                  <span className="text-[10px] text-primary font-mono">
+                    UID: {user.uid}
+                  </span>
+                )}
               </div>
               <span className="text-xs text-muted-foreground">
                 {user.registeredAt

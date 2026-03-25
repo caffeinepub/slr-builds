@@ -119,6 +119,7 @@ export interface _SERVICE {
   'updateItem' : ActorMethod<[Item], undefined>,
   'updateSkill' : ActorMethod<[Skill], undefined>,
   'sendChatMessage' : ActorMethod<[string, string], bigint>,
+  'sendVoiceChatMessage' : ActorMethod<[string, string], bigint>,
   'getChatMessages' : ActorMethod<[], Array<ChatMessage>>,
   'onlineHeartbeat' : ActorMethod<[string], bigint>,
   'getOnlineUsers' : ActorMethod<[], Array<OnlineUser>>,

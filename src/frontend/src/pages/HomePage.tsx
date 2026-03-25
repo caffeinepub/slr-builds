@@ -1,8 +1,10 @@
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Plus, Swords, Video } from "lucide-react";
+import { Crown, Loader2, Plus, Star, Swords, Video } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Skill } from "../backend";
+import type { Build, Skill, TopAuthor } from "../backend";
 import { BuildCard } from "../components/BuildCard";
 import { TierListTab } from "../components/TierListTab";
 import { CreateBuildModal } from "../components/modals/CreateBuildModal";
@@ -61,6 +63,18 @@ export function HomePage() {
       selectedSkills.length > 0
         ? actor!.getPublicBuildsExcludingSkills(selectedSkills)
         : actor!.getPublicBuilds(),
+    enabled: !!actor,
+  });
+
+  const { data: topBuilds = [] } = useQuery<Build[]>({
+    queryKey: ["topBuilds"],
+    queryFn: () => actor!.getTopBuilds(5n),
+    enabled: !!actor,
+  });
+
+  const { data: topAuthors = [] } = useQuery<TopAuthor[]>({
+    queryKey: ["topAuthors"],
+    queryFn: () => actor!.getTopAuthors(5n),
     enabled: !!actor,
   });
 
@@ -163,6 +177,61 @@ export function HomePage() {
 
         {tab === "builds" && (
           <div>
+            {/* Top Builds and Top Authors */}
+            {(topBuilds.length > 0 || topAuthors.length > 0) && (
+              <div className="mb-8 space-y-4">
+                {topBuilds.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Crown size={14} className="text-yellow-400" />
+                      <h2 className="font-display text-sm font-bold uppercase tracking-widest text-yellow-400">
+                        {t("ТОП СБОРОК", "TOP BUILDS")}
+                      </h2>
+                    </div>
+                    <div className="overflow-x-auto w-full">
+                      <div className="flex gap-3 pb-2">
+                        {topBuilds.map((b) => (
+                          <TopBuildCard
+                            key={b.id.toString()}
+                            build={b}
+                            heroes={heroes}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {topAuthors.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Star size={14} className="text-primary" />
+                      <h2 className="font-display text-sm font-bold uppercase tracking-widest text-primary">
+                        {t("ТОП АВТОРОВ", "TOP AUTHORS")}
+                      </h2>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {topAuthors.map((a) => (
+                        <div
+                          key={a.authorId.toString()}
+                          className="flex items-center gap-2 px-3 py-1.5 bg-secondary border border-border rounded-none"
+                        >
+                          <div className="w-6 h-6 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center text-[10px] font-bold text-primary">
+                            {a.authorName.slice(0, 2).toUpperCase()}
+                          </div>
+                          <span className="text-xs font-bold">
+                            {a.authorName}
+                          </span>
+                          <Badge className="bg-primary/20 text-primary border-primary/30 text-[10px] px-1.5 py-0 h-4">
+                            ♥ {Number(a.totalLikes)}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="mb-6">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-display text-sm font-bold uppercase tracking-widest text-muted-foreground">
@@ -322,5 +391,49 @@ function SkillChip({
         {displayName}
       </span>
     </button>
+  );
+}
+
+function TopBuildCard({
+  build,
+  heroes,
+}: {
+  build: Build;
+  heroes: { id: bigint; name: string; imageUrl: string; tier: string }[];
+}) {
+  const buildHeroes = heroes
+    .filter((h) => build.heroIds.includes(h.id))
+    .slice(0, 3);
+  return (
+    <div className="flex-shrink-0 w-48 bg-secondary border border-border rounded-none p-3 hover:border-primary/50 transition-colors">
+      <div className="flex items-center gap-1 mb-2">
+        <Crown size={10} className="text-yellow-400" />
+        <span className="text-[10px] font-bold text-yellow-400 uppercase truncate">
+          {build.name}
+        </span>
+      </div>
+      {buildHeroes.length > 0 && (
+        <div className="flex gap-1 mb-2">
+          {buildHeroes.map((h) => (
+            <img
+              key={h.id.toString()}
+              src={h.imageUrl}
+              alt={h.name}
+              width={24}
+              height={24}
+              className="w-6 h-6 rounded-full object-cover border border-border"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = "none";
+              }}
+            />
+          ))}
+        </div>
+      )}
+      {build.hint && (
+        <p className="text-[10px] text-muted-foreground line-clamp-2">
+          {build.hint}
+        </p>
+      )}
+    </div>
   );
 }

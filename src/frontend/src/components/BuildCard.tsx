@@ -1,9 +1,27 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Coins, Shield, Sword, X } from "lucide-react";
-import { useState } from "react";
-import type { Build, Hero, Skill } from "../backend";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  Coins,
+  Loader2,
+  MessageSquare,
+  Mic,
+  MicOff,
+  Shield,
+  Sword,
+  ThumbsDown,
+  ThumbsUp,
+  Trash2,
+  X,
+} from "lucide-react";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
+import type { Build, BuildComment, Hero, Skill } from "../backend";
 import { useLang } from "../contexts/LangContext";
+import { useActor } from "../hooks/useActor";
+import { useInternetIdentity } from "../hooks/useInternetIdentity";
 
 interface Props {
   build: Build;
@@ -27,7 +45,17 @@ export function BuildCard({
   "data-ocid": dataOcid,
 }: Props) {
   const { t, lang } = useLang();
+  const { actor } = useActor();
+  const { identity } = useInternetIdentity();
+  const queryClient = useQueryClient();
   const [expanded, setExpanded] = useState(false);
+  const [commentText, setCommentText] = useState("");
+  const [voiceRecording, setVoiceRecording] = useState(false);
+  const [voiceRecordSecs, setVoiceRecordSecs] = useState(0);
+  const voiceMediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const voiceAudioChunksRef = useRef<Blob[]>([]);
+  const voiceTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const buildHeroes = heroes.filter((h) => build.heroIds.includes(h.id));
   const requiredSkills = skills.filter((s) =>
     build.requiredSkillIds.includes(s.id),
@@ -35,6 +63,162 @@ export function BuildCard({
   const forbiddenSkills = skills.filter((s) =>
     build.forbiddenSkillIds.includes(s.id),
   );
+
+  const { data: profile } = useQuery({
+    queryKey: ["callerProfile"],
+    queryFn: () => actor!.getCallerUserProfile(),
+    enabled: !!actor,
+  });
+
+  const shortPrincipal = identity
+    ? `${identity.getPrincipal().toString().slice(0, 8)}...`
+    : t("Гость", "Guest");
+  const displayName = profile?.name || shortPrincipal;
+
+  const { data: votes, refetch: refetchVotes } = useQuery({
+    queryKey: ["buildVotes", build.id.toString()],
+    queryFn: () => actor!.getBuildVotes(build.id),
+    enabled: !!actor && expanded,
+  });
+
+  const { data: myVote, refetch: refetchMyVote } = useQuery<boolean | null>({
+    queryKey: ["myVote", build.id.toString()],
+    queryFn: () => actor!.getMyVoteOnBuild(build.id),
+    enabled: !!actor && !!identity && expanded,
+  });
+
+  const { data: comments = [], isLoading: commentsLoading } = useQuery<
+    BuildComment[]
+  >({
+    queryKey: ["comments", build.id.toString()],
+    queryFn: () => actor!.getBuildComments(build.id),
+    enabled: !!actor && expanded,
+  });
+
+  const likeMutation = useMutation({
+    mutationFn: () => actor!.toggleBuildLike(build.id),
+    onSuccess: () => {
+      refetchVotes();
+      refetchMyVote();
+    },
+    onError: () => toast.error(t("Войдите чтобы голосовать", "Login to vote")),
+  });
+
+  const dislikeMutation = useMutation({
+    mutationFn: () => actor!.toggleBuildDislike(build.id),
+    onSuccess: () => {
+      refetchVotes();
+      refetchMyVote();
+    },
+    onError: () => toast.error(t("Войдите чтобы голосовать", "Login to vote")),
+  });
+
+  const addCommentMutation = useMutation({
+    mutationFn: (text: string) =>
+      actor!.addBuildComment(build.id, displayName, text),
+    onSuccess: () => {
+      setCommentText("");
+      queryClient.invalidateQueries({
+        queryKey: ["comments", build.id.toString()],
+      });
+    },
+    onError: () => toast.error(t("Ошибка", "Error")),
+  });
+
+  const addVoiceCommentMutation = useMutation({
+    mutationFn: (audioData: string) =>
+      actor!.addVoiceBuildComment(build.id, displayName, audioData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["comments", build.id.toString()],
+      });
+      toast.success(t("Голосовой комментарий добавлен", "Voice comment added"));
+    },
+    onError: () => toast.error(t("Ошибка отправки", "Send error")),
+  });
+
+  const startVoiceComment = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream, {
+        mimeType: MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+          ? "audio/webm;codecs=opus"
+          : "audio/webm",
+      });
+      voiceAudioChunksRef.current = [];
+      mr.ondataavailable = (e) => {
+        if (e.data.size > 0) voiceAudioChunksRef.current.push(e.data);
+      };
+      mr.onstop = () => {
+        for (const trk of stream.getTracks()) trk.stop();
+        const blob = new Blob(voiceAudioChunksRef.current, {
+          type: mr.mimeType,
+        });
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const b64 = (reader.result as string).split(",")[1];
+          addVoiceCommentMutation.mutate(b64);
+        };
+        reader.readAsDataURL(blob);
+        setVoiceRecording(false);
+        setVoiceRecordSecs(0);
+        if (voiceTimerRef.current) clearInterval(voiceTimerRef.current);
+      };
+      mr.start(1000);
+      voiceMediaRecorderRef.current = mr;
+      setVoiceRecording(true);
+      setVoiceRecordSecs(0);
+      // Notify user how to finish recording and turn off microphone
+      toast.info(
+        t(
+          "Чтобы отправить — нажмите кнопку ещё раз и выключите микрофон",
+          "To send — press the button again to stop and turn off microphone",
+        ),
+        { duration: 4000 },
+      );
+      voiceTimerRef.current = setInterval(() => {
+        setVoiceRecordSecs((s) => {
+          if (s + 1 >= 60) {
+            stopVoiceComment();
+            return 60;
+          }
+          return s + 1;
+        });
+      }, 1000);
+    } catch {
+      toast.error(t("Нет доступа к микрофону", "Microphone access denied"));
+    }
+  };
+
+  const stopVoiceComment = () => {
+    if (
+      voiceMediaRecorderRef.current &&
+      voiceMediaRecorderRef.current.state !== "inactive"
+    ) {
+      voiceMediaRecorderRef.current.stop();
+    }
+    if (voiceTimerRef.current) {
+      clearInterval(voiceTimerRef.current);
+      voiceTimerRef.current = null;
+    }
+  };
+
+  const formatVoiceTime = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  };
+
+  const deleteCommentMutation = useMutation({
+    mutationFn: (commentId: bigint) => actor!.deleteBuildComment(commentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["comments", build.id.toString()],
+      });
+    },
+  });
+
+  const myPrincipal = identity?.getPrincipal().toString();
 
   return (
     <>
@@ -356,6 +540,199 @@ export function BuildCard({
                   </div>
                 </div>
               )}
+
+              {/* Votes section */}
+              <div className="mt-5 pt-4 border-t border-border">
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => likeMutation.mutate()}
+                    disabled={!identity || likeMutation.isPending}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-none text-sm font-bold transition-all ${
+                      myVote === true
+                        ? "border-primary text-primary glow-red bg-primary/10"
+                        : "border-border text-muted-foreground hover:border-green-400/60 hover:text-green-400"
+                    }`}
+                    data-ocid="builds.toggle"
+                  >
+                    <ThumbsUp size={14} />
+                    <span>{Number(votes?.likes ?? 0)}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => dislikeMutation.mutate()}
+                    disabled={!identity || dislikeMutation.isPending}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-none text-sm font-bold transition-all ${
+                      myVote === false
+                        ? "border-primary text-primary glow-red bg-primary/10"
+                        : "border-border text-muted-foreground hover:border-destructive/60 hover:text-destructive"
+                    }`}
+                    data-ocid="builds.secondary_button"
+                  >
+                    <ThumbsDown size={14} />
+                    <span>{Number(votes?.dislikes ?? 0)}</span>
+                  </button>
+                  {!identity && (
+                    <span className="text-xs text-muted-foreground">
+                      {t("Войдите чтобы голосовать", "Login to vote")}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Comments section */}
+              <div className="mt-5 pt-4 border-t border-border">
+                <p className="text-xs font-bold uppercase tracking-widest text-primary mb-3 flex items-center gap-1">
+                  <MessageSquare size={12} />
+                  {t("Комментарии", "Comments")} ({comments.length})
+                </p>
+
+                {commentsLoading ? (
+                  <div className="flex justify-center py-4">
+                    <Loader2 className="animate-spin text-primary" size={18} />
+                  </div>
+                ) : comments.length === 0 ? (
+                  <p className="text-xs text-muted-foreground py-2">
+                    {t("Нет комментариев", "No comments yet")}
+                  </p>
+                ) : (
+                  <ScrollArea className="max-h-40 mb-3">
+                    <div className="space-y-2">
+                      {comments.map((c) => (
+                        <div
+                          key={c.id.toString()}
+                          className="bg-secondary border border-border p-2 rounded-none"
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-[10px] font-bold text-primary">
+                              {c.authorName}
+                            </span>
+                            <div className="flex items-center gap-1">
+                              <span className="text-[9px] text-muted-foreground">
+                                {new Date(
+                                  Number(c.createdAt) / 1_000_000,
+                                ).toLocaleDateString()}
+                              </span>
+                              {myPrincipal &&
+                                c.authorId.toString() === myPrincipal && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      deleteCommentMutation.mutate(c.id)
+                                    }
+                                    className="text-muted-foreground hover:text-destructive transition-colors ml-1"
+                                  >
+                                    <Trash2 size={10} />
+                                  </button>
+                                )}
+                            </div>
+                          </div>
+                          {c.text.startsWith("VOICE:") ? (
+                            <audio
+                              controls
+                              style={{ height: "28px", width: "100%" }}
+                              src={`data:audio/webm;base64,${c.text.slice(6)}`}
+                            >
+                              <track kind="captions" />
+                            </audio>
+                          ) : (
+                            <p className="text-xs text-foreground/90">
+                              {c.text}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                )}
+
+                {identity ? (
+                  <div className="space-y-1">
+                    {voiceRecording && (
+                      <div className="flex items-center gap-2 px-2 py-1 bg-primary/10 border border-primary/30 rounded-none">
+                        <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                        <span className="text-xs text-primary font-mono">
+                          {formatVoiceTime(voiceRecordSecs)} / 1:00
+                        </span>
+                        <span className="text-xs text-muted-foreground ml-auto">
+                          {t(
+                            "Нажмите ещё раз чтобы отправить",
+                            "Press again to send",
+                          )}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={
+                          voiceRecording ? stopVoiceComment : startVoiceComment
+                        }
+                        disabled={addVoiceCommentMutation.isPending}
+                        title={
+                          voiceRecording
+                            ? t(
+                                "Остановить и отправить (выключить микрофон)",
+                                "Stop and send (turn off microphone)",
+                              )
+                            : t("Голосовой комментарий", "Voice comment")
+                        }
+                        className={`h-8 w-8 flex items-center justify-center shrink-0 transition-colors border border-primary/40 ${voiceRecording ? "text-primary animate-pulse bg-primary/10" : "text-muted-foreground hover:text-primary bg-black"}`}
+                      >
+                        {addVoiceCommentMutation.isPending ? (
+                          <Loader2 size={12} className="animate-spin" />
+                        ) : voiceRecording ? (
+                          <MicOff size={13} />
+                        ) : (
+                          <Mic size={13} />
+                        )}
+                      </button>
+                      <Input
+                        value={commentText}
+                        onChange={(e) =>
+                          setCommentText(e.target.value.slice(0, 300))
+                        }
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && commentText.trim()) {
+                            addCommentMutation.mutate(commentText.trim());
+                          }
+                        }}
+                        placeholder={
+                          voiceRecording
+                            ? t("Запись голоса...", "Recording voice...")
+                            : t("Ваш комментарий...", "Your comment...")
+                        }
+                        disabled={voiceRecording}
+                        className="text-xs h-8 bg-black border-primary/40 focus:border-primary rounded-none flex-1"
+                        data-ocid="builds.input"
+                      />
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          addCommentMutation.mutate(commentText.trim())
+                        }
+                        disabled={
+                          !commentText.trim() ||
+                          addCommentMutation.isPending ||
+                          voiceRecording
+                        }
+                        className="h-8 bg-primary hover:bg-primary/80 rounded-none glow-red text-xs"
+                        data-ocid="builds.submit_button"
+                      >
+                        {addCommentMutation.isPending ? (
+                          <Loader2 size={12} className="animate-spin" />
+                        ) : (
+                          t("Отправить", "Send")
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    {t("Войдите чтобы комментировать", "Login to comment")}
+                  </p>
+                )}
+              </div>
 
               {/* Close at bottom */}
               <div className="mt-6 flex justify-end">
