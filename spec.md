@@ -1,32 +1,35 @@
-# SLR Builds — Патч v25: Синхронизация с say-gg.ru
+# SLR Builds
 
 ## Current State
-Сайт работает как клон say-gg.ru с 65 героями, 13 навыками, 99 предметами, 42 сборками. Данные загружаются с бэкенда ICP.
+Full-stack clone of say-gg.ru. Admin panel exists with password gate (garenA11). Test data loading uses 4-step process (skills → heroes → items → builds), but `seedItems` (99 items) and `seedBuilds` (42 builds) still exceed ICP instruction limits in one call. All data is publicly readable via anonymous actor.
 
 ## Requested Changes (Diff)
 
 ### Add
-- Исправление 3 названий скиллов на точное совпадение с say-gg.ru
-- Обновление всех 42 названий сборок по API say-gg.ru
-- Исправление подсказок в UI (УКЛОНЕНИЕ → ДОДЖ, HP → ХП, ULT → УЛЬТ)
-- Новые крутые функции: быстрый поиск сборки по скиллу, «поделиться» ссылкой на сборку, улучшенные карточки сборок с бейджами навыков
+- `seedItemsA()` — items 1–50
+- `seedItemsB()` — items 51–99
+- `seedBuildsA()` — builds 1–21
+- `seedBuildsB()` — builds 22–42
+- 6-step progress UI in AdminPage seed button
+- Redesigned AdminPage with sidebar navigation (left panel) + content area
+- Guest access badge/indicator showing all content is publicly available
 
 ### Modify
-- Скилл #9: HP → ХП
-- Скилл #10: ULT → УЛЬТ  
-- Скилл #12: УКЛОНЕНИЕ → ДОДЖ
-- Все 42 build.name обновлены до точного совпадения с say-gg.ru API
-- Подсказки на главной странице исправлены
-- seedSkillsAndBranches() — исправлена и работает корректно
-- seedBuilds() — все имена точно соответствуют say-gg.ru
+- `seedItems` renamed to `seedItemsA` in backend, d.ts, backend.ts, did files
+- `seedBuilds` renamed to `seedBuildsA` in all files
+- AdminPage seed mutation: now 6 steps with 800ms delays between each
+- AdminPage layout: redesigned with left sidebar tabs instead of horizontal scrolling tabs
+- Seed button shows detailed step progress (Шаг N/6: ...)
 
 ### Remove
-- Старые кастомные названия сборок (Лучник: Ускорение+Крит+Ульт и т.д.)
+- Old `seedItems()` and `seedBuilds()` single-call functions (replaced)
 
 ## Implementation Plan
-1. Backend уже обновлён (main.mo)
-2. Frontend: исправить подсказки (УКЛОНЕНИЕ → ДОДЖ, HP → ХП)
-3. Frontend: добавить кнопку «Поделиться» в карточке сборки (копирует ссылку/имя)
-4. Frontend: улучшить отображение карточек сборок — показывать бейджи скиллов внутри
-5. Frontend: fix tips array (заменить УКЛОНЕНИЕ на ДОДЖ)
-6. Validate и деплой
+1. ✅ Backend: split seed functions (done)
+2. ✅ Update backend.d.ts, backend.ts, did files (done)
+3. Frontend: redesign AdminPage
+   - Left sidebar with icon + label for each tab
+   - Seed button in header shows 6-step progress
+   - All panels remain functionally identical
+   - Guests see all heroes/items/builds/skills without login
+4. Validate build

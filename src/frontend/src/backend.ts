@@ -240,7 +240,11 @@ export interface backendInterface {
     seedSkillsAndBranches(): Promise<void>;
     seedHeroes(): Promise<void>;
     seedItems(): Promise<void>;
+    seedItemsA(): Promise<void>;
+    seedItemsB(): Promise<void>;
     seedBuilds(): Promise<void>;
+    seedBuildsA(): Promise<void>;
+    seedBuildsB(): Promise<void>;
     toggleBuildVisibility(buildId: bigint): Promise<void>;
     updateBranch(updatedBranch: Branch): Promise<void>;
     updateBuild(build: Build): Promise<void>;
@@ -793,30 +797,66 @@ export class Backend implements backendInterface {
         }
     }
     async seedItems(): Promise<void> {
+        await this.seedItemsA();
+        await this.seedItemsB();
+    }
+    async seedBuilds(): Promise<void> {
+        await this.seedBuildsA();
+        await this.seedBuildsB();
+    }
+        async seedItemsA(): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.seedItems();
+                const result = await this.actor.seedItemsA();
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.seedItems();
+            const result = await this.actor.seedItemsA();
             return result;
         }
     }
-    async seedBuilds(): Promise<void> {
+    async seedItemsB(): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.seedBuilds();
+                const result = await this.actor.seedItemsB();
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.seedBuilds();
+            const result = await this.actor.seedItemsB();
+            return result;
+        }
+    }
+    async seedBuildsA(): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.seedBuildsA();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.seedBuildsA();
+            return result;
+        }
+    }
+    async seedBuildsB(): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.seedBuildsB();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.seedBuildsB();
             return result;
         }
     }

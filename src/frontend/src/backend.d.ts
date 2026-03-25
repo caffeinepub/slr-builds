@@ -133,8 +133,10 @@ export interface backendInterface {
     seedTestData(): Promise<void>;
     seedSkillsAndBranches(): Promise<void>;
     seedHeroes(): Promise<void>;
-    seedItems(): Promise<void>;
-    seedBuilds(): Promise<void>;
+    seedItemsA(): Promise<void>;
+    seedItemsB(): Promise<void>;
+    seedBuildsA(): Promise<void>;
+    seedBuildsB(): Promise<void>;
     toggleBuildVisibility(buildId: bigint): Promise<void>;
     updateBranch(updatedBranch: Branch): Promise<void>;
     updateBuild(build: Build): Promise<void>;

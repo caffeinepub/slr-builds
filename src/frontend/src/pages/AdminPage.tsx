@@ -15,18 +15,24 @@ import {
   Database,
   Eye,
   EyeOff,
+  GitBranch,
   Loader2,
   Lock,
+  MessageCircle,
   MessageSquare,
   Mic,
+  Package,
   Pencil,
   Plus,
   RefreshCw,
   Shield,
+  Swords,
   Trash2,
   Users,
   X,
+  Zap,
 } from "lucide-react";
+import type React from "react";
 import { useState } from "react";
 import { toast } from "sonner";
 import type { Branch, Hero, Item, Skill } from "../backend";
@@ -84,15 +90,21 @@ export function AdminPage() {
       }
       setSeedStep(1);
       await actor.seedSkillsAndBranches();
-      await new Promise((r) => setTimeout(r, 500));
+      await new Promise((r) => setTimeout(r, 800));
       setSeedStep(2);
       await actor.seedHeroes();
-      await new Promise((r) => setTimeout(r, 500));
+      await new Promise((r) => setTimeout(r, 800));
       setSeedStep(3);
-      await actor.seedItems();
-      await new Promise((r) => setTimeout(r, 500));
+      await actor.seedItemsA();
+      await new Promise((r) => setTimeout(r, 800));
       setSeedStep(4);
-      await actor.seedBuilds();
+      await actor.seedItemsB();
+      await new Promise((r) => setTimeout(r, 800));
+      setSeedStep(5);
+      await actor.seedBuildsA();
+      await new Promise((r) => setTimeout(r, 800));
+      setSeedStep(6);
+      await actor.seedBuildsB();
       setSeedStep(0);
     },
     onSuccess: () => {
@@ -163,104 +175,117 @@ export function AdminPage() {
     );
   }
 
+  const SIDEBAR_TABS: {
+    key: AdminTab;
+    label: string;
+    icon: React.ReactNode;
+  }[] = [
+    { key: "heroes", label: "Герои", icon: <Users size={16} /> },
+    { key: "skills", label: "Навыки", icon: <Zap size={16} /> },
+    { key: "items", label: "Предметы", icon: <Package size={16} /> },
+    { key: "branches", label: "Ветки", icon: <GitBranch size={16} /> },
+    { key: "builds", label: "Сборки", icon: <Swords size={16} /> },
+    { key: "users", label: "Пользователи", icon: <Users size={16} /> },
+    { key: "chat", label: "Чат", icon: <MessageSquare size={16} /> },
+    {
+      key: "comments",
+      label: "Комментарии",
+      icon: <MessageCircle size={16} />,
+    },
+    { key: "stats", label: "Статистика", icon: <BarChart3 size={16} /> },
+  ];
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="font-display text-3xl font-bold uppercase tracking-wide text-glow">
-          {t("АДМИН ПАНЕЛЬ", "ADMIN PANEL")}
-        </h1>
-        <div className="flex gap-2">
+    <div className="container mx-auto px-4 py-6">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
+        <div className="flex items-center gap-3">
+          <Shield className="text-primary" size={22} />
+          <h1 className="font-display text-2xl font-bold uppercase tracking-wide text-primary">
+            Админ Панель
+          </h1>
+          <span className="flex items-center gap-1.5 px-2 py-1 bg-green-950/60 border border-green-700/40 rounded text-xs text-green-400">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
+            Все данные доступны гостям
+          </span>
+        </div>
+        <div className="flex gap-2 flex-wrap">
           <Button
             onClick={() => seedMutation.mutate()}
             disabled={seedMutation.isPending || !actor}
             variant="outline"
-            className="gap-2 border-primary/50 text-primary hover:bg-primary/10"
+            className="gap-2 border-primary/50 text-primary hover:bg-primary/10 text-sm"
+            data-ocid="admin.primary_button"
           >
             {seedMutation.isPending ? (
-              <Loader2 className="animate-spin" size={14} />
+              <Loader2 className="animate-spin" size={13} />
             ) : (
-              <Database size={14} />
+              <Database size={13} />
             )}
             {seedMutation.isPending
               ? seedStep === 1
-                ? t("Загрузка навыков...", "Loading skills...")
+                ? "Шаг 1/6: Навыки..."
                 : seedStep === 2
-                  ? t("Загрузка героев...", "Loading heroes...")
+                  ? "Шаг 2/6: Герои..."
                   : seedStep === 3
-                    ? t("Загрузка предметов...", "Loading items...")
+                    ? "Шаг 3/6: Предметы (1/2)..."
                     : seedStep === 4
-                      ? t("Загрузка сборок...", "Loading builds...")
-                      : t("Загрузка...", "Loading...")
-              : t("Загрузить тест данные", "Seed Test Data")}
+                      ? "Шаг 4/6: Предметы (2/2)..."
+                      : seedStep === 5
+                        ? "Шаг 5/6: Сборки (1/2)..."
+                        : seedStep === 6
+                          ? "Шаг 6/6: Сборки (2/2)..."
+                          : "Загрузка..."
+              : "Загрузить тест данные"}
           </Button>
           <Button
             onClick={handleLogout}
             variant="outline"
+            size="sm"
             className="gap-2 border-destructive/50 text-destructive hover:bg-destructive/10"
             data-ocid="admin.close_button"
           >
-            <X size={14} />
-            {t("Выйти из панели", "Exit Panel")}
+            <X size={13} />
+            Выйти
           </Button>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-0 border-b border-border mb-6 overflow-x-auto">
-        {(
-          [
-            "heroes",
-            "skills",
-            "items",
-            "branches",
-            "builds",
-            "users",
-            "chat",
-            "comments",
-            "stats",
-          ] as AdminTab[]
-        ).map((at) => (
-          <button
-            type="button"
-            key={at}
-            onClick={() => setTab(at)}
-            className={`px-5 py-3 text-sm font-bold uppercase tracking-widest border-b-2 transition-colors whitespace-nowrap ${
-              tab === at
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-            data-ocid="admin.tab"
-          >
-            {at === "heroes"
-              ? t("Герои", "Heroes")
-              : at === "skills"
-                ? t("Навыки", "Skills")
-                : at === "items"
-                  ? t("Предметы", "Items")
-                  : at === "branches"
-                    ? t("Ветки", "Branches")
-                    : at === "builds"
-                      ? t("Сборки", "Builds")
-                      : at === "users"
-                        ? t("Пользователи", "Users")
-                        : at === "chat"
-                          ? t("Чат", "Chat")
-                          : at === "comments"
-                            ? t("Комментарии", "Comments")
-                            : t("Статистика", "Stats")}
-          </button>
-        ))}
-      </div>
+      {/* Main layout: sidebar + content */}
+      <div className="flex gap-0 min-h-[70vh]">
+        {/* Sidebar */}
+        <aside className="w-48 shrink-0 border border-border rounded-l bg-card/50 flex flex-col py-2">
+          {SIDEBAR_TABS.map((item) => (
+            <button
+              type="button"
+              key={item.key}
+              onClick={() => setTab(item.key)}
+              data-ocid="admin.tab"
+              className={`flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium transition-all border-l-2 text-left w-full ${
+                tab === item.key
+                  ? "border-l-primary text-primary bg-primary/8"
+                  : "border-l-transparent text-muted-foreground hover:text-foreground hover:bg-white/5"
+              }`}
+            >
+              {item.icon}
+              <span>{item.label}</span>
+            </button>
+          ))}
+        </aside>
 
-      {tab === "heroes" && <HeroesPanel />}
-      {tab === "skills" && <SkillsPanel />}
-      {tab === "items" && <ItemsPanel />}
-      {tab === "branches" && <BranchesPanel />}
-      {tab === "builds" && <BuildsPanel />}
-      {tab === "users" && <UsersPanel />}
-      {tab === "chat" && <ChatModerationPanel />}
-      {tab === "comments" && <CommentsModerationPanel />}
-      {tab === "stats" && <StatsPanel />}
+        {/* Content */}
+        <div className="flex-1 border border-l-0 border-border rounded-r bg-card/20 p-5 overflow-auto">
+          {tab === "heroes" && <HeroesPanel />}
+          {tab === "skills" && <SkillsPanel />}
+          {tab === "items" && <ItemsPanel />}
+          {tab === "branches" && <BranchesPanel />}
+          {tab === "builds" && <BuildsPanel />}
+          {tab === "users" && <UsersPanel />}
+          {tab === "chat" && <ChatModerationPanel />}
+          {tab === "comments" && <CommentsModerationPanel />}
+          {tab === "stats" && <StatsPanel />}
+        </div>
+      </div>
     </div>
   );
 }
