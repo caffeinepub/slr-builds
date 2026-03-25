@@ -770,6 +770,26 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async sendChatMessage(arg0: string, arg1: string): Promise<bigint> {
+        const result = await (this.actor as any).sendChatMessage(arg0, arg1);
+        return result;
+    }
+    async getChatMessages(): Promise<Array<any>> {
+        const result = await (this.actor as any).getChatMessages();
+        return result;
+    }
+    async onlineHeartbeat(arg0: string): Promise<bigint> {
+        const result = await (this.actor as any).onlineHeartbeat(arg0);
+        return result;
+    }
+    async getOnlineUsers(): Promise<Array<any>> {
+        const result = await (this.actor as any).getOnlineUsers();
+        return result;
+    }
+    async getAllRegisteredUsers(): Promise<Array<any>> {
+        const result = await (this.actor as any).getAllRegisteredUsers();
+        return result;
+    }
 }
 function from_candid_UserRole_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
     return from_candid_variant_n5(_uploadFile, _downloadFile, value);

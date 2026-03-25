@@ -50,6 +50,9 @@ export interface UserProfile { 'name' : string }
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
   { 'guest' : null };
+export interface ChatMessage { 'id': bigint, 'authorName': string, 'text': string, 'createdAt': bigint }
+export interface OnlineUser { 'displayName': string, 'lastSeen': bigint }
+export interface RegisteredUser { 'principal': Principal, 'name': string, 'registeredAt': bigint }
 export interface _SERVICE {
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   /**
@@ -115,6 +118,11 @@ export interface _SERVICE {
   'updateHero' : ActorMethod<[Hero], undefined>,
   'updateItem' : ActorMethod<[Item], undefined>,
   'updateSkill' : ActorMethod<[Skill], undefined>,
+  'sendChatMessage' : ActorMethod<[string, string], bigint>,
+  'getChatMessages' : ActorMethod<[], Array<ChatMessage>>,
+  'onlineHeartbeat' : ActorMethod<[string], bigint>,
+  'getOnlineUsers' : ActorMethod<[], Array<OnlineUser>>,
+  'getAllRegisteredUsers' : ActorMethod<[], Array<RegisteredUser>>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

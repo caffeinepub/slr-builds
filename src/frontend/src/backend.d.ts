@@ -54,6 +54,16 @@ export interface RecordedBuild {
 export interface UserProfile {
     name: string;
 }
+export interface ChatMessage {
+    id: bigint;
+    authorName: string;
+    text: string;
+    createdAt: bigint;
+}
+export interface OnlineUser {
+    displayName: string;
+    lastSeen: bigint;
+}
 export enum UserRole {
     admin = "admin",
     user = "user",
@@ -123,4 +133,14 @@ export interface backendInterface {
     updateHero(updatedHero: Hero): Promise<void>;
     updateItem(updatedItem: Item): Promise<void>;
     updateSkill(updatedSkill: Skill): Promise<void>;
+    /**
+     * / Chat
+     */
+    sendChatMessage(authorName: string, text: string): Promise<bigint>;
+    getChatMessages(): Promise<Array<ChatMessage>>;
+    /**
+     * / Online presence
+     */
+    onlineHeartbeat(displayName: string): Promise<bigint>;
+    getOnlineUsers(): Promise<Array<OnlineUser>>;
 }

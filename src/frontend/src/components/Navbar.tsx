@@ -10,6 +10,7 @@ import { useState } from "react";
 import { useLang } from "../contexts/LangContext";
 import { useActor } from "../hooks/useActor";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
+import { OnlineCounter } from "./OnlineCounter";
 import { MyBuildsModal } from "./modals/MyBuildsModal";
 
 interface Props {
@@ -26,18 +27,19 @@ export function Navbar({ onNavigate, currentPage }: Props) {
 
   return (
     <>
-      <nav className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur">
+      <nav className="sticky top-0 z-50 border-b border-border bg-black/95 backdrop-blur">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           {/* Logo */}
           <button
             type="button"
             onClick={() => onNavigate("home")}
             className="font-display font-bold text-xl uppercase tracking-widest text-glow text-primary"
+            data-ocid="nav.link"
           >
             SLR <span className="text-foreground">BUILDS</span>
           </button>
 
-          {/* Nav links */}
+          {/* Nav links — admin link intentionally excluded here, accessible via dropdown only */}
           <div className="hidden md:flex items-center gap-8">
             <NavLink
               active={currentPage === "home"}
@@ -45,23 +47,19 @@ export function Navbar({ onNavigate, currentPage }: Props) {
             >
               {t("СБОРКИ", "BUILDS")}
             </NavLink>
-            {isLoggedIn && (
-              <NavLink
-                active={currentPage === "admin"}
-                onClick={() => onNavigate("admin")}
-              >
-                {t("АДМИН", "ADMIN")}
-              </NavLink>
-            )}
           </div>
 
           {/* Right side */}
           <div className="flex items-center gap-3">
+            {/* Online counter */}
+            <OnlineCounter />
+
             {/* Lang toggle */}
             <button
               type="button"
               onClick={() => setLang(lang === "ru" ? "en" : "ru")}
-              className="text-xs font-bold uppercase text-muted-foreground hover:text-foreground transition-colors px-2 py-1 border border-border rounded"
+              className="text-xs font-bold uppercase text-muted-foreground hover:text-foreground transition-colors px-2 py-1 border border-border rounded-none"
+              data-ocid="nav.toggle"
             >
               {lang === "ru" ? "EN" : "RU"}
             </button>
@@ -72,7 +70,8 @@ export function Navbar({ onNavigate, currentPage }: Props) {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="gap-1 border-primary/50 text-foreground"
+                    className="gap-1 border-primary/50 text-foreground rounded-none"
+                    data-ocid="nav.open_modal_button"
                   >
                     <User size={14} />
                     <ChevronDown size={12} />
@@ -80,7 +79,7 @@ export function Navbar({ onNavigate, currentPage }: Props) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
-                  className="bg-card border-border"
+                  className="bg-black border-primary/40 rounded-none"
                 >
                   <DropdownMenuItem onClick={() => setShowMyBuilds(true)}>
                     {t("Мои сборки", "My Builds")}
@@ -92,6 +91,7 @@ export function Navbar({ onNavigate, currentPage }: Props) {
                   <DropdownMenuItem
                     onClick={clear}
                     className="text-destructive"
+                    data-ocid="nav.delete_button"
                   >
                     <LogOut size={14} className="mr-2" />
                     {t("Выйти", "Logout")}
@@ -103,7 +103,8 @@ export function Navbar({ onNavigate, currentPage }: Props) {
                 onClick={login}
                 disabled={isLoggingIn}
                 size="sm"
-                className="bg-primary hover:bg-primary/80 text-primary-foreground font-bold uppercase tracking-wide glow-red"
+                className="bg-primary hover:bg-primary/80 text-primary-foreground font-bold uppercase tracking-wide glow-red rounded-none gap-2"
+                data-ocid="nav.primary_button"
               >
                 {isLoggingIn
                   ? t("Вход...", "Logging in...")
@@ -131,6 +132,7 @@ function NavLink({
       className={`text-sm font-bold uppercase tracking-widest transition-colors relative pb-1 ${
         active ? "text-primary" : "text-muted-foreground hover:text-foreground"
       }`}
+      data-ocid="nav.link"
     >
       {children}
       {active && (
