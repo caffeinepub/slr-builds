@@ -298,9 +298,19 @@ export function ChatPanel() {
             style={{ minHeight: 0 }}
           >
             {messages.length === 0 ? (
-              <p className="text-center text-muted-foreground text-xs py-8">
-                {t("Нет сообщений", "No messages yet")}
-              </p>
+              <div
+                className="flex flex-col items-center justify-center py-10 gap-2"
+                style={{
+                  background: "oklch(0.19 0.046 252 / 0.5)",
+                  borderRadius: "0.75rem",
+                  margin: "0.5rem",
+                }}
+              >
+                <span className="text-3xl">💬</span>
+                <p className="text-center text-muted-foreground text-xs">
+                  Нет сообщений, начни первым! 💬
+                </p>
+              </div>
             ) : (
               messages.map((msg) => (
                 <div key={msg.id.toString()} className="mb-2 group">

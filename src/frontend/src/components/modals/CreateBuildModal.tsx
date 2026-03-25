@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, X } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import type { Hero, Skill } from "../../backend";
@@ -39,6 +39,7 @@ export function CreateBuildModal({ heroes, skills, onClose }: Props) {
   const [costBasic, setCostBasic] = useState("0");
   const [rounds, setRounds] = useState("0");
   const [saving, setSaving] = useState(false);
+  const [heroSearch, setHeroSearch] = useState("");
 
   const toggleHero = (id: bigint) =>
     setSelectedHeroes((prev) =>
@@ -100,55 +101,224 @@ export function CreateBuildModal({ heroes, skills, onClose }: Props) {
     }
   };
 
+  const filteredHeroes = heroSearch.trim()
+    ? heroes.filter((h) =>
+        h.name.toLowerCase().includes(heroSearch.toLowerCase()),
+      )
+    : heroes;
+
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="bg-card border-border max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent
+        className="max-w-2xl max-h-[90vh] overflow-y-auto"
+        style={{
+          background: "oklch(0.14 0.04 252)",
+          border: "1px solid oklch(0.71 0.16 75 / 0.3)",
+        }}
+      >
         <DialogHeader>
-          <DialogTitle className="font-display text-xl uppercase tracking-wide text-glow">
+          <DialogTitle
+            className="font-display text-xl uppercase tracking-wide"
+            style={{ color: "oklch(0.71 0.16 75)" }}
+          >
             {t("Создание сборки", "Create Build")}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 mt-2">
+        <div className="space-y-5 mt-2">
+          {/* Name */}
           <div>
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+            <Label
+              className="text-xs uppercase tracking-wide"
+              style={{ color: "oklch(0.55 0.02 252)" }}
+            >
               {t("Название сборки", "Build Name")}
             </Label>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="mt-1 bg-secondary border-border"
+              className="mt-1"
+              style={{
+                background: "oklch(0.19 0.046 252)",
+                border: "1px solid oklch(0.71 0.16 75 / 0.3)",
+                color: "oklch(0.93 0.008 252)",
+              }}
               placeholder={t("Введите название...", "Enter name...")}
             />
           </div>
 
+          {/* Heroes — icon grid */}
           <div>
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-              {t("Герои (до 5)", "Heroes (up to 5)")} — {selectedHeroes.length}
-              /5
-            </Label>
-            <div className="flex flex-wrap gap-1.5 mt-1">
-              {heroes.map((h) => (
-                <Chip
-                  key={h.id.toString()}
-                  label={h.name}
-                  selected={selectedHeroes.includes(h.id)}
-                  onClick={() => toggleHero(h.id)}
-                />
-              ))}
+            <div className="flex items-center justify-between mb-2">
+              <Label
+                className="text-xs uppercase tracking-wide"
+                style={{ color: "oklch(0.55 0.02 252)" }}
+              >
+                {t("Герои (до 5)", "Heroes (up to 5)")}
+              </Label>
+              <span
+                className="text-xs font-mono px-2 py-0.5 rounded-full"
+                style={{
+                  background: "oklch(0.71 0.16 75 / 0.15)",
+                  color: "oklch(0.71 0.16 75)",
+                  border: "1px solid oklch(0.71 0.16 75 / 0.4)",
+                }}
+              >
+                {selectedHeroes.length}/5
+              </span>
+            </div>
+
+            {/* Selected heroes preview row */}
+            {selectedHeroes.length > 0 && (
+              <div className="flex gap-2 mb-3 flex-wrap">
+                {selectedHeroes.map((hId) => {
+                  const hero = heroes.find((h) => h.id === hId);
+                  if (!hero) return null;
+                  return (
+                    <button
+                      key={hero.id.toString()}
+                      type="button"
+                      onClick={() => toggleHero(hero.id)}
+                      className="relative group"
+                      title={hero.name}
+                    >
+                      <img
+                        src={hero.imageUrl}
+                        alt={hero.name}
+                        width={44}
+                        height={44}
+                        className="w-11 h-11 rounded-full object-cover transition-all"
+                        style={{
+                          border: "2px solid oklch(0.71 0.16 75)",
+                          boxShadow: "0 0 10px oklch(0.71 0.16 75 / 0.5)",
+                        }}
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src =
+                            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Crect width='44' height='44' rx='22' fill='%23334155'/%3E%3Ctext x='22' y='27' text-anchor='middle' font-size='16' fill='%23cbd5e1'%3E%3F%3C/text%3E%3C/svg%3E";
+                        }}
+                      />
+                      <div
+                        className="absolute inset-0 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        style={{ background: "oklch(0.1 0.04 252 / 0.7)" }}
+                      >
+                        <span className="text-white text-xs font-bold">✕</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Hero search */}
+            <input
+              type="text"
+              placeholder="Поиск героя..."
+              value={heroSearch}
+              onChange={(e) => setHeroSearch(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl text-sm mb-2 outline-none"
+              style={{
+                background: "oklch(0.19 0.046 252)",
+                border: "1px solid oklch(0.71 0.16 75 / 0.2)",
+                color: "oklch(0.93 0.008 252)",
+              }}
+            />
+
+            {/* Hero icon grid */}
+            <div
+              className="grid gap-2 max-h-52 overflow-y-auto pr-1"
+              style={{
+                gridTemplateColumns: "repeat(auto-fill, minmax(52px, 1fr))",
+              }}
+            >
+              {filteredHeroes.map((hero) => {
+                const active = selectedHeroes.includes(hero.id);
+                const disabled = !active && selectedHeroes.length >= 5;
+                return (
+                  <button
+                    key={hero.id.toString()}
+                    type="button"
+                    onClick={() => !disabled && toggleHero(hero.id)}
+                    disabled={disabled}
+                    title={hero.name}
+                    className="flex flex-col items-center gap-1 p-1 rounded-xl transition-all"
+                    style={{
+                      background: active
+                        ? "oklch(0.71 0.16 75 / 0.15)"
+                        : "oklch(0.19 0.046 252)",
+                      border: active
+                        ? "1px solid oklch(0.71 0.16 75)"
+                        : "1px solid oklch(0.71 0.16 75 / 0.1)",
+                      opacity: disabled ? 0.35 : 1,
+                      boxShadow: active
+                        ? "0 0 8px oklch(0.71 0.16 75 / 0.4)"
+                        : "none",
+                    }}
+                  >
+                    <div className="relative">
+                      <img
+                        src={hero.imageUrl}
+                        alt={hero.name}
+                        width={40}
+                        height={40}
+                        className="w-10 h-10 rounded-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src =
+                            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect width='40' height='40' rx='20' fill='%23334155'/%3E%3Ctext x='20' y='25' text-anchor='middle' font-size='14' fill='%23cbd5e1'%3E%3F%3C/text%3E%3C/svg%3E";
+                        }}
+                      />
+                      {active && (
+                        <div
+                          className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center"
+                          style={{ background: "oklch(0.71 0.16 75)" }}
+                        >
+                          <Check
+                            size={9}
+                            style={{ color: "oklch(0.14 0.04 252)" }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                    <span
+                      className="text-[8px] leading-tight text-center line-clamp-2 max-w-[48px]"
+                      style={{
+                        color: active
+                          ? "oklch(0.71 0.16 75)"
+                          : "oklch(0.55 0.02 252)",
+                      }}
+                    >
+                      {hero.name}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
+          {/* Required skills */}
           <div>
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-              {t("Обязательные навыки (до 5)", "Required skills (up to 5)")} —{" "}
-              {requiredSkills.length}/5
-            </Label>
-            <div className="flex flex-wrap gap-1.5 mt-1">
+            <div className="flex items-center justify-between mb-2">
+              <Label
+                className="text-xs uppercase tracking-wide"
+                style={{ color: "oklch(0.55 0.02 252)" }}
+              >
+                {t("Обязательные навыки (до 5)", "Required skills (up to 5)")}
+              </Label>
+              <span
+                className="text-xs font-mono px-2 py-0.5 rounded-full"
+                style={{
+                  background: "oklch(0.3 0.15 150 / 0.2)",
+                  color: "oklch(0.7 0.15 150)",
+                  border: "1px solid oklch(0.7 0.15 150 / 0.4)",
+                }}
+              >
+                {requiredSkills.length}/5
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
               {skills.map((s) => (
-                <Chip
+                <SkillChip
                   key={s.id.toString()}
-                  label={s.name}
+                  skill={s}
                   selected={requiredSkills.includes(s.id)}
                   onClick={() => toggleRequired(s.id)}
                   color="green"
@@ -157,16 +327,31 @@ export function CreateBuildModal({ heroes, skills, onClose }: Props) {
             </div>
           </div>
 
+          {/* Forbidden skills */}
           <div>
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-              {t("Запрещённые навыки (до 5)", "Forbidden skills (up to 5)")} —{" "}
-              {forbiddenSkills.length}/5
-            </Label>
-            <div className="flex flex-wrap gap-1.5 mt-1">
+            <div className="flex items-center justify-between mb-2">
+              <Label
+                className="text-xs uppercase tracking-wide"
+                style={{ color: "oklch(0.55 0.02 252)" }}
+              >
+                {t("Запрещённые навыки (до 5)", "Forbidden skills (up to 5)")}
+              </Label>
+              <span
+                className="text-xs font-mono px-2 py-0.5 rounded-full"
+                style={{
+                  background: "oklch(0.3 0.15 25 / 0.2)",
+                  color: "oklch(0.7 0.15 25)",
+                  border: "1px solid oklch(0.7 0.15 25 / 0.4)",
+                }}
+              >
+                {forbiddenSkills.length}/5
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
               {skills.map((s) => (
-                <Chip
+                <SkillChip
                   key={s.id.toString()}
-                  label={s.name}
+                  skill={s}
                   selected={forbiddenSkills.includes(s.id)}
                   onClick={() => toggleForbidden(s.id)}
                   color="red"
@@ -175,9 +360,13 @@ export function CreateBuildModal({ heroes, skills, onClose }: Props) {
             </div>
           </div>
 
+          {/* Cost fields */}
           <div className="grid grid-cols-4 gap-2">
             <div>
-              <Label className="text-xs text-muted-foreground">
+              <Label
+                className="text-xs"
+                style={{ color: "oklch(0.55 0.02 252)" }}
+              >
                 {t("Лег.", "Leg.")}
               </Label>
               <Input
@@ -185,11 +374,19 @@ export function CreateBuildModal({ heroes, skills, onClose }: Props) {
                 onChange={(e) => setCostLeg(e.target.value)}
                 type="number"
                 min="0"
-                className="mt-1 bg-secondary border-border"
+                className="mt-1"
+                style={{
+                  background: "oklch(0.19 0.046 252)",
+                  border: "1px solid oklch(0.71 0.16 75 / 0.2)",
+                  color: "oklch(0.93 0.008 252)",
+                }}
               />
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">
+              <Label
+                className="text-xs"
+                style={{ color: "oklch(0.55 0.02 252)" }}
+              >
                 {t("Редк.", "Rare")}
               </Label>
               <Input
@@ -197,11 +394,19 @@ export function CreateBuildModal({ heroes, skills, onClose }: Props) {
                 onChange={(e) => setCostRare(e.target.value)}
                 type="number"
                 min="0"
-                className="mt-1 bg-secondary border-border"
+                className="mt-1"
+                style={{
+                  background: "oklch(0.19 0.046 252)",
+                  border: "1px solid oklch(0.71 0.16 75 / 0.2)",
+                  color: "oklch(0.93 0.008 252)",
+                }}
               />
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">
+              <Label
+                className="text-xs"
+                style={{ color: "oklch(0.55 0.02 252)" }}
+              >
                 {t("Баз.", "Basic")}
               </Label>
               <Input
@@ -209,11 +414,19 @@ export function CreateBuildModal({ heroes, skills, onClose }: Props) {
                 onChange={(e) => setCostBasic(e.target.value)}
                 type="number"
                 min="0"
-                className="mt-1 bg-secondary border-border"
+                className="mt-1"
+                style={{
+                  background: "oklch(0.19 0.046 252)",
+                  border: "1px solid oklch(0.71 0.16 75 / 0.2)",
+                  color: "oklch(0.93 0.008 252)",
+                }}
               />
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">
+              <Label
+                className="text-xs"
+                style={{ color: "oklch(0.55 0.02 252)" }}
+              >
                 {t("Раунды", "Rounds")}
               </Label>
               <Input
@@ -221,35 +434,58 @@ export function CreateBuildModal({ heroes, skills, onClose }: Props) {
                 onChange={(e) => setRounds(e.target.value)}
                 type="number"
                 min="0"
-                className="mt-1 bg-secondary border-border"
+                className="mt-1"
+                style={{
+                  background: "oklch(0.19 0.046 252)",
+                  border: "1px solid oklch(0.71 0.16 75 / 0.2)",
+                  color: "oklch(0.93 0.008 252)",
+                }}
               />
             </div>
           </div>
 
+          {/* Hint */}
           <div>
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+            <Label
+              className="text-xs uppercase tracking-wide"
+              style={{ color: "oklch(0.55 0.02 252)" }}
+            >
               {t("Подсказка", "Hint")}
             </Label>
             <Textarea
               value={hint}
               onChange={(e) => setHint(e.target.value)}
-              className="mt-1 bg-secondary border-border"
+              className="mt-1"
+              style={{
+                background: "oklch(0.19 0.046 252)",
+                border: "1px solid oklch(0.71 0.16 75 / 0.2)",
+                color: "oklch(0.93 0.008 252)",
+              }}
               rows={3}
             />
           </div>
 
+          {/* Actions */}
           <div className="flex gap-2 justify-end pt-2">
             <Button
               variant="outline"
               onClick={onClose}
-              className="border-border"
+              style={{
+                border: "1px solid oklch(0.71 0.16 75 / 0.3)",
+                color: "oklch(0.55 0.02 252)",
+                background: "transparent",
+              }}
             >
               {t("Отмена", "Cancel")}
             </Button>
             <Button
               onClick={handleSave}
               disabled={saving}
-              className="bg-primary hover:bg-primary/80 glow-red"
+              style={{
+                background: "oklch(0.71 0.16 75)",
+                color: "oklch(0.14 0.04 252)",
+                fontWeight: 700,
+              }}
             >
               {saving ? (
                 <Loader2 className="animate-spin mr-2" size={14} />
@@ -263,35 +499,61 @@ export function CreateBuildModal({ heroes, skills, onClose }: Props) {
   );
 }
 
-function Chip({
-  label,
+function SkillChip({
+  skill,
   selected,
   onClick,
   color = "default",
 }: {
-  label: string;
+  skill: Skill;
   selected: boolean;
   onClick: () => void;
   color?: "default" | "green" | "red";
 }) {
-  const colors = {
-    default: selected
-      ? "border-primary bg-primary/20 text-primary"
-      : "border-border text-muted-foreground hover:border-primary/50",
-    green: selected
-      ? "border-green-500 bg-green-500/20 text-green-400"
-      : "border-border text-muted-foreground hover:border-green-500/50",
-    red: selected
-      ? "border-destructive bg-destructive/20 text-destructive"
-      : "border-border text-muted-foreground hover:border-destructive/50",
-  };
+  const borderColor =
+    color === "green"
+      ? selected
+        ? "oklch(0.7 0.15 150)"
+        : "oklch(0.7 0.15 150 / 0.2)"
+      : color === "red"
+        ? selected
+          ? "oklch(0.65 0.2 25)"
+          : "oklch(0.65 0.2 25 / 0.2)"
+        : selected
+          ? "oklch(0.71 0.16 75)"
+          : "oklch(0.71 0.16 75 / 0.2)";
+
+  const textColor =
+    color === "green"
+      ? "oklch(0.7 0.15 150)"
+      : color === "red"
+        ? "oklch(0.65 0.2 25)"
+        : "oklch(0.71 0.16 75)";
+
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`px-2.5 py-1 text-xs font-bold rounded border transition-all ${colors[color]}`}
+      className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium transition-all"
+      style={{
+        background: selected ? `${textColor}18` : "oklch(0.19 0.046 252)",
+        border: `1px solid ${borderColor}`,
+        color: selected ? textColor : "oklch(0.55 0.02 252)",
+      }}
     >
-      {label}
+      {skill.imageUrl && (
+        <img
+          src={skill.imageUrl}
+          alt={skill.name}
+          width={14}
+          height={14}
+          className="w-3.5 h-3.5 object-contain"
+          onError={(e) => {
+            (e.target as HTMLImageElement).style.display = "none";
+          }}
+        />
+      )}
+      {skill.name}
     </button>
   );
 }

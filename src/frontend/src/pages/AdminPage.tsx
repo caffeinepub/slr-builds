@@ -85,6 +85,10 @@ export function AdminPage() {
         ),
       );
       queryClient.invalidateQueries();
+      // Перезагрузить все данные через 500мс чтобы обновить интерфейс
+      setTimeout(() => {
+        queryClient.refetchQueries({ type: "active" });
+      }, 500);
     },
     onError: (err) => {
       setSeedStep(0);

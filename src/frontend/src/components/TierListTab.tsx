@@ -264,6 +264,17 @@ export function TierListTab({ heroes, items, branches }: Props) {
       </div>
 
       {/* Tier rows */}
+      <div
+        className="text-xs mb-3 px-3 py-2 rounded-lg"
+        style={{
+          background: "oklch(0.71 0.16 75 / 0.08)",
+          border: "1px solid oklch(0.71 0.16 75 / 0.3)",
+          color: "oklch(0.71 0.16 75)",
+        }}
+      >
+        💡 Нажмите на иконку снизу, затем кликните на строку тира чтобы
+        добавить. Перетаскивание тоже работает.
+      </div>
       <div className="space-y-2 mb-8">
         {TIER_KEYS.map((tier) => (
           <TierRow

@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Coins,
+  Copy,
   Loader2,
   MessageSquare,
   Mic,
@@ -33,7 +34,17 @@ interface Props {
   onHeroClick?: (heroId: bigint) => void;
 }
 
-function parseSkillName(name: string, lang: string): string {
+// Fallback mapping for skill IDs to correct Russian names
+const SKILL_ID_NAMES: Record<string, string> = {
+  "9": "ХП",
+  "10": "УЛЬТ",
+  "12": "ДОДЖ",
+};
+
+function parseSkillName(name: string, lang: string, id?: bigint): string {
+  if (id !== undefined && SKILL_ID_NAMES[id.toString()]) {
+    return SKILL_ID_NAMES[id.toString()];
+  }
   if (name.includes(" / ")) {
     const parts = name.split(" / ");
     return lang === "ru" ? parts[0] : parts[1];
@@ -231,6 +242,29 @@ export function BuildCard({
     onHeroClick?.(heroId);
   };
 
+  // Rarity border based on top required skill
+  const LEGENDARY_SKILLS = ["УЛЬТ", "ЯРОСТЬ", "КРИТ", "ULT", "RAGE", "CRIT"];
+  const RARE_SKILLS = [
+    "ЗАМОРОЗКА",
+    "ЩИТ",
+    "АТАКА",
+    "ДОДЖ",
+    "ИСЦЕЛЕНИЕ",
+    "FREEZE",
+    "SHIELD",
+    "ATTACK",
+    "DODGE",
+    "HEAL",
+  ];
+  const topSkillName = requiredSkills[0]
+    ? parseSkillName(requiredSkills[0].name, "ru", requiredSkills[0].id)
+    : "";
+  const rarityBorder = LEGENDARY_SKILLS.includes(topSkillName)
+    ? "#f0c230"
+    : RARE_SKILLS.includes(topSkillName)
+      ? "#a78bfa"
+      : "oklch(0.71 0.16 75 / 0.25)";
+
   return (
     <>
       <button
@@ -239,7 +273,7 @@ export function BuildCard({
         className="group relative cursor-pointer text-left w-full transition-all duration-200"
         style={{
           background: "oklch(0.19 0.046 252)",
-          border: "1px solid oklch(0.71 0.16 75 / 0.25)",
+          border: `1px solid ${rarityBorder}`,
           borderRadius: "0.75rem",
           overflow: "hidden",
         }}
@@ -247,12 +281,15 @@ export function BuildCard({
           (e.currentTarget as HTMLButtonElement).style.borderColor =
             "oklch(0.71 0.16 75 / 0.7)";
           (e.currentTarget as HTMLButtonElement).style.boxShadow =
-            "0 0 20px oklch(0.71 0.16 75 / 0.15)";
+            "0 4px 20px oklch(0.71 0.16 75 / 0.25)";
+          (e.currentTarget as HTMLButtonElement).style.transform =
+            "scale(1.02)";
         }}
         onMouseLeave={(e) => {
           (e.currentTarget as HTMLButtonElement).style.borderColor =
             "oklch(0.71 0.16 75 / 0.25)";
           (e.currentTarget as HTMLButtonElement).style.boxShadow = "";
+          (e.currentTarget as HTMLButtonElement).style.transform = "";
         }}
         onClick={() => setExpanded(true)}
       >
@@ -266,13 +303,30 @@ export function BuildCard({
         />
 
         <div className="p-4">
-          {/* Name */}
-          <h3
-            className="font-display font-bold text-base uppercase tracking-wide mb-3 line-clamp-1"
-            style={{ color: "oklch(0.71 0.16 75)" }}
-          >
-            {build.name}
-          </h3>
+          {/* Name + Share */}
+          <div className="flex items-start justify-between gap-2 mb-3">
+            <h3
+              className="font-display font-bold text-base uppercase tracking-wide line-clamp-1 flex-1"
+              style={{ color: "oklch(0.71 0.16 75)" }}
+            >
+              {build.name}
+            </h3>
+            <button
+              type="button"
+              data-ocid="build.secondary_button"
+              title="Поделиться"
+              className="flex-shrink-0 p-0.5 rounded opacity-50 hover:opacity-100 transition-opacity"
+              style={{ color: "oklch(0.71 0.16 75)" }}
+              onClick={(e) => {
+                e.stopPropagation();
+                navigator.clipboard.writeText(build.name).then(() => {
+                  toast.success("Скопировано!");
+                });
+              }}
+            >
+              <Copy size={12} />
+            </button>
+          </div>
 
           {/* Heroes */}
           {buildHeroes.length > 0 && (
@@ -335,7 +389,7 @@ export function BuildCard({
                         }}
                       />
                     )}
-                    {parseSkillName(s.name, lang)}
+                    {parseSkillName(s.name, lang, s.id)}
                   </Badge>
                 ))}
               </div>
@@ -368,7 +422,7 @@ export function BuildCard({
                         }}
                       />
                     )}
-                    {parseSkillName(s.name, lang)}
+                    {parseSkillName(s.name, lang, s.id)}
                   </Badge>
                 ))}
               </div>
@@ -561,7 +615,7 @@ export function BuildCard({
                             }}
                           />
                         )}
-                        {parseSkillName(s.name, lang)}
+                        {parseSkillName(s.name, lang, s.id)}
                       </Badge>
                     ))}
                   </div>
@@ -595,7 +649,7 @@ export function BuildCard({
                             }}
                           />
                         )}
-                        {parseSkillName(s.name, lang)}
+                        {parseSkillName(s.name, lang, s.id)}
                       </Badge>
                     ))}
                   </div>

@@ -4,6 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
+  ChevronUp,
   Crown,
   Loader2,
   MessageSquare,
@@ -45,6 +46,10 @@ export function HomePage() {
   const isLoggedIn = !!identity;
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<"builds" | "tierlist">("builds");
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const [tipExpanded, setTipExpanded] = useState(
+    typeof window !== "undefined" && window.innerWidth >= 768,
+  );
   const [selectedSkills, setSelectedSkills] = useState<bigint[]>([]);
   const [showCreateBuild, setShowCreateBuild] = useState(false);
   const [showRecordBuild, setShowRecordBuild] = useState(false);
@@ -112,6 +117,12 @@ export function HomePage() {
 
   const topBuilds =
     topBuildsRaw.length > 0 ? topBuildsRaw : builds.slice(0, 10);
+
+  useEffect(() => {
+    const handleScroll = () => setShowScrollTop(window.scrollY > 200);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentional simplified deps
   useEffect(() => {
@@ -664,6 +675,37 @@ export function HomePage() {
             )}
           </div>
         </div>
+
+        {/* Stats bar */}
+        {heroes.length > 0 && (
+          <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-3 z-10 px-4">
+            {[
+              { icon: "🛡", count: heroes.length, label: "Героев" },
+              { icon: "📦", count: items.length, label: "Предметов" },
+              { icon: "⚔", count: allBuildsRaw.length, label: "Сборок" },
+            ].map((stat) => (
+              <div
+                key={stat.label}
+                className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold"
+                style={{
+                  background: "oklch(0.14 0.04 252 / 0.7)",
+                  border: "1px solid oklch(0.71 0.16 75 / 0.5)",
+                  color: "oklch(0.93 0.008 252)",
+                  backdropFilter: "blur(4px)",
+                }}
+              >
+                <span>{stat.icon}</span>
+                <span
+                  style={{ color: "oklch(0.71 0.16 75)" }}
+                  className="font-mono"
+                >
+                  {stat.count}
+                </span>
+                <span className="text-foreground/60">{stat.label}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Description card */}
@@ -682,6 +724,85 @@ export function HomePage() {
           сообществом.
         </div>
       </div>
+
+      {/* Daily Tip widget */}
+      {(() => {
+        const tips = [
+          "Блокируй навыки противника перед составлением сборки — это увеличивает шансы на победу",
+          "Герои с высоким уроном хорошо работают в паре с поддержкой",
+          "Редкие предметы дают больше синергий — собирай их в первую очередь",
+          "Изучи тир-лист перед каждым матчем — мета меняется с каждым патчем",
+          "Сборки с ЯРОСТЬ + КРИТ дают максимальный урон на первых раундах",
+          "Не забывай обновлять свою сборку после каждого патча",
+          "ИСЦЕЛЕНИЕ отлично работает с персонажами ближнего боя",
+          "Используй ЩИТ для защиты на поздних стадиях игры",
+          "Сборки сообщества часто содержат неочевидные комбинации — изучай их",
+          "ЯД эффективен против противников с большим количеством ХП",
+          "ЗАМОРОЗКА даёт время для нанесения урона безопасно",
+          "ДОДЖ лучше всего работает у быстрых героев",
+          "УСКОРЕНИЕ + атакующие навыки = летальная комбинация",
+          "Смотри на сборки топ-игроков и адаптируй их под свой стиль",
+          "СПРАЙТ навык хорошо усиливает магические атаки",
+        ];
+        const tip = tips[new Date().getDate() % tips.length];
+        return (
+          <div className="container mx-auto px-4 mb-3">
+            <div
+              className="rounded-xl overflow-hidden"
+              style={{
+                border: "1px solid oklch(0.71 0.16 75 / 0.4)",
+                background: "oklch(0.19 0.046 252 / 0.9)",
+              }}
+            >
+              <button
+                type="button"
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-left"
+                onClick={() => setTipExpanded((v) => !v)}
+                style={{ color: "oklch(0.71 0.16 75)" }}
+              >
+                <span className="text-base">💡</span>
+                <span className="font-bold text-sm uppercase tracking-widest flex-1">
+                  Совет дня
+                </span>
+                <ChevronUp
+                  size={14}
+                  className="transition-transform duration-200"
+                  style={{
+                    transform: tipExpanded ? "rotate(0deg)" : "rotate(180deg)",
+                  }}
+                />
+              </button>
+              {tipExpanded && (
+                <div
+                  className="px-4 pb-3 text-sm"
+                  style={{ color: "oklch(0.93 0.008 252 / 0.85)" }}
+                >
+                  {tip}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Scroll to top FAB */}
+      <button
+        type="button"
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        className="fixed bottom-24 left-4 z-50 w-10 h-10 flex items-center justify-center rounded-full shadow-lg transition-all duration-200"
+        style={{
+          background: "oklch(0.71 0.16 75)",
+          color: "oklch(0.14 0.04 252)",
+          opacity: showScrollTop ? 1 : 0,
+          pointerEvents: showScrollTop ? "auto" : "none",
+          transform: showScrollTop ? "scale(1)" : "scale(0.8)",
+          boxShadow: "0 4px 16px oklch(0.71 0.16 75 / 0.4)",
+        }}
+        aria-label="Наверх"
+        data-ocid="page.button"
+      >
+        <ChevronUp size={20} />
+      </button>
 
       {/* Tabs + content */}
       <div className="container mx-auto px-4 py-4">
