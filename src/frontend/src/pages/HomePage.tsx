@@ -3,17 +3,20 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  ArrowLeft,
   Crown,
   Loader2,
   MessageSquare,
   Plus,
+  Search,
   Star,
   Swords,
   ThumbsDown,
   ThumbsUp,
   Video,
+  X,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Build, Skill, TopAuthor } from "../backend";
 import { BuildCard } from "../components/BuildCard";
 import { TierListTab } from "../components/TierListTab";
@@ -32,6 +35,8 @@ function parseSkillName(name: string, lang: string): string {
 }
 
 type TopSection = "top_builds" | "top_authors" | "top_comments";
+type SortMode = "newest" | "popular" | "alpha";
+type ViewMode = "dashboard" | "allBuilds";
 
 export function HomePage() {
   const { t, lang } = useLang();
@@ -46,6 +51,13 @@ export function HomePage() {
   const [topSection, setTopSection] = useState<TopSection>("top_builds");
   const [selectedTopBuild, setSelectedTopBuild] = useState<Build | null>(null);
   const seeded = useRef(false);
+
+  // All builds view state
+  const [viewMode, setViewMode] = useState<ViewMode>("dashboard");
+  const [searchText, setSearchText] = useState("");
+  const [selectedHeroes, setSelectedHeroes] = useState<bigint[]>([]);
+  const [sortMode, setSortMode] = useState<SortMode>("newest");
+  const [allBuildsSkills, setAllBuildsSkills] = useState<bigint[]>([]);
 
   const { data: heroes = [], isLoading: heroesLoading } = useQuery({
     queryKey: ["heroes"],
@@ -77,6 +89,12 @@ export function HomePage() {
       selectedSkills.length > 0
         ? actor!.getPublicBuildsExcludingSkills(selectedSkills)
         : actor!.getPublicBuilds(),
+    enabled: !!actor,
+  });
+
+  const { data: allBuildsRaw = [], isLoading: allBuildsLoading } = useQuery({
+    queryKey: ["allPublicBuilds"],
+    queryFn: () => actor!.getPublicBuilds(),
     enabled: !!actor,
   });
 
@@ -128,6 +146,413 @@ export function HomePage() {
     );
   };
 
+  const toggleAllBuildsSkill = (id: bigint) => {
+    setAllBuildsSkills((prev) =>
+      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id],
+    );
+  };
+
+  const toggleHeroFilter = (id: bigint) => {
+    setSelectedHeroes((prev) =>
+      prev.includes(id) ? prev.filter((h) => h !== id) : [...prev, id],
+    );
+  };
+
+  // Filtered + sorted builds for allBuilds view
+  const filteredBuilds = useMemo(() => {
+    let list = [...allBuildsRaw];
+
+    // Text search
+    if (searchText.trim()) {
+      const q = searchText.toLowerCase();
+      list = list.filter((b) => b.name.toLowerCase().includes(q));
+    }
+
+    // Hero filter
+    if (selectedHeroes.length > 0) {
+      list = list.filter((b) =>
+        selectedHeroes.some((hId) => b.heroIds.includes(hId)),
+      );
+    }
+
+    // Skill filter
+    if (allBuildsSkills.length > 0) {
+      list = list.filter(
+        (b) => !allBuildsSkills.some((sId) => b.requiredSkillIds.includes(sId)),
+      );
+    }
+
+    // Sort
+    if (sortMode === "newest") {
+      list = list.sort((a, b) => Number(b.id) - Number(a.id));
+    } else if (sortMode === "popular") {
+      const topIds = topBuilds.map((b) => b.id.toString());
+      list = list.sort((a, b) => {
+        const ai = topIds.indexOf(a.id.toString());
+        const bi = topIds.indexOf(b.id.toString());
+        if (ai === -1 && bi === -1) return Number(b.id) - Number(a.id);
+        if (ai === -1) return 1;
+        if (bi === -1) return -1;
+        return ai - bi;
+      });
+    } else if (sortMode === "alpha") {
+      list = list.sort((a, b) => a.name.localeCompare(b.name, "ru"));
+    }
+
+    return list;
+  }, [
+    allBuildsRaw,
+    searchText,
+    selectedHeroes,
+    allBuildsSkills,
+    sortMode,
+    topBuilds,
+  ]);
+
+  const openAllBuilds = () => {
+    setViewMode("allBuilds");
+    setSearchText("");
+    setSelectedHeroes([]);
+    setAllBuildsSkills([]);
+    setSortMode("newest");
+  };
+
+  const handleHeroClick = (heroId: bigint) => {
+    setSelectedTopBuild(null);
+    setViewMode("allBuilds");
+    setSelectedHeroes([heroId]);
+    setSearchText("");
+    setAllBuildsSkills([]);
+    setSortMode("newest");
+    setTab("builds");
+  };
+
+  if (viewMode === "allBuilds") {
+    return (
+      <div className="min-h-screen">
+        {/* Header */}
+        <div
+          className="sticky top-0 z-30 border-b px-4 py-3"
+          style={{
+            background: "oklch(0.14 0.04 252 / 0.97)",
+            borderColor: "oklch(0.71 0.16 75 / 0.2)",
+            backdropFilter: "blur(12px)",
+          }}
+        >
+          <div className="container mx-auto flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setViewMode("dashboard")}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-bold transition-all hover:scale-105"
+              style={{
+                background: "oklch(0.19 0.046 252)",
+                border: "1px solid oklch(0.71 0.16 75 / 0.3)",
+                color: "oklch(0.71 0.16 75)",
+              }}
+              data-ocid="builds.secondary_button"
+            >
+              <ArrowLeft size={14} />
+              На главную
+            </button>
+            <h1
+              className="font-display text-lg font-bold uppercase tracking-widest"
+              style={{ color: "oklch(0.71 0.16 75)" }}
+            >
+              Все сборки
+            </h1>
+            <Badge
+              className="rounded-xl font-mono"
+              style={{
+                background: "oklch(0.71 0.16 75 / 0.15)",
+                border: "1px solid oklch(0.71 0.16 75 / 0.4)",
+                color: "oklch(0.71 0.16 75)",
+              }}
+            >
+              {filteredBuilds.length} / {allBuildsRaw.length}
+            </Badge>
+          </div>
+        </div>
+
+        <div className="container mx-auto px-4 py-6 space-y-6">
+          {/* Search bar */}
+          <div className="relative">
+            <Search
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+              style={{ color: "oklch(0.71 0.16 75 / 0.6)" }}
+            />
+            <input
+              type="text"
+              placeholder="Поиск по названию сборки..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              className="w-full pl-9 pr-9 py-3 rounded-xl text-sm outline-none transition-all"
+              style={{
+                background: "oklch(0.19 0.046 252)",
+                border: `1px solid ${searchText ? "oklch(0.71 0.16 75 / 0.7)" : "oklch(0.71 0.16 75 / 0.2)"}`,
+                color: "oklch(0.93 0.008 252)",
+                boxShadow: searchText
+                  ? "0 0 12px oklch(0.71 0.16 75 / 0.2)"
+                  : "none",
+              }}
+              data-ocid="builds.search_input"
+            />
+            {searchText && (
+              <button
+                type="button"
+                onClick={() => setSearchText("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2"
+                style={{ color: "oklch(0.55 0.02 252)" }}
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
+          {/* Sort tabs */}
+          <div className="flex gap-2">
+            {(
+              [
+                { key: "newest", label: "Новые" },
+                { key: "popular", label: "Популярные" },
+                { key: "alpha", label: "По алфавиту" },
+              ] as { key: SortMode; label: string }[]
+            ).map((s) => (
+              <button
+                key={s.key}
+                type="button"
+                onClick={() => setSortMode(s.key)}
+                className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wide transition-all"
+                style={
+                  sortMode === s.key
+                    ? {
+                        background: "oklch(0.71 0.16 75 / 0.2)",
+                        border: "1px solid oklch(0.71 0.16 75)",
+                        color: "oklch(0.71 0.16 75)",
+                        boxShadow: "0 0 10px oklch(0.71 0.16 75 / 0.3)",
+                      }
+                    : {
+                        background: "oklch(0.19 0.046 252)",
+                        border: "1px solid oklch(0.71 0.16 75 / 0.2)",
+                        color: "oklch(0.55 0.02 252)",
+                      }
+                }
+                data-ocid="builds.tab"
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Hero filter */}
+          {heroes.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <span
+                  className="text-xs font-bold uppercase tracking-widest"
+                  style={{ color: "oklch(0.55 0.02 252)" }}
+                >
+                  Герои
+                </span>
+                {selectedHeroes.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedHeroes([])}
+                    className="text-xs px-2 py-0.5 rounded-lg"
+                    style={{
+                      background: "oklch(0.71 0.16 75 / 0.1)",
+                      border: "1px solid oklch(0.71 0.16 75 / 0.3)",
+                      color: "oklch(0.71 0.16 75)",
+                    }}
+                  >
+                    Сбросить ({selectedHeroes.length})
+                  </button>
+                )}
+              </div>
+              <div
+                className="flex gap-2 overflow-x-auto pb-2"
+                style={{ WebkitOverflowScrolling: "touch" }}
+              >
+                {heroes.map((hero) => {
+                  const active = selectedHeroes.includes(hero.id);
+                  return (
+                    <button
+                      key={hero.id.toString()}
+                      type="button"
+                      onClick={() => toggleHeroFilter(hero.id)}
+                      className="shrink-0 flex flex-col items-center gap-1 px-2 pt-2 pb-1.5 rounded-xl text-center transition-all hover:scale-105"
+                      style={
+                        active
+                          ? {
+                              background: "oklch(0.71 0.16 75 / 0.2)",
+                              border: "1px solid oklch(0.71 0.16 75)",
+                              color: "oklch(0.71 0.16 75)",
+                              boxShadow: "0 0 10px oklch(0.71 0.16 75 / 0.3)",
+                            }
+                          : {
+                              background: "oklch(0.19 0.046 252)",
+                              border: "1px solid oklch(0.71 0.16 75 / 0.15)",
+                              color: "oklch(0.55 0.02 252)",
+                            }
+                      }
+                    >
+                      <img
+                        src={hero.imageUrl}
+                        alt={hero.name}
+                        width={36}
+                        height={36}
+                        className="w-9 h-9 rounded-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = "none";
+                        }}
+                      />
+                      <span className="text-[9px] leading-tight max-w-[48px] line-clamp-2">
+                        {hero.name}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Skill exclusion filter */}
+          {skills.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <span
+                  className="text-xs font-bold uppercase tracking-widest"
+                  style={{ color: "oklch(0.55 0.02 252)" }}
+                >
+                  Исключить навыки
+                </span>
+                {allBuildsSkills.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setAllBuildsSkills([])}
+                    className="text-xs px-2 py-0.5 rounded-lg"
+                    style={{
+                      background: "oklch(0.71 0.16 75 / 0.1)",
+                      border: "1px solid oklch(0.71 0.16 75 / 0.3)",
+                      color: "oklch(0.71 0.16 75)",
+                    }}
+                  >
+                    Сбросить ({allBuildsSkills.length})
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-11 xl:grid-cols-14 gap-2">
+                {skills.map((skill) => (
+                  <SkillChip
+                    key={skill.id.toString()}
+                    skill={skill}
+                    selected={allBuildsSkills.includes(skill.id)}
+                    onClick={() => toggleAllBuildsSkill(skill.id)}
+                    lang={lang}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Results grid */}
+          {allBuildsLoading ? (
+            <div
+              className="flex justify-center py-20"
+              data-ocid="builds.loading_state"
+            >
+              <Loader2
+                className="animate-spin"
+                size={32}
+                style={{ color: "oklch(0.71 0.16 75)" }}
+              />
+            </div>
+          ) : filteredBuilds.length === 0 ? (
+            <div
+              className="text-center py-20 rounded-2xl"
+              style={{
+                background: "oklch(0.19 0.046 252)",
+                border: "1px solid oklch(0.71 0.16 75 / 0.15)",
+                color: "oklch(0.55 0.02 252)",
+              }}
+              data-ocid="builds.empty_state"
+            >
+              <Swords size={40} className="mx-auto mb-3 opacity-30" />
+              <p className="text-sm font-medium">Сборки не найдены</p>
+              <p className="text-xs mt-1 opacity-70">
+                Попробуйте изменить фильтры
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {filteredBuilds.map((build, idx) => (
+                <BuildCard
+                  key={build.id.toString()}
+                  build={build}
+                  heroes={heroes}
+                  skills={skills}
+                  onHeroClick={handleHeroClick}
+                  data-ocid={`builds.item.${idx + 1}`}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <footer
+          className="mt-16 border-t py-6 text-center text-xs text-muted-foreground"
+          style={{ borderColor: "oklch(0.71 0.16 75 / 0.2)" }}
+        >
+          <div className="flex flex-col items-center gap-3">
+            <a
+              href="https://internetcomputer.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-white text-xs font-medium transition-opacity hover:opacity-80"
+              style={{ background: "#3B00B9" }}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 100 100"
+                fill="none"
+                aria-hidden="true"
+              >
+                <circle cx="50" cy="50" r="50" fill="#3B00B9" />
+                <path
+                  d="M26 50c0-8.8 7.2-16 16-16s16 7.2 16 16-7.2 16-16 16S26 58.8 26 50zm32 0c0-8.8 7.2-16 16-16s16 7.2 16 16-7.2 16-16 16S58 58.8 58 50z"
+                  fill="white"
+                  opacity="0.4"
+                />
+                <path
+                  d="M50 38c6.6 0 12 5.4 12 12s-5.4 12-12 12-12-5.4-12-12 5.4-12 12-12z"
+                  fill="white"
+                />
+              </svg>
+              Работает на Internet Computer
+            </a>
+            <p>
+              © {new Date().getFullYear()}.{" "}
+              <a
+                href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(typeof window !== "undefined" ? window.location.hostname : "")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-primary transition-colors"
+              >
+                Built with ❤️ using caffeine.ai
+              </a>
+              {" · "}
+              <span style={{ color: "oklch(0.71 0.16 75)" }}>
+                Powered by SLR Community
+              </span>
+            </p>
+          </div>
+        </footer>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen">
       {/* Hero banner */}
@@ -175,10 +600,7 @@ export function HomePage() {
             {/* Build count — clickable button */}
             <button
               type="button"
-              onClick={() => {
-                setTab("builds");
-                setTopSection("top_builds");
-              }}
+              onClick={openAllBuilds}
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all hover:scale-105 active:scale-95"
               style={{
                 background: "oklch(0.19 0.046 252 / 0.9)",
@@ -186,10 +608,11 @@ export function HomePage() {
                 color: "oklch(0.93 0.008 252)",
                 boxShadow: "0 0 12px oklch(0.71 0.16 75 / 0.2)",
               }}
+              data-ocid="builds.primary_button"
             >
               <Swords size={14} style={{ color: "oklch(0.71 0.16 75)" }} />
               <span style={{ color: "oklch(0.71 0.16 75)" }}>Сборок:</span>
-              <span className="font-mono">{builds.length}</span>
+              <span className="font-mono">{allBuildsRaw.length}</span>
             </button>
 
             {/* Telegram */}
@@ -218,7 +641,7 @@ export function HomePage() {
                     boxShadow: "0 0 16px oklch(0.71 0.16 75 / 0.4)",
                   }}
                   onClick={() => setShowCreateBuild(true)}
-                  data-ocid="builds.primary_button"
+                  data-ocid="builds.secondary_button"
                 >
                   <Plus size={16} />
                   {t("Добавить сборку", "Add Build")}
@@ -233,7 +656,6 @@ export function HomePage() {
                     background: "oklch(0.71 0.16 75 / 0.08)",
                   }}
                   onClick={() => setShowRecordBuild(true)}
-                  data-ocid="builds.secondary_button"
                 >
                   <Video size={16} />
                   {t("Записать сборку", "Record Build")}
@@ -285,7 +707,10 @@ export function HomePage() {
         {tab === "builds" && (
           <div>
             {/* Top section nav buttons */}
-            <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
+            <div
+              className="flex gap-2 mb-6 overflow-x-auto pb-1"
+              style={{ WebkitOverflowScrolling: "touch" }}
+            >
               <TopNavBtn
                 active={topSection === "top_builds"}
                 onClick={() => setTopSection("top_builds")}
@@ -313,7 +738,10 @@ export function HomePage() {
             {topSection === "top_builds" && (
               <div className="mb-8">
                 {topBuilds.length > 0 ? (
-                  <div className="overflow-x-auto w-full">
+                  <div
+                    className="overflow-x-auto w-full"
+                    style={{ WebkitOverflowScrolling: "touch" }}
+                  >
                     <div className="flex gap-3 pb-2">
                       {topBuilds.map((b) => (
                         <TopBuildCard
@@ -513,6 +941,7 @@ export function HomePage() {
                     build={build}
                     heroes={heroes}
                     skills={skills}
+                    onHeroClick={handleHeroClick}
                     data-ocid={`builds.item.${idx + 1}`}
                   />
                 ))}
@@ -531,21 +960,50 @@ export function HomePage() {
         className="mt-16 border-t py-6 text-center text-xs text-muted-foreground"
         style={{ borderColor: "oklch(0.71 0.16 75 / 0.2)" }}
       >
-        <p>
-          © {new Date().getFullYear()}.{" "}
+        <div className="flex flex-col items-center gap-3">
           <a
-            href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(typeof window !== "undefined" ? window.location.hostname : "")}`}
+            href="https://internetcomputer.org"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-primary transition-colors"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-white text-xs font-medium transition-opacity hover:opacity-80"
+            style={{ background: "#3B00B9" }}
           >
-            Built with ❤️ using caffeine.ai
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 100 100"
+              fill="none"
+              aria-hidden="true"
+            >
+              <circle cx="50" cy="50" r="50" fill="#3B00B9" />
+              <path
+                d="M26 50c0-8.8 7.2-16 16-16s16 7.2 16 16-7.2 16-16 16S26 58.8 26 50zm32 0c0-8.8 7.2-16 16-16s16 7.2 16 16-7.2 16-16 16S58 58.8 58 50z"
+                fill="white"
+                opacity="0.4"
+              />
+              <path
+                d="M50 38c6.6 0 12 5.4 12 12s-5.4 12-12 12-12-5.4-12-12 5.4-12 12-12z"
+                fill="white"
+              />
+            </svg>
+            Работает на Internet Computer
           </a>
-          {" · "}
-          <span style={{ color: "oklch(0.71 0.16 75)" }}>
-            Powered by SLR Community
-          </span>
-        </p>
+          <p>
+            © {new Date().getFullYear()}.{" "}
+            <a
+              href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(typeof window !== "undefined" ? window.location.hostname : "")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-primary transition-colors"
+            >
+              Built with ❤️ using caffeine.ai
+            </a>
+            {" · "}
+            <span style={{ color: "oklch(0.71 0.16 75)" }}>
+              Powered by SLR Community
+            </span>
+          </p>
+        </div>
       </footer>
 
       {showCreateBuild && (
@@ -569,6 +1027,7 @@ export function HomePage() {
           heroes={heroes}
           skills={skills}
           defaultExpanded
+          onHeroClick={handleHeroClick}
           onClose={() => setSelectedTopBuild(null)}
         />
       )}

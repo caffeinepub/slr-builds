@@ -30,6 +30,7 @@ interface Props {
   "data-ocid"?: string;
   defaultExpanded?: boolean;
   onClose?: () => void;
+  onHeroClick?: (heroId: bigint) => void;
 }
 
 function parseSkillName(name: string, lang: string): string {
@@ -47,6 +48,7 @@ export function BuildCard({
   "data-ocid": dataOcid,
   defaultExpanded,
   onClose,
+  onHeroClick,
 }: Props) {
   const { t, lang } = useLang();
   const { actor } = useActor();
@@ -222,6 +224,12 @@ export function BuildCard({
   });
 
   const myPrincipal = identity?.getPrincipal().toString();
+
+  const handleHeroChipClick = (heroId: bigint) => {
+    setExpanded(false);
+    onClose?.();
+    onHeroClick?.(heroId);
+  };
 
   return (
     <>
@@ -467,7 +475,7 @@ export function BuildCard({
                 </p>
               )}
 
-              {/* Heroes */}
+              {/* Heroes — clickable to filter */}
               {buildHeroes.length > 0 && (
                 <div className="mb-5">
                   <p
@@ -475,15 +483,35 @@ export function BuildCard({
                     style={{ color: "oklch(0.71 0.16 75)" }}
                   >
                     {t("Герои", "Heroes")}
+                    {onHeroClick && (
+                      <span className="ml-2 text-[10px] font-normal text-muted-foreground normal-case">
+                        (нажмите чтобы найти сборки)
+                      </span>
+                    )}
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {buildHeroes.map((h) => (
-                      <div
+                      <button
                         key={h.id.toString()}
-                        className="flex items-center gap-2 px-2 py-1 rounded-lg"
+                        type="button"
+                        title={`Сборки с ${h.name}`}
+                        onClick={() => handleHeroChipClick(h.id)}
+                        className="flex items-center gap-2 px-2 py-1 rounded-lg transition-all hover:scale-105"
                         style={{
                           background: "oklch(0.22 0.052 252)",
                           border: "1px solid oklch(0.71 0.16 75 / 0.2)",
+                          cursor: onHeroClick ? "pointer" : "default",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (onHeroClick)
+                            (
+                              e.currentTarget as HTMLButtonElement
+                            ).style.borderColor = "oklch(0.71 0.16 75)";
+                        }}
+                        onMouseLeave={(e) => {
+                          (
+                            e.currentTarget as HTMLButtonElement
+                          ).style.borderColor = "oklch(0.71 0.16 75 / 0.2)";
                         }}
                       >
                         {h.imageUrl && (
@@ -500,7 +528,7 @@ export function BuildCard({
                           />
                         )}
                         <span className="text-sm font-medium">{h.name}</span>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 </div>

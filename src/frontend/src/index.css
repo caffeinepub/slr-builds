@@ -19,7 +19,7 @@
 @layer base {
   :root {
     --radius: 0.75rem;
-    /* Navy blue + golden amber theme */
+    /* Navy blue + golden amber theme (dark) */
     --background: 0.14 0.04 252;
     --foreground: 0.93 0.008 252;
     --card: 0.19 0.046 252;
@@ -55,6 +55,42 @@
     --sidebar-ring: 0.71 0.16 75;
   }
 
+  /* Light theme */
+  [data-theme="light"] {
+    --background: 0.97 0.008 252;
+    --foreground: 0.12 0.04 252;
+    --card: 0.94 0.012 252;
+    --card-foreground: 0.12 0.04 252;
+    --popover: 0.94 0.012 252;
+    --popover-foreground: 0.12 0.04 252;
+    --primary: 0.6 0.18 75;
+    --primary-foreground: 0.97 0.008 252;
+    --secondary: 0.9 0.016 252;
+    --secondary-foreground: 0.25 0.05 252;
+    --muted: 0.88 0.014 252;
+    --muted-foreground: 0.45 0.03 252;
+    --accent: 0.6 0.18 75;
+    --accent-foreground: 0.97 0.008 252;
+    --destructive: 0.55 0.22 20;
+    --destructive-foreground: 0.97 0.008 252;
+    --border: 0.12 0.04 252 / 0.15;
+    --input: 0.9 0.016 252;
+    --ring: 0.6 0.18 75;
+    --chart-1: 0.6 0.18 75;
+    --chart-2: 0.52 0.14 80;
+    --chart-3: 0.44 0.12 70;
+    --chart-4: 0.4 0.1 260;
+    --chart-5: 0.3 0.08 252;
+    --sidebar: 0.93 0.01 252;
+    --sidebar-foreground: 0.12 0.04 252;
+    --sidebar-primary: 0.6 0.18 75;
+    --sidebar-primary-foreground: 0.97 0.008 252;
+    --sidebar-accent: 0.9 0.016 252;
+    --sidebar-accent-foreground: 0.25 0.05 252;
+    --sidebar-border: 0.12 0.04 252 / 0.15;
+    --sidebar-ring: 0.6 0.18 75;
+  }
+
   * {
     @apply border-border;
   }
@@ -78,6 +114,30 @@
         transparent
       );
     min-height: 100vh;
+  }
+
+  [data-theme="light"] body {
+    background-color: oklch(0.97 0.008 252);
+    background-image: radial-gradient(
+        ellipse 80% 40% at 50% 0%,
+        oklch(0.71 0.16 75 / 0.06),
+        transparent
+      ),
+      radial-gradient(
+        ellipse 50% 30% at 90% 100%,
+        oklch(0.55 0.1 260 / 0.06),
+        transparent
+      ),
+      radial-gradient(
+        ellipse 40% 25% at 10% 70%,
+        oklch(0.88 0.014 252 / 0.8),
+        transparent
+      );
+  }
+
+  html {
+    touch-action: manipulation;
+    -webkit-text-size-adjust: 100%;
   }
 
   h1,
@@ -130,4 +190,36 @@
     border-color: oklch(0.71 0.16 75 / 0.7);
     box-shadow: 0 0 20px oklch(0.71 0.16 75 / 0.2);
   }
+
+  [data-theme="light"] .card-dark {
+    background: oklch(0.96 0.01 252 / 0.95);
+    border: 1px solid oklch(0.71 0.16 75 / 0.25);
+  }
+  [data-theme="light"] .card-dark:hover {
+    border-color: oklch(0.6 0.18 75 / 0.6);
+    box-shadow: 0 0 20px oklch(0.6 0.18 75 / 0.12);
+  }
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .container {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+}
+
+/* iOS smooth scroll */
+* {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Touch targets: relax global min-height but ensure nav is compact */
+button,
+a {
+  min-height: 36px;
+}
+nav button,
+nav a {
+  min-height: 32px;
 }

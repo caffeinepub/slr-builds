@@ -225,7 +225,12 @@ export function TierListTab({ heroes, items, branches }: Props) {
             type="button"
             size="sm"
             onClick={saveTierList}
-            disabled={saving}
+            disabled={saving || !isLoggedIn}
+            title={
+              !isLoggedIn
+                ? t("Войдите для сохранения", "Login to save")
+                : t("Сохранить тир-лист", "Save tier list")
+            }
             className="gap-1 text-xs bg-primary hover:bg-primary/80 glow-red"
             data-ocid="tierlist.save_button"
           >

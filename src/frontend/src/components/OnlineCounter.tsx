@@ -2,11 +2,13 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
+import { Users } from "lucide-react";
 import { useEffect } from "react";
-import { useLang } from "../contexts/LangContext";
 import { useActor } from "../hooks/useActor";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 
@@ -16,13 +18,12 @@ interface OnlineUser {
 }
 
 export function OnlineCounter() {
-  const { t } = useLang();
   const { actor } = useActor();
   const { identity } = useInternetIdentity();
 
   const shortPrincipal = identity
     ? `${identity.getPrincipal().toString().slice(0, 8)}...`
-    : t("Гость", "Guest");
+    : "Гость";
 
   const { data: profile } = useQuery({
     queryKey: ["callerProfile"],
@@ -36,7 +37,7 @@ export function OnlineCounter() {
     queryKey: ["onlineUsers"],
     queryFn: () => actor!.getOnlineUsers(),
     enabled: !!actor,
-    refetchInterval: 30000,
+    refetchInterval: 15000,
   });
 
   // Heartbeat every 60s
@@ -44,7 +45,7 @@ export function OnlineCounter() {
     if (!actor) return;
     actor.onlineHeartbeat(displayName).catch(() => {});
     const id = setInterval(() => {
-      actor.onlineHeartbeat(displayName).catch(() => {});
+      if (actor) actor.onlineHeartbeat(displayName).catch(() => {});
     }, 60000);
     return () => clearInterval(id);
   }, [actor, displayName]);
@@ -56,33 +57,61 @@ export function OnlineCounter() {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="flex items-center gap-1.5 text-xs font-bold px-2 py-1 border border-border rounded-none hover:border-primary/50 transition-colors"
+          className="flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-lg transition-all hover:scale-105 focus:outline-none"
+          style={{
+            border: "1px solid oklch(0.71 0.16 75 / 0.6)",
+            background: "oklch(0.71 0.16 75 / 0.08)",
+            color: "oklch(0.71 0.16 75)",
+            boxShadow: "0 0 10px oklch(0.71 0.16 75 / 0.12)",
+          }}
           data-ocid="online.toggle"
         >
-          <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-          <span className="text-green-400">{count}</span>
-          <span className="text-muted-foreground hidden sm:inline">
-            {t("онлайн", "online")}
+          <Users size={12} />
+          <span className="hidden sm:inline">Кто онлайн</span>
+          <span
+            className="flex items-center gap-1"
+            style={{ color: "#4ade80" }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+            {count}
           </span>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="bg-black border-primary/40 min-w-[160px] rounded-none"
+        className="min-w-[180px] rounded-xl"
+        style={{
+          background: "oklch(0.17 0.043 252)",
+          border: "1px solid oklch(0.71 0.16 75 / 0.4)",
+          boxShadow: "0 8px 32px oklch(0.14 0.04 252 / 0.8)",
+        }}
         data-ocid="online.dropdown_menu"
       >
+        <DropdownMenuLabel
+          className="text-xs font-bold uppercase tracking-widest"
+          style={{ color: "oklch(0.71 0.16 75)" }}
+        >
+          Онлайн: {count}
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator
+          style={{ background: "oklch(0.71 0.16 75 / 0.2)" }}
+        />
         {count === 0 ? (
-          <DropdownMenuItem className="text-muted-foreground text-xs">
-            {t("Никого нет", "Nobody online")}
+          <DropdownMenuItem
+            className="text-xs"
+            style={{ color: "oklch(0.6 0.03 252)" }}
+          >
+            Никого нет онлайн
           </DropdownMenuItem>
         ) : (
-          onlineUsers.map((u) => (
+          onlineUsers.map((u, i) => (
             <DropdownMenuItem
-              key={u.displayName}
+              key={`${u.displayName}-${i}`}
               className="text-xs gap-2 cursor-default"
+              style={{ color: "oklch(0.9 0.02 252)" }}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
-              {u.displayName}
+              <span className="w-2 h-2 rounded-full bg-green-400 flex-shrink-0" />
+              {u.displayName || "Гость"}
             </DropdownMenuItem>
           ))
         )}

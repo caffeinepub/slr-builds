@@ -151,7 +151,7 @@ export function AdminPage() {
         <div className="flex gap-2">
           <Button
             onClick={() => seedMutation.mutate()}
-            disabled={seedMutation.isPending}
+            disabled={seedMutation.isPending || !actor}
             variant="outline"
             className="gap-2 border-primary/50 text-primary hover:bg-primary/10"
           >

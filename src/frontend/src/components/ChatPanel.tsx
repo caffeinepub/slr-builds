@@ -248,10 +248,13 @@ export function ChatPanel() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
+    <div
+      className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex flex-col items-end gap-2"
+      style={{ maxWidth: "calc(100vw - 2rem)" }}
+    >
       {open && (
         <div
-          className="w-80 flex flex-col"
+          className="w-[calc(100vw-2rem)] sm:w-80 flex flex-col"
           style={{
             height: "460px",
             borderRadius: "1rem",

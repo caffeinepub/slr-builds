@@ -576,14 +576,14 @@ actor {
   };
 
   public query func getPublicBuilds() : async [Build] {
-    buildStore.values().toArray().filter(func(b) { b.isPublic }).sort();
+    buildStore.values().toArray().filter(func(b) { b.isPublic }).sort(func(a, b) { Nat.compare(a.id, b.id) });
   };
 
   public query ({ caller }) func getMyBuilds() : async [Build] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can access their builds");
     };
-    buildStore.values().toArray().filter(func(b) { Principal.equal(b.authorId, caller) }).sort();
+    buildStore.values().toArray().filter(func(b) { Principal.equal(b.authorId, caller) }).sort(func(a, b) { Nat.compare(a.id, b.id) });
   };
 
   public query func countPublicBuildsBySkill(skillId : Nat) : async Nat {
@@ -679,11 +679,11 @@ actor {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can access their recorded builds");
     };
-    recordedBuildStore.values().toArray().filter(func(b) { Principal.equal(caller, b.authorId) }).sort();
+    recordedBuildStore.values().toArray().filter(func(b) { Principal.equal(caller, b.authorId) }).sort(func(a, b) { Nat.compare(a.id, b.id) });
   };
 
   public query func getRecordedBuildsByHero(heroId : Nat) : async [RecordedBuild] {
-    recordedBuildStore.values().toArray().filter(func(b) { b.heroId == heroId }).sort();
+    recordedBuildStore.values().toArray().filter(func(b) { b.heroId == heroId }).sort(func(a, b) { Nat.compare(a.id, b.id) });
   };
 
   /// Tier list management
@@ -748,7 +748,7 @@ actor {
   };
 
   public query func getBuildComments(buildId : Nat) : async [BuildComment] {
-    commentStore.values().toArray().filter(func(c) { c.buildId == buildId }).sort();
+    commentStore.values().toArray().filter(func(c) { c.buildId == buildId }).sort(func(a, b) { Nat.compare(a.id, b.id) });
   };
 
   public shared ({ caller }) func deleteBuildComment(commentId : Nat) : async () {
@@ -874,7 +874,7 @@ actor {
   };
 
   public query func getChatMessages() : async [ChatMessage] {
-    chatStore.values().toArray().sort();
+    chatStore.values().toArray().sort(func(a, b) { Nat.compare(a.id, b.id) });
   };
 
   public query func getChatUserUID(name : Text) : async ?Text {
@@ -949,11 +949,35 @@ actor {
   };
 
   public shared func seedItems() : async () {
+    let itemNames : [Text] = [
+      "Меч Атаки", "Щит Защиты", "Посох Магии", "Кольцо Крита", "Амулет Уклонения",
+      "Пояс Силы", "Сапоги Скорости", "Шлем Воина", "Броня Рыцаря", "Лук Лучника",
+      "Кинжал Теней", "Топор Берсерка", "Копьё Охотника", "Жезл Мага", "Тотем Шамана",
+      "Перчатки Ярости", "Плащ Ночи", "Сфера Льда", "Камень Огня", "Талисман Яда",
+      "Руна Исцеления", "Символ Грома", "Медальон Силы", "Орб Теней", "Жезл Бурь",
+      "Браслет Крита", "Кольцо Скорости", "Амулет Магии", "Пояс Стражника", "Серьга Воина",
+      "Фиала Крови", "Эликсир Силы", "Свиток Атаки", "Зелье Скорости", "Книга Тайн",
+      "Перо Феникса", "Коготь Дракона", "Клык Волка", "Рог Минотавра", "Хвост Скорпиона",
+      "Крыло Грифона", "Глаз Паука", "Чешуя Нага", "Шкура Медведя", "Сердце Льва",
+      "Кость Гиганта", "Зуб Тигра", "Яд Паука", "Кровь Дракона", "Душа Воина",
+      "Артефакт Мощи", "Реликвия Предков", "Печать Короля", "Герб Ордена", "Знак Судьбы",
+      "Осколок Льда", "Искра Огня", "Капля Воды", "Ком Земли", "Вихрь Ветра",
+      "Звезда Крита", "Луна Магии", "Солнце Силы", "Туман Теней", "Гром Атаки",
+      "Молния Скорости", "Буря Ярости", "Метель Льда", "Пламя Огня", "Лава Земли",
+      "Ураган Ветра", "Потоп Воды", "Затмение Тьмы", "Рассвет Света", "Закат Теней",
+      "Бездна Тьмы", "Небо Света", "Море Магии", "Земля Силы", "Огонь Ярости",
+      "Лёд Защиты", "Ветер Скорости", "Вода Исцеления", "Тьма Уклонения", "Свет Удачи",
+      "Камень Мощи", "Кристалл Льда", "Рубин Огня", "Сапфир Воды", "Изумруд Земли",
+      "Аметист Магии", "Жемчуг Теней", "Топаз Света", "Янтарь Духа", "Опал Судьбы",
+      "Диамант Силы", "Золото Королей", "Серебро Воинов", "Платина Богов", "Митрил Легенд"
+    ];
     itemStore.clear();
     var itemId = 1;
     while (itemId <= 99) {
       let imageUrl = "https://say-gg.ru/static/items/" # itemId.toText() # ".jpg";
-      itemStore.add(itemId, { id = itemId; name = "Item " # itemId.toText(); imageUrl });
+      let nameIdx = itemId - 1;
+      let name = itemNames[nameIdx];
+      itemStore.add(itemId, { id = itemId; name; imageUrl });
       itemId += 1;
     };
   };

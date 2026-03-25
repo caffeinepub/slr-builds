@@ -1,0 +1,25 @@
+{
+  "name": "SAY-GG — Skill Legends Royale",
+  "short_name": "SAY-GG",
+  "description": "Сборки для Skill Legends Royale от сообщества",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d1626",
+  "theme_color": "#c8a84b",
+  "orientation": "portrait-primary",
+  "lang": "ru",
+  "icons": [
+    {
+      "src": "/assets/generated/app-icon.dim_512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/generated/app-icon-192.dim_192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
