@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { RotateCcw, Save } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { Download, RotateCcw, Save } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { Branch, Hero, Item } from "../backend";
 import { useLang } from "../contexts/LangContext";
@@ -34,6 +34,14 @@ const TIER_COLORS: Record<TierKey, string> = {
   D: "bg-slate-500 text-white",
 };
 
+const TIER_HEX: Record<TierKey, string> = {
+  S: "#dc2626",
+  A: "#f97316",
+  B: "#eab308",
+  C: "#fde047",
+  D: "#64748b",
+};
+
 interface Props {
   heroes: Hero[];
   items: Item[];
@@ -48,6 +56,7 @@ export function TierListTab({ heroes, items, branches }: Props) {
   const [poolTab, setPoolTab] = useState<PoolType>("heroes");
   const [saving, setSaving] = useState(false);
   const [selectedItem, setSelectedItem] = useState<TierItem | null>(null);
+  const tierContainerRef = useRef<HTMLDivElement>(null);
 
   const makePool = useCallback(
     (): TierItem[] => [
@@ -92,7 +101,6 @@ export function TierListTab({ heroes, items, branches }: Props) {
           if (data) {
             try {
               const saved = JSON.parse(data) as Omit<TierState, "pool">;
-              // Re-attach imageUrls from current pool data
               const rehydrate = (arr: TierItem[]): TierItem[] =>
                 arr.map((item) => ({
                   ...item,
@@ -183,11 +191,86 @@ export function TierListTab({ heroes, items, branches }: Props) {
   const resetTierList = async () => {
     const pool = makePool();
     setTiers({ S: [], A: [], B: [], C: [], D: [], pool });
+    setSelectedItem(null);
     if (actor && isLoggedIn) {
       try {
         await actor.deleteMyTierList();
       } catch {}
     }
+  };
+
+  const downloadAsPng = async () => {
+    const CELL = 56;
+    const LABEL_W = 56;
+    const GAP = 4;
+    const PADDING = 8;
+    const ROW_H = CELL + GAP * 2;
+
+    const canvas = document.createElement("canvas");
+    const maxCols = Math.max(...TIER_KEYS.map((k) => tiers[k].length), 1);
+    canvas.width = LABEL_W + PADDING * 2 + maxCols * (CELL + GAP);
+    canvas.height = TIER_KEYS.length * ROW_H + PADDING * 2;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    // Background
+    ctx.fillStyle = "#0f172a";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const loadImage = (url: string): Promise<HTMLImageElement | null> =>
+      new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+        img.src = url;
+      });
+
+    for (let ri = 0; ri < TIER_KEYS.length; ri++) {
+      const tier = TIER_KEYS[ri];
+      const y = PADDING + ri * ROW_H;
+
+      // Tier label box
+      ctx.fillStyle = TIER_HEX[tier];
+      ctx.fillRect(PADDING, y, LABEL_W, ROW_H - GAP);
+      ctx.fillStyle = tier === "B" || tier === "C" ? "#000" : "#fff";
+      ctx.font = "bold 28px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(tier, PADDING + LABEL_W / 2, y + (ROW_H - GAP) / 2);
+
+      // Items
+      for (let ci = 0; ci < tiers[tier].length; ci++) {
+        const item = tiers[tier][ci];
+        const x = PADDING + LABEL_W + GAP + ci * (CELL + GAP);
+        ctx.fillStyle = "#1e293b";
+        ctx.fillRect(x, y, CELL, CELL);
+        if (item.imageUrl) {
+          const img = await loadImage(item.imageUrl);
+          if (img) {
+            ctx.drawImage(img, x, y, CELL, CELL);
+          } else {
+            ctx.fillStyle = "#94a3b8";
+            ctx.font = "11px sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(item.name.slice(0, 6), x + CELL / 2, y + CELL / 2);
+          }
+        } else {
+          ctx.fillStyle = "#94a3b8";
+          ctx.font = "11px sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(item.name.slice(0, 6), x + CELL / 2, y + CELL / 2);
+        }
+      }
+    }
+
+    const a = document.createElement("a");
+    a.href = canvas.toDataURL("image/png");
+    a.download = "tier-list.png";
+    a.click();
+    toast.success("Тир-лист скачан!");
   };
 
   const filteredPool = tiers.pool.filter((i) => i.type === poolTab);
@@ -205,18 +288,40 @@ export function TierListTab({ heroes, items, branches }: Props) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="font-display text-2xl font-bold uppercase tracking-wide text-glow">
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+        <h2
+          className="font-display text-2xl font-bold uppercase tracking-wide"
+          style={{ color: "oklch(0.71 0.16 75)" }}
+        >
           {t("ТИР-ЛИСТ", "TIER LIST")}
         </h2>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={downloadAsPng}
+            className="gap-1 text-xs"
+            style={{
+              border: "1px solid oklch(0.71 0.16 75 / 0.4)",
+              color: "oklch(0.71 0.16 75)",
+            }}
+            data-ocid="tierlist.secondary_button"
+          >
+            <Download size={12} />
+            {t("Скачать", "Download")}
+          </Button>
           <Button
             type="button"
             size="sm"
             variant="outline"
             onClick={resetTierList}
             className="gap-1 text-xs"
-            data-ocid="tierlist.secondary_button"
+            style={{
+              border: "1px solid oklch(0.71 0.16 75 / 0.3)",
+              color: "oklch(0.55 0.02 252)",
+            }}
+            data-ocid="tierlist.delete_button"
           >
             <RotateCcw size={12} />
             {t("Сброс", "Reset")}
@@ -231,7 +336,12 @@ export function TierListTab({ heroes, items, branches }: Props) {
                 ? t("Войдите для сохранения", "Login to save")
                 : t("Сохранить тир-лист", "Save tier list")
             }
-            className="gap-1 text-xs bg-primary hover:bg-primary/80 glow-red"
+            className="gap-1 text-xs"
+            style={{
+              background: "oklch(0.71 0.16 75)",
+              color: "oklch(0.14 0.04 252)",
+              fontWeight: 700,
+            }}
             data-ocid="tierlist.save_button"
           >
             <Save size={12} />
@@ -240,13 +350,13 @@ export function TierListTab({ heroes, items, branches }: Props) {
         </div>
       </div>
 
-      {/* Instructions + selected item indicator */}
+      {/* Instructions */}
       <div className="mb-3 flex items-center gap-3">
         <p className="text-xs text-muted-foreground">
           {selectedItem ? (
             <span style={{ color: "oklch(0.71 0.16 75)" }}>
               ✓ Выбран: <strong>{selectedItem.name}</strong> — нажмите на тир
-              чтобы добавить, или выберите другого
+              чтобы добавить
             </span>
           ) : (
             "Кликните по иконке снизу → затем нажмите на тир чтобы добавить"
@@ -263,7 +373,7 @@ export function TierListTab({ heroes, items, branches }: Props) {
         )}
       </div>
 
-      {/* Tier rows */}
+      {/* Hint box */}
       <div
         className="text-xs mb-3 px-3 py-2 rounded-lg"
         style={{
@@ -272,10 +382,12 @@ export function TierListTab({ heroes, items, branches }: Props) {
           color: "oklch(0.71 0.16 75)",
         }}
       >
-        💡 Нажмите на иконку снизу, затем кликните на строку тира чтобы
-        добавить. Перетаскивание тоже работает.
+        💡 Нажмите иконку снизу, затем строку тира — добавить. Перетаскивание
+        тоже работает.
       </div>
-      <div className="space-y-2 mb-8">
+
+      {/* Tier rows */}
+      <div ref={tierContainerRef} className="space-y-2 mb-8">
         {TIER_KEYS.map((tier) => (
           <TierRow
             key={tier}
@@ -290,18 +402,31 @@ export function TierListTab({ heroes, items, branches }: Props) {
       </div>
 
       {/* Pool */}
-      <div className="bg-card border border-border rounded p-4">
-        <div className="flex gap-0 mb-4 border-b border-border">
+      <div
+        className="rounded-xl p-4"
+        style={{
+          background: "oklch(0.19 0.046 252)",
+          border: "1px solid oklch(0.71 0.16 75 / 0.2)",
+        }}
+      >
+        <div
+          className="flex gap-0 mb-4 border-b"
+          style={{ borderColor: "oklch(0.71 0.16 75 / 0.15)" }}
+        >
           {(["heroes", "items", "branches"] as PoolType[]).map((pt) => (
             <button
               type="button"
               key={pt}
               onClick={() => setPoolTab(pt)}
-              className={`px-4 py-2 text-xs font-bold uppercase tracking-widest border-b-2 transition-colors ${
-                poolTab === pt
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
+              className="px-4 py-2 text-xs font-bold uppercase tracking-widest border-b-2 transition-colors"
+              style={{
+                borderColor:
+                  poolTab === pt ? "oklch(0.71 0.16 75)" : "transparent",
+                color:
+                  poolTab === pt
+                    ? "oklch(0.71 0.16 75)"
+                    : "oklch(0.55 0.02 252)",
+              }}
               data-ocid={`tierlist.${pt}.tab`}
             >
               {pt === "heroes"
@@ -312,7 +437,7 @@ export function TierListTab({ heroes, items, branches }: Props) {
             </button>
           ))}
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2">
           {filteredPool.map((item) => (
             <PoolItem
               key={item.id}
@@ -324,7 +449,7 @@ export function TierListTab({ heroes, items, branches }: Props) {
           ))}
           {filteredPool.length === 0 && (
             <p
-              className="text-xs text-muted-foreground"
+              className="col-span-full text-xs text-muted-foreground"
               data-ocid="tierlist.pool.empty_state"
             >
               {t("Все добавлены в тир", "All placed in tiers")}
@@ -355,13 +480,20 @@ function TierRow({
 
   return (
     <div
-      className={`flex items-stretch min-h-16 border ${
+      className={`flex items-stretch min-h-16 rounded-lg overflow-hidden transition-colors ${
         draggingOver
-          ? "border-primary bg-primary/5"
+          ? "ring-2 ring-primary"
           : hasSelectedItem
-            ? "border-yellow-400/50 cursor-pointer hover:border-yellow-400"
-            : "border-border"
-      } rounded overflow-hidden transition-colors`}
+            ? "cursor-pointer"
+            : ""
+      }`}
+      style={{
+        border: draggingOver
+          ? "1px solid oklch(0.71 0.16 75)"
+          : hasSelectedItem
+            ? "1px solid oklch(0.71 0.16 75 / 0.5)"
+            : "1px solid oklch(0.71 0.16 75 / 0.15)",
+      }}
       onClick={hasSelectedItem ? onRowClick : undefined}
       onKeyDown={
         hasSelectedItem
@@ -389,19 +521,22 @@ function TierRow({
       >
         {tier}
       </div>
-      <div className="flex-1 flex flex-wrap gap-2 p-2 bg-card">
+      <div
+        className="flex-1 flex flex-wrap gap-2 p-2 overflow-hidden"
+        style={{ background: "oklch(0.14 0.04 252)" }}
+      >
         {items.map((item) => (
           <ImageTile
             key={item.id}
             item={item}
             size={56}
             onClick={() => onRemove(item)}
-            title={`${item.name} — click to remove`}
+            title={`${item.name} — нажмите для удаления`}
           />
         ))}
         {items.length === 0 && (
           <span className="text-xs text-muted-foreground/30 italic self-center">
-            drag here
+            перетащи или выбери
           </span>
         )}
       </div>
@@ -427,19 +562,15 @@ function PoolItem({
         e.dataTransfer.setData("item", JSON.stringify(item));
       }}
       onClick={onClick}
-      className="cursor-pointer select-none rounded transition-all"
+      className="cursor-pointer select-none rounded-lg transition-all w-10 h-10 overflow-hidden"
       title={item.name}
       style={
         selected
-          ? {
-              outline: "2px solid oklch(0.71 0.16 75)",
-              outlineOffset: "2px",
-              borderRadius: "6px",
-            }
+          ? { outline: "2px solid oklch(0.71 0.16 75)", outlineOffset: "2px" }
           : {}
       }
     >
-      <ImageTile item={item} size={48} />
+      <ImageTile item={item} size={40} />
     </button>
   );
 }
@@ -456,7 +587,7 @@ function ImageTile({
   title?: string;
 }) {
   const [imgError, setImgError] = useState(false);
-  const sizeClass = size === 56 ? "w-14 h-14" : "w-12 h-12";
+  const dim = size === 56 ? "w-14 h-14" : "w-10 h-10";
 
   const content = (
     <>
@@ -464,17 +595,17 @@ function ImageTile({
         <img
           src={item.imageUrl}
           alt={item.name}
-          className={`${sizeClass} object-cover`}
+          className={`${dim} object-cover`}
           onError={() => setImgError(true)}
         />
       ) : (
         <div
-          className={`${sizeClass} flex items-center justify-center text-xs font-bold uppercase bg-muted text-muted-foreground`}
+          className={`${dim} flex items-center justify-center text-xs font-bold uppercase bg-muted text-muted-foreground`}
         >
           {item.name[0]}
         </div>
       )}
-      <span className="absolute bottom-0 left-0 right-0 bg-black/70 text-[9px] text-white text-center px-0.5 leading-tight py-0.5 truncate opacity-0 group-hover:opacity-100 transition-opacity">
+      <span className="absolute bottom-0 left-0 right-0 bg-black/70 text-[8px] text-white text-center px-0.5 leading-tight py-0.5 truncate opacity-0 group-hover:opacity-100 transition-opacity">
         {item.name}
       </span>
     </>
@@ -486,7 +617,7 @@ function ImageTile({
         type="button"
         onClick={onClick}
         title={title ?? item.name}
-        className={`group relative ${sizeClass} rounded overflow-hidden border border-border hover:border-destructive transition-colors`}
+        className={`group relative ${dim} rounded overflow-hidden border border-border hover:border-destructive transition-colors flex-shrink-0`}
       >
         {content}
       </button>
@@ -496,7 +627,7 @@ function ImageTile({
   return (
     <div
       title={title ?? item.name}
-      className={`group relative ${sizeClass} rounded overflow-hidden border border-border hover:border-primary/50 transition-colors`}
+      className={`group relative ${dim} rounded overflow-hidden border border-border hover:border-primary/50 transition-colors`}
     >
       {content}
     </div>

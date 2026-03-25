@@ -101,6 +101,13 @@ const serviceEntries = {
   'toggleBuildDislike': IDL.Func([IDL.Nat], [BuildVotes], []),
   'getBuildVotes': IDL.Func([IDL.Nat], [BuildVotes], ['query']),
   'getMyVoteOnBuild': IDL.Func([IDL.Nat], [IDL.Opt(IDL.Bool)], ['query']),
+  // Admin moderation
+  'deleteChatMessage': IDL.Func([IDL.Nat], [], []),
+  'clearAllChat': IDL.Func([], [], []),
+  'getAllBuildComments': IDL.Func([], [IDL.Vec(BuildComment)], ['query']),
+  'adminDeleteBuildComment': IDL.Func([IDL.Nat], [], []),
+  'adminDeleteBuild': IDL.Func([IDL.Nat], [], []),
+  'getSiteStats': IDL.Func([], [IDL.Nat, IDL.Nat, IDL.Nat, IDL.Nat, IDL.Nat, IDL.Nat], ['query']),
   // Top lists
   'getTopBuilds': IDL.Func([IDL.Nat], [IDL.Vec(Build)], ['query']),
   'getTopAuthors': IDL.Func([IDL.Nat], [IDL.Vec(TopAuthor)], ['query']),

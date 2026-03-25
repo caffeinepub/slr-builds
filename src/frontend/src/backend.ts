@@ -274,6 +274,13 @@ export interface backendInterface {
     toggleBuildDislike(buildId: bigint): Promise<BuildVotes>;
     getBuildVotes(buildId: bigint): Promise<BuildVotes>;
     getMyVoteOnBuild(buildId: bigint): Promise<boolean | null>;
+    // Admin moderation
+    deleteChatMessage(msgId: bigint): Promise<void>;
+    clearAllChat(): Promise<void>;
+    getAllBuildComments(): Promise<Array<BuildComment>>;
+    adminDeleteBuildComment(commentId: bigint): Promise<void>;
+    adminDeleteBuild(buildId: bigint): Promise<void>;
+    getSiteStats(): Promise<[bigint, bigint, bigint, bigint, bigint, bigint]>;
     // Top lists
     getTopBuilds(limit: bigint): Promise<Array<Build>>;
     getTopAuthors(limit: bigint): Promise<Array<TopAuthor>>;
@@ -983,6 +990,26 @@ export class Backend implements backendInterface {
     }
     async getTopAuthors(limit: bigint): Promise<Array<any>> {
         const result = await (this.actor as any).getTopAuthors(limit);
+        return result;
+    }
+    async deleteChatMessage(msgId: bigint): Promise<void> {
+        await (this.actor as any).deleteChatMessage(msgId);
+    }
+    async clearAllChat(): Promise<void> {
+        await (this.actor as any).clearAllChat();
+    }
+    async getAllBuildComments(): Promise<Array<any>> {
+        const result = await (this.actor as any).getAllBuildComments();
+        return result;
+    }
+    async adminDeleteBuildComment(commentId: bigint): Promise<void> {
+        await (this.actor as any).adminDeleteBuildComment(commentId);
+    }
+    async adminDeleteBuild(buildId: bigint): Promise<void> {
+        await (this.actor as any).adminDeleteBuild(buildId);
+    }
+    async getSiteStats(): Promise<[bigint, bigint, bigint, bigint, bigint, bigint]> {
+        const result = await (this.actor as any).getSiteStats();
         return result;
     }
 }

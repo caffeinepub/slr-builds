@@ -675,38 +675,37 @@ export function HomePage() {
             )}
           </div>
         </div>
-
-        {/* Stats bar */}
-        {heroes.length > 0 && (
-          <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-3 z-10 px-4">
-            {[
-              { icon: "🛡", count: heroes.length, label: "Героев" },
-              { icon: "📦", count: items.length, label: "Предметов" },
-              { icon: "⚔", count: allBuildsRaw.length, label: "Сборок" },
-            ].map((stat) => (
-              <div
-                key={stat.label}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold"
-                style={{
-                  background: "oklch(0.14 0.04 252 / 0.7)",
-                  border: "1px solid oklch(0.71 0.16 75 / 0.5)",
-                  color: "oklch(0.93 0.008 252)",
-                  backdropFilter: "blur(4px)",
-                }}
-              >
-                <span>{stat.icon}</span>
-                <span
-                  style={{ color: "oklch(0.71 0.16 75)" }}
-                  className="font-mono"
-                >
-                  {stat.count}
-                </span>
-                <span className="text-foreground/60">{stat.label}</span>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
+
+      {/* Stats bar — inline, не перекрывает интерфейс */}
+      {heroes.length > 0 && (
+        <div className="flex justify-center gap-2 py-1.5 px-4">
+          {[
+            { icon: "🛡", count: heroes.length, label: "Героев" },
+            { icon: "📦", count: items.length, label: "Предметов" },
+            { icon: "⚔", count: allBuildsRaw.length, label: "Сборок" },
+          ].map((stat) => (
+            <div
+              key={stat.label}
+              className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold"
+              style={{
+                background: "oklch(0.19 0.046 252 / 0.9)",
+                border: "1px solid oklch(0.71 0.16 75 / 0.4)",
+                color: "oklch(0.93 0.008 252)",
+              }}
+            >
+              <span>{stat.icon}</span>
+              <span
+                style={{ color: "oklch(0.71 0.16 75)" }}
+                className="font-mono"
+              >
+                {stat.count}
+              </span>
+              <span className="text-foreground/60">{stat.label}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Description card */}
       <div className="container mx-auto px-4 -mt-2 mb-2">

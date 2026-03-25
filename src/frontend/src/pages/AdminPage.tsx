@@ -8,15 +8,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  BarChart3,
   Database,
   Eye,
   EyeOff,
   Loader2,
   Lock,
+  MessageSquare,
+  Mic,
   Pencil,
   Plus,
+  RefreshCw,
+  Shield,
   Trash2,
   Users,
   X,
@@ -30,7 +36,16 @@ import { useActor } from "../hooks/useActor";
 const ADMIN_AUTH_KEY = "slr_admin_auth";
 const ADMIN_PASSWORD = "garenA11";
 
-type AdminTab = "heroes" | "skills" | "items" | "branches" | "builds" | "users";
+type AdminTab =
+  | "heroes"
+  | "skills"
+  | "items"
+  | "branches"
+  | "builds"
+  | "users"
+  | "chat"
+  | "comments"
+  | "stats";
 
 export function AdminPage() {
   const { t } = useLang();
@@ -69,10 +84,13 @@ export function AdminPage() {
       }
       setSeedStep(1);
       await actor.seedSkillsAndBranches();
+      await new Promise((r) => setTimeout(r, 500));
       setSeedStep(2);
       await actor.seedHeroes();
+      await new Promise((r) => setTimeout(r, 500));
       setSeedStep(3);
       await actor.seedItems();
+      await new Promise((r) => setTimeout(r, 500));
       setSeedStep(4);
       await actor.seedBuilds();
       setSeedStep(0);
@@ -85,7 +103,6 @@ export function AdminPage() {
         ),
       );
       queryClient.invalidateQueries();
-      // Перезагрузить все данные через 500мс чтобы обновить интерфейс
       setTimeout(() => {
         queryClient.refetchQueries({ type: "active" });
       }, 500);
@@ -198,6 +215,9 @@ export function AdminPage() {
             "branches",
             "builds",
             "users",
+            "chat",
+            "comments",
+            "stats",
           ] as AdminTab[]
         ).map((at) => (
           <button
@@ -221,7 +241,13 @@ export function AdminPage() {
                     ? t("Ветки", "Branches")
                     : at === "builds"
                       ? t("Сборки", "Builds")
-                      : t("Пользователи", "Users")}
+                      : at === "users"
+                        ? t("Пользователи", "Users")
+                        : at === "chat"
+                          ? t("Чат", "Chat")
+                          : at === "comments"
+                            ? t("Комментарии", "Comments")
+                            : t("Статистика", "Stats")}
           </button>
         ))}
       </div>
@@ -232,6 +258,9 @@ export function AdminPage() {
       {tab === "branches" && <BranchesPanel />}
       {tab === "builds" && <BuildsPanel />}
       {tab === "users" && <UsersPanel />}
+      {tab === "chat" && <ChatModerationPanel />}
+      {tab === "comments" && <CommentsModerationPanel />}
+      {tab === "stats" && <StatsPanel />}
     </div>
   );
 }
@@ -642,6 +671,23 @@ function SkillsPanel() {
   );
 }
 
+interface ItemMeta {
+  description: string;
+  tip: string;
+}
+
+function getItemMeta(id: bigint): ItemMeta {
+  try {
+    const raw = localStorage.getItem(`slr_item_meta_${id}`);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return { description: "", tip: "" };
+}
+
+function saveItemMeta(id: bigint, meta: ItemMeta) {
+  localStorage.setItem(`slr_item_meta_${id}`, JSON.stringify(meta));
+}
+
 function ItemsPanel() {
   const { t } = useLang();
   const { actor } = useActor();
@@ -651,6 +697,8 @@ function ItemsPanel() {
   const [editingId, setEditingId] = useState<bigint | null>(null);
   const [editName, setEditName] = useState("");
   const [editImageUrl, setEditImageUrl] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editTip, setEditTip] = useState("");
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["items"],
@@ -689,6 +737,18 @@ function ItemsPanel() {
     setEditingId(item.id);
     setEditName(item.name);
     setEditImageUrl(item.imageUrl);
+    const meta = getItemMeta(item.id);
+    setEditDescription(meta.description);
+    setEditTip(meta.tip);
+  };
+
+  const handleSave = (item: Item) => {
+    saveItemMeta(item.id, { description: editDescription, tip: editTip });
+    updateMutation.mutate({
+      id: item.id,
+      name: editName,
+      imageUrl: editImageUrl,
+    });
   };
 
   return (
@@ -733,31 +793,64 @@ function ItemsPanel() {
               className="bg-secondary border border-border rounded"
             >
               {editingId === item.id ? (
-                <div className="p-3 grid grid-cols-1 md:grid-cols-3 gap-2">
-                  <Input
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    className="bg-card border-primary/40"
-                    placeholder={t("Имя", "Name")}
-                  />
-                  <Input
-                    value={editImageUrl}
-                    onChange={(e) => setEditImageUrl(e.target.value)}
-                    className="bg-card border-primary/40"
-                    placeholder="Image URL"
-                  />
+                <div className="p-3 space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-xs uppercase text-muted-foreground">
+                        {t("Имя", "Name")}
+                      </Label>
+                      <Input
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        className="mt-1 bg-card border-primary/40"
+                        placeholder={t("Имя", "Name")}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs uppercase text-muted-foreground">
+                        Image URL
+                      </Label>
+                      <Input
+                        value={editImageUrl}
+                        onChange={(e) => setEditImageUrl(e.target.value)}
+                        className="mt-1 bg-card border-primary/40"
+                        placeholder="Image URL"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-xs uppercase text-muted-foreground">
+                      {t("Описание", "Description")}
+                    </Label>
+                    <Textarea
+                      value={editDescription}
+                      onChange={(e) => setEditDescription(e.target.value)}
+                      className="mt-1 bg-card border-primary/40 resize-none"
+                      rows={2}
+                      placeholder={t(
+                        "Описание предмета...",
+                        "Item description...",
+                      )}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs uppercase text-muted-foreground">
+                      {t("Совет по использованию", "Usage tip")}
+                    </Label>
+                    <Textarea
+                      value={editTip}
+                      onChange={(e) => setEditTip(e.target.value)}
+                      className="mt-1 bg-card border-primary/40 resize-none"
+                      rows={2}
+                      placeholder={t("Совет...", "Tip...")}
+                    />
+                  </div>
                   <div className="flex gap-2">
                     <Button
                       size="sm"
                       className="bg-primary hover:bg-primary/80 flex-1"
                       disabled={updateMutation.isPending}
-                      onClick={() =>
-                        updateMutation.mutate({
-                          id: item.id,
-                          name: editName,
-                          imageUrl: editImageUrl,
-                        })
-                      }
+                      onClick={() => handleSave(item)}
                     >
                       {t("Сохранить", "Save")}
                     </Button>
@@ -773,7 +866,29 @@ function ItemsPanel() {
                 </div>
               ) : (
                 <div className="flex items-center justify-between p-3">
-                  <span className="font-bold">{item.name}</span>
+                  <div className="flex items-center gap-3">
+                    {item.imageUrl && (
+                      <img
+                        src={item.imageUrl}
+                        alt={item.name}
+                        className="w-8 h-8 rounded object-cover flex-shrink-0"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = "none";
+                        }}
+                      />
+                    )}
+                    <div>
+                      <span className="font-bold">{item.name}</span>
+                      {(() => {
+                        const meta = getItemMeta(item.id);
+                        return meta.description ? (
+                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                            {meta.description}
+                          </p>
+                        ) : null;
+                      })()}
+                    </div>
+                  </div>
                   <div className="flex gap-1">
                     <Button
                       size="icon"
@@ -1121,6 +1236,387 @@ function UsersPanel() {
                       Number(user.registeredAt) / 1_000_000,
                     ).toLocaleDateString()
                   : "—"}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ChatModerationPanel() {
+  const { t } = useLang();
+  const { actor } = useActor();
+  const actorAny = actor as any;
+  const queryClient = useQueryClient();
+
+  const {
+    data: messages = [],
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ["adminChatMessages"],
+    queryFn: async () => {
+      if (typeof actorAny.getChatMessages !== "function") return [];
+      return actorAny.getChatMessages();
+    },
+    enabled: !!actor,
+    refetchInterval: 15000,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: bigint) => actorAny.deleteChatMessage(id),
+    onSuccess: () => {
+      toast.success(t("Сообщение удалено", "Message deleted"));
+      queryClient.invalidateQueries({ queryKey: ["adminChatMessages"] });
+    },
+    onError: () => toast.error(t("Ошибка удаления", "Delete error")),
+  });
+
+  const clearMutation = useMutation({
+    mutationFn: () => actorAny.clearAllChat(),
+    onSuccess: () => {
+      toast.success(t("Чат очищен", "Chat cleared"));
+      queryClient.invalidateQueries({ queryKey: ["adminChatMessages"] });
+    },
+    onError: () => toast.error(t("Ошибка очистки", "Clear error")),
+  });
+
+  const handleClear = () => {
+    if (
+      window.confirm(
+        t(
+          "Очистить весь чат? Это действие необратимо.",
+          "Clear all chat? This cannot be undone.",
+        ),
+      )
+    ) {
+      clearMutation.mutate();
+    }
+  };
+
+  const formatTime = (ts: bigint) => {
+    try {
+      return new Date(Number(ts) / 1_000_000).toLocaleString("ru-RU");
+    } catch {
+      return "—";
+    }
+  };
+
+  return (
+    <div className="space-y-4" data-ocid="admin.chat.panel">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Shield size={16} className="text-primary" />
+          <h3 className="font-bold text-sm uppercase tracking-widest text-primary">
+            {t("Модерация чата", "Chat Moderation")} ({messages.length})
+          </h3>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1 border-border text-muted-foreground hover:text-foreground"
+            onClick={() => refetch()}
+            disabled={isLoading}
+          >
+            <RefreshCw size={13} className={isLoading ? "animate-spin" : ""} />
+            {t("Обновить", "Refresh")}
+          </Button>
+          <Button
+            size="sm"
+            variant="destructive"
+            className="gap-1"
+            onClick={handleClear}
+            disabled={clearMutation.isPending || messages.length === 0}
+            data-ocid="admin.chat.delete_button"
+          >
+            <Trash2 size={13} />
+            {t("Очистить весь чат", "Clear all chat")}
+          </Button>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="flex justify-center py-8">
+          <Loader2 className="animate-spin text-primary" />
+        </div>
+      ) : messages.length === 0 ? (
+        <div
+          className="text-center py-12 text-muted-foreground"
+          data-ocid="admin.chat.empty_state"
+        >
+          <MessageSquare size={32} className="mx-auto mb-2 opacity-30" />
+          <p className="text-sm">{t("Чат пуст", "Chat is empty")}</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {(messages as any[]).map((msg: any, idx: number) => (
+            <div
+              key={msg.id?.toString() ?? idx}
+              className="flex items-start justify-between p-3 bg-secondary border border-border rounded gap-3"
+              data-ocid={`admin.chat.item.${idx + 1}`}
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-bold text-sm text-primary truncate">
+                    {msg.authorName || t("Аноним", "Anonymous")}
+                  </span>
+                  <span className="text-xs text-muted-foreground flex-shrink-0">
+                    {formatTime(msg.createdAt)}
+                  </span>
+                </div>
+                <p className="text-sm text-foreground/80 truncate">
+                  {String(msg.text ?? "").startsWith("VOICE:") ? (
+                    <span className="flex items-center gap-1 text-muted-foreground">
+                      <Mic size={12} />{" "}
+                      {t("Голосовое сообщение", "Voice message")}
+                    </span>
+                  ) : (
+                    msg.text
+                  )}
+                </p>
+              </div>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7 text-destructive flex-shrink-0"
+                onClick={() => deleteMutation.mutate(BigInt(msg.id))}
+                disabled={deleteMutation.isPending}
+                data-ocid="admin.chat.delete_button"
+              >
+                <Trash2 size={14} />
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CommentsModerationPanel() {
+  const { t } = useLang();
+  const { actor } = useActor();
+  const actorAny = actor as any;
+  const queryClient = useQueryClient();
+  const [search, setSearch] = useState("");
+
+  const {
+    data: comments = [],
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ["adminAllComments"],
+    queryFn: async () => {
+      if (typeof actorAny.getAllBuildComments !== "function") return [];
+      return actorAny.getAllBuildComments();
+    },
+    enabled: !!actor,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: bigint) => actorAny.adminDeleteBuildComment(id),
+    onSuccess: () => {
+      toast.success(t("Комментарий удалён", "Comment deleted"));
+      queryClient.invalidateQueries({ queryKey: ["adminAllComments"] });
+    },
+    onError: () => toast.error(t("Ошибка удаления", "Delete error")),
+  });
+
+  const filtered = (comments as any[]).filter((c: any) => {
+    if (!search.trim()) return true;
+    return String(c.authorName ?? "")
+      .toLowerCase()
+      .includes(search.toLowerCase());
+  });
+
+  const formatTime = (ts: bigint) => {
+    try {
+      return new Date(Number(ts) / 1_000_000).toLocaleString("ru-RU");
+    } catch {
+      return "—";
+    }
+  };
+
+  return (
+    <div className="space-y-4" data-ocid="admin.comments.panel">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <MessageSquare size={16} className="text-primary" />
+          <h3 className="font-bold text-sm uppercase tracking-widest text-primary">
+            {t("Модерация комментариев", "Comments Moderation")} (
+            {comments.length})
+          </h3>
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          className="gap-1 border-border text-muted-foreground hover:text-foreground"
+          onClick={() => refetch()}
+          disabled={isLoading}
+        >
+          <RefreshCw size={13} className={isLoading ? "animate-spin" : ""} />
+          {t("Обновить", "Refresh")}
+        </Button>
+      </div>
+
+      <Input
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder={t("Поиск по автору...", "Search by author...")}
+        className="bg-secondary border-border"
+        data-ocid="admin.comments.search_input"
+      />
+
+      {isLoading ? (
+        <div className="flex justify-center py-8">
+          <Loader2 className="animate-spin text-primary" />
+        </div>
+      ) : filtered.length === 0 ? (
+        <div
+          className="text-center py-12 text-muted-foreground"
+          data-ocid="admin.comments.empty_state"
+        >
+          <MessageSquare size={32} className="mx-auto mb-2 opacity-30" />
+          <p className="text-sm">
+            {search
+              ? t("Ничего не найдено", "Nothing found")
+              : t("Комментариев нет", "No comments")}
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {filtered.map((comment: any, idx: number) => (
+            <div
+              key={comment.id?.toString() ?? idx}
+              className="flex items-start justify-between p-3 bg-secondary border border-border rounded gap-3"
+              data-ocid={`admin.comments.item.${idx + 1}`}
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <span className="font-bold text-sm text-primary">
+                    {comment.authorName || t("Аноним", "Anonymous")}
+                  </span>
+                  <span className="text-xs text-muted-foreground bg-card px-1.5 py-0.5 rounded">
+                    {t("Сборка", "Build")} #{comment.buildId?.toString() ?? "?"}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {formatTime(comment.createdAt)}
+                  </span>
+                </div>
+                <p className="text-sm text-foreground/80 truncate">
+                  {String(comment.text ?? "").startsWith("VOICE:") ? (
+                    <span className="flex items-center gap-1 text-muted-foreground">
+                      <Mic size={12} />{" "}
+                      {t("Голосовой комментарий", "Voice comment")}
+                    </span>
+                  ) : (
+                    comment.text
+                  )}
+                </p>
+              </div>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7 text-destructive flex-shrink-0"
+                onClick={() => deleteMutation.mutate(BigInt(comment.id))}
+                disabled={deleteMutation.isPending}
+                data-ocid="admin.comments.delete_button"
+              >
+                <Trash2 size={14} />
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StatsPanel() {
+  const { t } = useLang();
+  const { actor } = useActor();
+  const actorAny = actor as any;
+
+  const {
+    data: stats,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ["siteStats"],
+    queryFn: async (): Promise<
+      [bigint, bigint, bigint, bigint, bigint, bigint]
+    > => {
+      if (typeof actorAny.getSiteStats !== "function") {
+        return [0n, 0n, 0n, 0n, 0n, 0n];
+      }
+      return actorAny.getSiteStats();
+    },
+    enabled: !!actor,
+    refetchInterval: 30000,
+  });
+
+  const statCards = [
+    { icon: "🦸", label: t("Героев", "Heroes"), value: stats?.[0] ?? 0n },
+    { icon: "🎒", label: t("Предметов", "Items"), value: stats?.[1] ?? 0n },
+    {
+      icon: "⚔️",
+      label: t("Публичных сборок", "Public builds"),
+      value: stats?.[2] ?? 0n,
+    },
+    { icon: "👤", label: t("Пользователей", "Users"), value: stats?.[3] ?? 0n },
+    {
+      icon: "💬",
+      label: t("Комментариев", "Comments"),
+      value: stats?.[4] ?? 0n,
+    },
+    {
+      icon: "📨",
+      label: t("Сообщений в чате", "Chat messages"),
+      value: stats?.[5] ?? 0n,
+    },
+  ];
+
+  return (
+    <div className="space-y-6" data-ocid="admin.stats.panel">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <BarChart3 size={16} className="text-primary" />
+          <h3 className="font-bold text-sm uppercase tracking-widest text-primary">
+            {t("Статистика сайта", "Site Statistics")}
+          </h3>
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          className="gap-1 border-border text-muted-foreground hover:text-foreground"
+          onClick={() => refetch()}
+          disabled={isLoading}
+        >
+          <RefreshCw size={13} className={isLoading ? "animate-spin" : ""} />
+          {t("Обновить", "Refresh")}
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <div className="flex justify-center py-8">
+          <Loader2 className="animate-spin text-primary" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {statCards.map((card) => (
+            <div
+              key={card.label}
+              className="bg-card border border-border rounded-lg p-5 flex flex-col items-center gap-2 hover:border-primary/50 transition-colors"
+            >
+              <span className="text-3xl">{card.icon}</span>
+              <span className="text-3xl font-bold text-primary font-mono">
+                {String(card.value)}
+              </span>
+              <span className="text-xs text-muted-foreground uppercase tracking-wider text-center">
+                {card.label}
               </span>
             </div>
           ))}

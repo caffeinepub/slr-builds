@@ -92,7 +92,13 @@ export interface _SERVICE {
   'toggleBuildDislike': ActorMethod<[bigint], BuildVotes>,
   'getBuildVotes': ActorMethod<[bigint], BuildVotes>,
   'getMyVoteOnBuild': ActorMethod<[bigint], [] | [boolean]>,
-  'getTopBuilds': ActorMethod<[bigint], Array<Build>>,
+  'deleteChatMessage': ActorMethod<[bigint], undefined>,
+  'clearAllChat': ActorMethod<[], undefined>,
+  'getAllBuildComments': ActorMethod<[], Array<BuildComment>>,
+  'adminDeleteBuildComment': ActorMethod<[bigint], undefined>,
+  'adminDeleteBuild': ActorMethod<[bigint], undefined>,
+  'getSiteStats': ActorMethod<[], [bigint, bigint, bigint, bigint, bigint, bigint]>,
+    'getTopBuilds': ActorMethod<[bigint], Array<Build>>,
   'getTopAuthors': ActorMethod<[bigint], Array<TopAuthor>>,
 }
 export declare const idlService: IDL.ServiceClass;

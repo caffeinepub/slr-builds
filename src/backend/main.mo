@@ -1055,4 +1055,41 @@ actor {
     await seedItems();
     await seedBuilds();
   };
+  /// Admin: delete a specific chat message by id
+  public shared func deleteChatMessage(msgId : Nat) : async () {
+    chatStore.remove(msgId);
+  };
+
+  /// Admin: clear all chat messages
+  public shared func clearAllChat() : async () {
+    chatStore.clear();
+  };
+
+  /// Admin: get all build comments (for moderation)
+  public query func getAllBuildComments() : async [BuildComment] {
+    commentStore.values().toArray().sort(func(a, b) { Nat.compare(b.id, a.id) });
+  };
+
+  /// Admin: delete any build comment by id (no ownership check)
+  public shared func adminDeleteBuildComment(commentId : Nat) : async () {
+    commentStore.remove(commentId);
+  };
+
+  /// Admin: delete any build by id (no ownership check)
+  public shared func adminDeleteBuild(buildId : Nat) : async () {
+    buildStore.remove(buildId);
+  };
+
+  /// Stats for admin dashboard
+  public query func getSiteStats() : async (Nat, Nat, Nat, Nat, Nat, Nat) {
+    let heroCount = heroStore.size();
+    let itemCount = itemStore.size();
+    let buildCount = buildStore.values().toArray().filter(func(b) { b.isPublic }).size();
+    let userCount = userProfiles.size();
+    let commentCount = commentStore.size();
+    let chatCount = chatStore.size();
+    (heroCount, itemCount, buildCount, userCount, commentCount, chatCount);
+  };
+
+
 };

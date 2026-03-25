@@ -334,7 +334,7 @@ export function BuildCard({
               <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
                 {t("Герои", "Heroes")}
               </div>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-1.5 overflow-hidden">
                 {buildHeroes.map((h) => (
                   <span
                     key={h.id.toString()}
