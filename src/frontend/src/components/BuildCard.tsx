@@ -67,7 +67,7 @@ export function BuildCard({
   const { data: profile } = useQuery({
     queryKey: ["callerProfile"],
     queryFn: () => actor!.getCallerUserProfile(),
-    enabled: !!actor,
+    enabled: !!actor && !!identity,
   });
 
   const shortPrincipal = identity

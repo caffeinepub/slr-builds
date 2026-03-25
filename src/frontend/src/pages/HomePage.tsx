@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Crown, Loader2, Plus, Star, Swords, Video } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Build, Skill, TopAuthor } from "../backend";
 import { BuildCard } from "../components/BuildCard";
 import { TierListTab } from "../components/TierListTab";
@@ -66,7 +66,7 @@ export function HomePage() {
     enabled: !!actor,
   });
 
-  const { data: topBuilds = [] } = useQuery<Build[]>({
+  const { data: topBuildsRaw = [] } = useQuery<Build[]>({
     queryKey: ["topBuilds"],
     queryFn: () => actor!.getTopBuilds(5n),
     enabled: !!actor,
@@ -78,23 +78,23 @@ export function HomePage() {
     enabled: !!actor,
   });
 
-  const seedMutation = useMutation({
-    mutationFn: () => actor!.seedTestData(),
-    onSuccess: () => {
-      queryClient.invalidateQueries();
-    },
-  });
-
-  const doSeed = useCallback(() => {
-    seedMutation.mutate();
-  }, [seedMutation.mutate]);
+  // Fallback: if no liked builds yet, show first 5 builds
+  const topBuilds = topBuildsRaw.length > 0 ? topBuildsRaw : builds.slice(0, 5);
 
   useEffect(() => {
     if (actor && !seeded.current && heroes.length === 0 && !heroesLoading) {
       seeded.current = true;
-      doSeed();
+      actor
+        .seedTestData()
+        .then(() => {
+          queryClient.invalidateQueries();
+        })
+        .catch((err) => {
+          console.error("Auto-seed failed:", err);
+          seeded.current = false; // allow retry
+        });
     }
-  }, [actor, heroes.length, heroesLoading, doSeed]);
+  }, [actor, heroes.length, heroesLoading, queryClient]);
 
   const toggleSkill = (id: bigint) => {
     setSelectedSkills((prev) =>
@@ -178,7 +178,7 @@ export function HomePage() {
         {tab === "builds" && (
           <div>
             {/* Top Builds and Top Authors */}
-            {(topBuilds.length > 0 || topAuthors.length > 0) && (
+            {(builds.length > 0 || topAuthors.length > 0) && (
               <div className="mb-8 space-y-4">
                 {topBuilds.length > 0 && (
                   <div>
@@ -269,7 +269,7 @@ export function HomePage() {
               </div>
             </div>
 
-            {buildsLoading || seedMutation.isPending ? (
+            {buildsLoading ? (
               <div
                 className="flex justify-center py-20"
                 data-ocid="builds.loading_state"
