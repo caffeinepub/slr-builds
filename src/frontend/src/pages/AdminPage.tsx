@@ -429,9 +429,19 @@ function HeroesPanel() {
                 </div>
               ) : (
                 <div className="flex items-center justify-between p-3">
-                  <div>
+                  <div className="flex items-center gap-2">
+                    {h.imageUrl && (
+                      <img
+                        src={h.imageUrl}
+                        alt={h.name}
+                        className="w-8 h-8 rounded object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = "none";
+                        }}
+                      />
+                    )}
                     <span className="font-bold">{h.name}</span>
-                    <span className="ml-2 text-xs text-muted-foreground">
+                    <span className="ml-1 text-xs text-muted-foreground">
                       Tier: {h.tier}
                     </span>
                   </div>
