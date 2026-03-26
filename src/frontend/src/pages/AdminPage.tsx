@@ -1324,6 +1324,7 @@ function BuildsPanel() {
   const { t } = useLang();
   const { actor } = useActor();
   const queryClient = useQueryClient();
+  const [seedStep, setSeedStep] = useState(0);
 
   const { data: builds = [], isLoading } = useQuery({
     queryKey: ["publicBuilds"],
@@ -1348,8 +1349,125 @@ function BuildsPanel() {
     },
   });
 
+  const deleteAllMutation = useMutation({
+    mutationFn: async () => {
+      if (!actor) throw new Error("Актор не загружен");
+      await actor.deleteAllBuilds();
+    },
+    onSuccess: () => {
+      toast.success("Все сборки удалены");
+      queryClient.invalidateQueries({ queryKey: ["publicBuilds"] });
+      queryClient.invalidateQueries({ queryKey: ["builds"] });
+    },
+    onError: (err) => {
+      toast.error(`Ошибка: ${String(err).slice(0, 80)}`);
+    },
+  });
+
+  const loadFromSayGGMutation = useMutation({
+    mutationFn: async () => {
+      if (!actor) throw new Error("Актор не загружен");
+      setSeedStep(1);
+      await actor.seedSkillsAndBranches();
+      await new Promise((r) => setTimeout(r, 600));
+      setSeedStep(2);
+      await actor.seedHeroes();
+      await new Promise((r) => setTimeout(r, 600));
+      setSeedStep(3);
+      await actor.seedItemsA();
+      await new Promise((r) => setTimeout(r, 600));
+      setSeedStep(4);
+      await actor.seedItemsB();
+      await new Promise((r) => setTimeout(r, 600));
+      setSeedStep(5);
+      await actor.seedBuildsA();
+      await new Promise((r) => setTimeout(r, 600));
+      setSeedStep(6);
+      await actor.seedBuildsB();
+      setSeedStep(0);
+    },
+    onSuccess: () => {
+      toast.success(
+        "Контент say-gg.ru загружен: 42 сборки, 65 героев, 99 предметов",
+      );
+      queryClient.invalidateQueries();
+      setTimeout(() => queryClient.refetchQueries({ type: "active" }), 500);
+    },
+    onError: (err) => {
+      setSeedStep(0);
+      toast.error(`Ошибка загрузки: ${String(err).slice(0, 80)}`);
+    },
+  });
+
+  const seedStepLabel =
+    seedStep === 1
+      ? "Шаг 1/6: Навыки..."
+      : seedStep === 2
+        ? "Шаг 2/6: Герои..."
+        : seedStep === 3
+          ? "Шаг 3/6: Предметы (1/2)..."
+          : seedStep === 4
+            ? "Шаг 4/6: Предметы (2/2)..."
+            : seedStep === 5
+              ? "Шаг 5/6: Сборки (1/2)..."
+              : seedStep === 6
+                ? "Шаг 6/6: Сборки (2/2)..."
+                : "Загрузка...";
+
   return (
-    <div>
+    <div className="space-y-4">
+      {/* Action buttons */}
+      <div className="flex flex-wrap gap-2 pb-3 border-b border-border">
+        <Button
+          size="sm"
+          variant="outline"
+          className="gap-2 border-primary/50 text-primary hover:bg-primary/10"
+          disabled={!actor || loadFromSayGGMutation.isPending}
+          onClick={() => loadFromSayGGMutation.mutate()}
+        >
+          {loadFromSayGGMutation.isPending ? (
+            <>
+              <Loader2 className="animate-spin" size={13} />
+              {seedStepLabel}
+            </>
+          ) : (
+            <>
+              <Database size={13} />
+              Загрузить с say-gg.ru
+            </>
+          )}
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="gap-2 border-destructive/60 text-destructive hover:bg-destructive/10"
+          disabled={
+            !actor || deleteAllMutation.isPending || builds.length === 0
+          }
+          onClick={() => {
+            if (
+              window.confirm(
+                `Удалить все ${builds.length} сборок? Это действие необратимо.`,
+              )
+            ) {
+              deleteAllMutation.mutate();
+            }
+          }}
+        >
+          {deleteAllMutation.isPending ? (
+            <>
+              <Loader2 className="animate-spin" size={13} />
+              Удаление...
+            </>
+          ) : (
+            <>
+              <Trash2 size={13} />
+              Удалить все сборки ({builds.length})
+            </>
+          )}
+        </Button>
+      </div>
+
       {isLoading ? (
         <Loader2 className="animate-spin text-primary" size={20} />
       ) : builds.length === 0 ? (

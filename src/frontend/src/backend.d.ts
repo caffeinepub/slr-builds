@@ -108,6 +108,7 @@ export interface backendInterface {
     createRecordedBuild(recordedBuild: RecordedBuild): Promise<bigint>;
     deleteAllTierLists(): Promise<void>;
     deleteBranch(branchId: bigint): Promise<void>;
+    deleteAllBuilds(): Promise<void>;
     deleteBuildById(buildId: bigint): Promise<void>;
     deleteHero(heroId: bigint): Promise<void>;
     deleteItem(itemId: bigint): Promise<void>;

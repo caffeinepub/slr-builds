@@ -208,6 +208,7 @@ export interface backendInterface {
     createRecordedBuild(recordedBuild: RecordedBuild): Promise<bigint>;
     deleteAllTierLists(): Promise<void>;
     deleteBranch(branchId: bigint): Promise<void>;
+    deleteAllBuilds(): Promise<void>;
     deleteBuildById(buildId: bigint): Promise<void>;
     deleteHero(heroId: bigint): Promise<void>;
     deleteItem(itemId: bigint): Promise<void>;
@@ -443,6 +444,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.deleteBranch(arg0);
+            return result;
+        }
+    }
+    async deleteAllBuilds(): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteAllBuilds();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error('unreachable');
+            }
+        } else {
+            const result = await this.actor.deleteAllBuilds();
             return result;
         }
     }

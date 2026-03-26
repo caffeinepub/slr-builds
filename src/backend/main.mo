@@ -575,6 +575,10 @@ actor {
     buildStore.remove(buildId);
   };
 
+  public shared func deleteAllBuilds() : async () {
+    buildStore.clear();
+  };
+
   public query func getPublicBuilds() : async [Build] {
     buildStore.values().toArray().filter(func(b) { b.isPublic }).sort(func(a, b) { Nat.compare(a.id, b.id) });
   };
