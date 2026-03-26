@@ -215,32 +215,34 @@ export function AdminPage() {
         </div>
         <div className="flex gap-2 flex-wrap">
           <Button
-            onClick={() => seedMutation.mutate()}
-            disabled={seedMutation.isPending || !actor}
+            onClick={() => actor && seedMutation.mutate()}
+            disabled={seedMutation.isPending}
             variant="outline"
             className="gap-2 border-primary/50 text-primary hover:bg-primary/10 text-sm"
             data-ocid="admin.primary_button"
           >
-            {seedMutation.isPending ? (
+            {seedMutation.isPending || !actor ? (
               <Loader2 className="animate-spin" size={13} />
             ) : (
               <Database size={13} />
             )}
-            {seedMutation.isPending
-              ? seedStep === 1
-                ? "Шаг 1/6: Навыки..."
-                : seedStep === 2
-                  ? "Шаг 2/6: Герои..."
-                  : seedStep === 3
-                    ? "Шаг 3/6: Предметы (1/2)..."
-                    : seedStep === 4
-                      ? "Шаг 4/6: Предметы (2/2)..."
-                      : seedStep === 5
-                        ? "Шаг 5/6: Сборки (1/2)..."
-                        : seedStep === 6
-                          ? "Шаг 6/6: Сборки (2/2)..."
-                          : "Загрузка..."
-              : "Загрузить тест данные"}
+            {!actor
+              ? "Подключение..."
+              : seedMutation.isPending
+                ? seedStep === 1
+                  ? "Шаг 1/6: Навыки..."
+                  : seedStep === 2
+                    ? "Шаг 2/6: Герои..."
+                    : seedStep === 3
+                      ? "Шаг 3/6: Предметы (1/2)..."
+                      : seedStep === 4
+                        ? "Шаг 4/6: Предметы (2/2)..."
+                        : seedStep === 5
+                          ? "Шаг 5/6: Сборки (1/2)..."
+                          : seedStep === 6
+                            ? "Шаг 6/6: Сборки (2/2)..."
+                            : "Загрузка..."
+                : "Загрузить тест данные"}
           </Button>
           <Button
             onClick={handleLogout}

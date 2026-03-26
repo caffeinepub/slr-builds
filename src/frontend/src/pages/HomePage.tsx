@@ -136,8 +136,13 @@ export function HomePage() {
       try {
         await actor.seedSkillsAndBranches();
         await actor.seedHeroes();
-        await actor.seedItems();
-        await actor.seedBuilds();
+        await actor.seedItemsA();
+        await new Promise((r) => setTimeout(r, 500));
+        await actor.seedItemsB();
+        await new Promise((r) => setTimeout(r, 500));
+        await actor.seedBuildsA();
+        await new Promise((r) => setTimeout(r, 500));
+        await actor.seedBuildsB();
         queryClient.invalidateQueries();
       } catch (err) {
         console.error("Auto-seed failed:", err);
