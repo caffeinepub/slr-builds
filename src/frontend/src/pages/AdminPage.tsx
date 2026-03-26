@@ -88,7 +88,9 @@ export function AdminPage() {
   const seedMutation = useMutation({
     mutationFn: async () => {
       if (!actor) {
-        throw new Error("Актор не загружен");
+        throw new Error(
+          "Бэкенд ещё загружается, подождите секунду и попробуйте снова",
+        );
       }
       setSeedStep(1);
       await actor.seedSkillsAndBranches();
@@ -131,20 +133,18 @@ export function AdminPage() {
 
   if (!isAuthed) {
     return (
-      <div className="flex items-center justify-center min-h-[70vh]">
+      <div className="flex items-center justify-center min-h-[70vh] bg-black">
         <div
-          className="w-full max-w-sm p-8 bg-black border border-primary/60"
-          style={{ boxShadow: "0 0 30px rgba(220,38,38,0.3)" }}
+          className="w-full max-w-sm p-8 bg-black border border-yellow-600/60 rounded"
+          style={{ boxShadow: "0 0 40px rgba(212,168,67,0.15)" }}
         >
           <div className="flex items-center gap-3 mb-6">
-            <Lock className="text-primary" size={20} />
-            <h2 className="font-display text-xl font-bold uppercase tracking-widest text-primary">
-              {t("ВХОД В АДМИНКУ", "ADMIN ACCESS")}
+            <Lock className="text-yellow-400" size={20} />
+            <h2 className="font-display text-xl font-bold uppercase tracking-widest text-yellow-400">
+              ВХОД В АДМИНКУ
             </h2>
           </div>
-          <Label className="text-xs uppercase text-muted-foreground">
-            {t("Пароль", "Password")}
-          </Label>
+          <Label className="text-xs uppercase text-yellow-600/80">Пароль</Label>
           <Input
             type="password"
             value={pwInput}
@@ -153,24 +153,24 @@ export function AdminPage() {
               setPwError(false);
             }}
             onKeyDown={(e) => e.key === "Enter" && handlePwSubmit()}
-            className="mt-2 mb-1 bg-secondary border-primary/40 focus:border-primary"
+            className="mt-2 mb-1 bg-zinc-900 border-yellow-700/50 focus:border-yellow-500 text-white"
             placeholder="••••••••"
             data-ocid="admin.input"
           />
           {pwError && (
             <p
-              className="text-xs text-destructive mb-3"
+              className="text-xs text-red-400 mb-3"
               data-ocid="admin.error_state"
             >
-              {t("Неверный пароль", "Wrong password")}
+              Неверный пароль
             </p>
           )}
           <Button
             onClick={handlePwSubmit}
-            className="w-full mt-3 bg-primary hover:bg-primary/80 font-bold uppercase tracking-widest glow-red"
+            className="w-full mt-3 bg-yellow-600 hover:bg-yellow-500 text-black font-bold uppercase tracking-widest"
             data-ocid="admin.submit_button"
           >
-            {t("Войти в панель", "Enter Panel")}
+            Войти в панель
           </Button>
         </div>
       </div>
@@ -215,40 +215,37 @@ export function AdminPage() {
         </div>
         <div className="flex gap-2 flex-wrap">
           <Button
-            onClick={() => actor && seedMutation.mutate()}
-            disabled={seedMutation.isPending}
+            onClick={() => seedMutation.mutate()}
             variant="outline"
             className="gap-2 border-primary/50 text-primary hover:bg-primary/10 text-sm"
             data-ocid="admin.primary_button"
           >
-            {seedMutation.isPending || !actor ? (
+            {seedMutation.isPending ? (
               <Loader2 className="animate-spin" size={13} />
             ) : (
               <Database size={13} />
             )}
-            {!actor
-              ? "Подключение..."
-              : seedMutation.isPending
-                ? seedStep === 1
-                  ? "Шаг 1/6: Навыки..."
-                  : seedStep === 2
-                    ? "Шаг 2/6: Герои..."
-                    : seedStep === 3
-                      ? "Шаг 3/6: Предметы (1/2)..."
-                      : seedStep === 4
-                        ? "Шаг 4/6: Предметы (2/2)..."
-                        : seedStep === 5
-                          ? "Шаг 5/6: Сборки (1/2)..."
-                          : seedStep === 6
-                            ? "Шаг 6/6: Сборки (2/2)..."
-                            : "Загрузка..."
-                : "Загрузить тест данные"}
+            {seedMutation.isPending
+              ? seedStep === 1
+                ? "Шаг 1/6: Навыки..."
+                : seedStep === 2
+                  ? "Шаг 2/6: Герои..."
+                  : seedStep === 3
+                    ? "Шаг 3/6: Предметы (1/2)..."
+                    : seedStep === 4
+                      ? "Шаг 4/6: Предметы (2/2)..."
+                      : seedStep === 5
+                        ? "Шаг 5/6: Сборки (1/2)..."
+                        : seedStep === 6
+                          ? "Шаг 6/6: Сборки (2/2)..."
+                          : "Загрузка..."
+              : "Загрузить тест данные"}
           </Button>
           <Button
             onClick={handleLogout}
             variant="outline"
             size="sm"
-            className="gap-2 border-destructive/50 text-destructive hover:bg-destructive/10"
+            className="gap-2 border-red-800/50 text-red-400 hover:bg-red-400/10"
             data-ocid="admin.close_button"
           >
             <X size={13} />
@@ -257,30 +254,30 @@ export function AdminPage() {
         </div>
       </div>
 
-      {/* Main layout: sidebar + content */}
-      <div className="flex gap-0 min-h-[70vh]">
-        {/* Sidebar */}
-        <aside className="w-48 shrink-0 border border-border rounded-l bg-card/50 flex flex-col py-2">
+      {/* Main layout: horizontal tabs + content */}
+      <div className="min-h-[70vh]">
+        {/* Horizontal Tab Bar */}
+        <div className="flex gap-1 overflow-x-auto scrollbar-none bg-black/40 border border-yellow-700/30 rounded-t">
           {SIDEBAR_TABS.map((item) => (
             <button
               type="button"
               key={item.key}
               onClick={() => setTab(item.key)}
               data-ocid="admin.tab"
-              className={`flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium transition-all border-l-2 text-left w-full ${
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold uppercase tracking-wide whitespace-nowrap transition-all ${
                 tab === item.key
-                  ? "border-l-primary text-primary bg-primary/8"
-                  : "border-l-transparent text-muted-foreground hover:text-foreground hover:bg-white/5"
+                  ? "text-yellow-400 border-b-2 border-yellow-400 bg-yellow-400/5"
+                  : "text-gray-400 hover:text-yellow-300 hover:bg-white/5"
               }`}
             >
               {item.icon}
               <span>{item.label}</span>
             </button>
           ))}
-        </aside>
+        </div>
 
         {/* Content */}
-        <div className="flex-1 border border-l-0 border-border rounded-r bg-card/20 p-5 overflow-auto">
+        <div className="border border-t-0 border-yellow-700/30 rounded-b bg-black/30 p-5 min-h-[60vh]">
           {tab === "heroes" && <HeroesPanel />}
           {tab === "skills" && <SkillsPanel />}
           {tab === "items" && <ItemsPanel />}

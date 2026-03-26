@@ -1,30 +1,28 @@
 # SLR Builds
 
 ## Current State
-Full-featured Russian gaming fan site (say-gg.ru clone) with dark/light theme toggle, admin panel with heroes/skills/items/branches/builds/users/chat/comments/stats tabs, profile modal with nickname and friends.
+AdminPage.tsx has a left sidebar with 11 navigation tabs and a top header with seed + logout buttons. The seed button shows 'Подключение...' and is disabled when `actor` is null, causing UI to hang visually until the anonymous actor resolves (~1-3 seconds). The layout uses sidebar + content panel side by side.
 
 ## Requested Changes (Diff)
 
 ### Add
-- AdminPage: new tab "Перезапуск" — button to clear chat (via clearAllChat if exists, else navigate reload) and reload seed data
-- AdminPage: new tab "Администраторы" — show registered users list, assign/revoke admin role via assignCallerUserRole(principal, UserRole)
-- ProfileModal: avatar selector — grid of hero icons (from say-gg.ru imageUrl pattern) + default colored circle options; stored in localStorage keyed by `avatar_${principalText}`
-- ProfileModal: clan text field — stored in localStorage keyed by `clan_${principalText}`; shown in profile header
+- Horizontal top navigation bar inside admin panel (replacing left sidebar) with tab buttons styled as classic black/gold pill or underline tabs
+- Loading spinner overlay on admin content while actor is null
+- `isFetching` from useActor used to show proper 'Подключение...' state as overlay, not blocking the nav
 
 ### Modify
-- ThemeContext: remove toggleTheme, always return theme='dark'; simplify
-- Navbar: remove theme toggle button (Moon/Sun), remove isDark conditionals everywhere, use dark styles always
-- AdminPage SIDEBAR_TABS: add 'restart' and 'admins' tabs
-- ProfileModal: show avatar circle at top, add avatar picker modal, add clan field display and edit
+- Replace left sidebar with horizontal scrollable top nav tabs
+- Admin panel redesign: darker header, gold accent borders, classic table styles, better spacing, mobile-first
+- Seed button enabled immediately, throws error inside mutationFn if actor still null
+- Connection state shown as banner/badge rather than disabling the button
 
 ### Remove
-- Theme toggle button from Navbar
-- Light theme styles (all `isDark ? ... : ...` conditionals — always use dark variant)
-- Moon/Sun icons import from Navbar
-- toggleTheme export from ThemeContext
+- Left sidebar (aside element)
+- `border-l-0` content panel style
 
 ## Implementation Plan
-1. Simplify ThemeContext — remove toggle, always dark
-2. Update Navbar — remove toggle button, remove isDark, hardcode dark styles
-3. Update AdminPage — add 'restart' tab (clear chat + reload) and 'admins' tab (list users + assign role)
-4. Update ProfileModal — add avatar (localStorage) and clan (localStorage) fields with edit UI
+1. Replace SIDEBAR_TABS + aside with horizontal nav tabs row (scrollable on mobile)
+2. Restyle admin panel: black bg, gold (#d4a843) borders/accents, sharp classic style buttons
+3. Fix seed button: always enabled when isAuthed, check actor inside mutationFn
+4. Add actor loading indicator as small status badge in header
+5. Mobile: tabs wrap/scroll horizontally
