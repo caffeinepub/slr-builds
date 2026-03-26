@@ -41,6 +41,7 @@ export interface _SERVICE {
   'deleteAllTierLists': ActorMethod<[], undefined>,
   'deleteBranch': ActorMethod<[bigint], undefined>,
   'deleteBuildById': ActorMethod<[bigint], undefined>,
+  'deleteAllBuilds': ActorMethod<[], undefined>,
   'deleteHero': ActorMethod<[bigint], undefined>,
   'deleteItem': ActorMethod<[bigint], undefined>,
   'deleteMyTierList': ActorMethod<[], undefined>,
