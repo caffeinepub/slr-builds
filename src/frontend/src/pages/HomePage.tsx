@@ -250,8 +250,8 @@ export function HomePage() {
         <div
           className="sticky top-0 z-30 border-b px-4 py-3"
           style={{
-            background: "oklch(0.06 0.01 240 / 0.97)",
-            borderColor: "oklch(0.72 0.19 40 / 0.2)",
+            background: "oklch(0.98 0.005 240)",
+            borderColor: "oklch(0.88 0.01 240)",
             backdropFilter: "blur(12px)",
           }}
         >
@@ -261,9 +261,9 @@ export function HomePage() {
               onClick={() => setViewMode("dashboard")}
               className="flex items-center gap-2 px-3 py-1.5 rounded text-sm font-bold transition-all hover:scale-105"
               style={{
-                background: "oklch(0.10 0.015 240)",
+                background: "oklch(1 0 0)",
                 border: "1px solid oklch(0.72 0.19 40 / 0.3)",
-                color: "oklch(0.72 0.19 40)",
+                color: "oklch(0.55 0.18 45)",
               }}
               data-ocid="builds.secondary_button"
             >
@@ -272,16 +272,16 @@ export function HomePage() {
             </button>
             <h1
               className="font-display text-lg font-bold uppercase tracking-widest"
-              style={{ color: "oklch(0.72 0.19 40)" }}
+              style={{ color: "oklch(0.55 0.18 45)" }}
             >
               Все сборки
             </h1>
             <Badge
               className="rounded font-mono"
               style={{
-                background: "oklch(0.72 0.19 40 / 0.15)",
+                background: "oklch(0.55 0.18 45 / 0.1)",
                 border: "1px solid oklch(0.72 0.19 40 / 0.4)",
-                color: "oklch(0.72 0.19 40)",
+                color: "oklch(0.55 0.18 45)",
               }}
             >
               {filteredBuilds.length} / {allBuildsRaw.length}
@@ -295,7 +295,7 @@ export function HomePage() {
             <Search
               size={16}
               className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
-              style={{ color: "oklch(0.72 0.19 40 / 0.6)" }}
+              style={{ color: "oklch(0.55 0.18 45 / 0.5)" }}
             />
             <input
               type="text"
@@ -304,11 +304,11 @@ export function HomePage() {
               onChange={(e) => setSearchText(e.target.value)}
               className="w-full pl-9 pr-9 py-3 rounded text-sm outline-none transition-all"
               style={{
-                background: "oklch(0.10 0.015 240)",
-                border: `1px solid ${searchText ? "oklch(0.72 0.19 40 / 0.7)" : "oklch(0.72 0.19 40 / 0.2)"}`,
-                color: "oklch(0.92 0.01 60)",
+                background: "oklch(1 0 0)",
+                border: `1px solid ${searchText ? "oklch(0.55 0.18 45 / 0.6)" : "oklch(0.55 0.18 45 / 0.15)"}`,
+                color: "oklch(0.15 0.01 240)",
                 boxShadow: searchText
-                  ? "0 0 12px oklch(0.72 0.19 40 / 0.2)"
+                  ? "0 2px 8px oklch(0 0 0 / 0.08)"
                   : "none",
               }}
               data-ocid="builds.search_input"
@@ -318,7 +318,7 @@ export function HomePage() {
                 type="button"
                 onClick={() => setSearchText("")}
                 className="absolute right-3 top-1/2 -translate-y-1/2"
-                style={{ color: "oklch(0.50 0.02 60)" }}
+                style={{ color: "oklch(0.5 0.02 240)" }}
               >
                 <X size={14} />
               </button>
@@ -342,15 +342,15 @@ export function HomePage() {
                 style={
                   sortMode === s.key
                     ? {
-                        background: "oklch(0.72 0.19 40 / 0.2)",
+                        background: "oklch(0.55 0.18 45 / 0.15)",
                         border: "1px solid oklch(0.72 0.19 40)",
-                        color: "oklch(0.72 0.19 40)",
-                        boxShadow: "0 0 10px oklch(0.72 0.19 40 / 0.3)",
+                        color: "oklch(0.55 0.18 45)",
+                        boxShadow: "0 2px 8px oklch(0.55 0.18 45 / 0.2)",
                       }
                     : {
-                        background: "oklch(0.10 0.015 240)",
+                        background: "oklch(1 0 0)",
                         border: "1px solid oklch(0.72 0.19 40 / 0.2)",
-                        color: "oklch(0.50 0.02 60)",
+                        color: "oklch(0.5 0.02 240)",
                       }
                 }
                 data-ocid="builds.tab"
@@ -366,7 +366,7 @@ export function HomePage() {
               <div className="flex items-center gap-2 mb-3">
                 <span
                   className="text-xs font-bold uppercase tracking-widest"
-                  style={{ color: "oklch(0.50 0.02 60)" }}
+                  style={{ color: "oklch(0.5 0.02 240)" }}
                 >
                   Герои
                 </span>
@@ -376,9 +376,9 @@ export function HomePage() {
                     onClick={() => setSelectedHeroes([])}
                     className="text-xs px-2 py-0.5 rounded"
                     style={{
-                      background: "oklch(0.72 0.19 40 / 0.1)",
+                      background: "oklch(0.55 0.18 45 / 0.08)",
                       border: "1px solid oklch(0.72 0.19 40 / 0.3)",
-                      color: "oklch(0.72 0.19 40)",
+                      color: "oklch(0.55 0.18 45)",
                     }}
                   >
                     Сбросить ({selectedHeroes.length})
@@ -400,15 +400,15 @@ export function HomePage() {
                       style={
                         active
                           ? {
-                              background: "oklch(0.72 0.19 40 / 0.2)",
+                              background: "oklch(0.55 0.18 45 / 0.15)",
                               border: "1px solid oklch(0.72 0.19 40)",
-                              color: "oklch(0.72 0.19 40)",
-                              boxShadow: "0 0 10px oklch(0.72 0.19 40 / 0.3)",
+                              color: "oklch(0.55 0.18 45)",
+                              boxShadow: "0 2px 8px oklch(0.55 0.18 45 / 0.2)",
                             }
                           : {
-                              background: "oklch(0.10 0.015 240)",
+                              background: "oklch(1 0 0)",
                               border: "1px solid oklch(0.72 0.19 40 / 0.15)",
-                              color: "oklch(0.50 0.02 60)",
+                              color: "oklch(0.5 0.02 240)",
                             }
                       }
                     >
@@ -438,7 +438,7 @@ export function HomePage() {
               <div className="flex items-center gap-2 mb-3">
                 <span
                   className="text-xs font-bold uppercase tracking-widest"
-                  style={{ color: "oklch(0.50 0.02 60)" }}
+                  style={{ color: "oklch(0.5 0.02 240)" }}
                 >
                   Исключить навыки
                 </span>
@@ -448,9 +448,9 @@ export function HomePage() {
                     onClick={() => setAllBuildsSkills([])}
                     className="text-xs px-2 py-0.5 rounded"
                     style={{
-                      background: "oklch(0.72 0.19 40 / 0.1)",
+                      background: "oklch(0.55 0.18 45 / 0.08)",
                       border: "1px solid oklch(0.72 0.19 40 / 0.3)",
-                      color: "oklch(0.72 0.19 40)",
+                      color: "oklch(0.55 0.18 45)",
                     }}
                   >
                     Сбросить ({allBuildsSkills.length})
@@ -480,16 +480,16 @@ export function HomePage() {
               <Loader2
                 className="animate-spin"
                 size={32}
-                style={{ color: "oklch(0.72 0.19 40)" }}
+                style={{ color: "oklch(0.55 0.18 45)" }}
               />
             </div>
           ) : filteredBuilds.length === 0 ? (
             <div
               className="text-center py-20 rounded"
               style={{
-                background: "oklch(0.10 0.015 240)",
+                background: "oklch(1 0 0)",
                 border: "1px solid oklch(0.72 0.19 40 / 0.15)",
-                color: "oklch(0.50 0.02 60)",
+                color: "oklch(0.5 0.02 240)",
               }}
               data-ocid="builds.empty_state"
             >
@@ -518,7 +518,7 @@ export function HomePage() {
         {/* Footer */}
         <footer
           className="mt-16 border-t py-6 text-center text-xs text-muted-foreground"
-          style={{ borderColor: "oklch(0.72 0.19 40 / 0.2)" }}
+          style={{ borderColor: "oklch(0.88 0.01 240)" }}
         >
           <div className="flex flex-col items-center gap-3">
             <a
@@ -559,7 +559,7 @@ export function HomePage() {
                 Built with ❤️ using caffeine.ai
               </a>
               {" · "}
-              <span style={{ color: "oklch(0.72 0.19 40)" }}>
+              <span style={{ color: "oklch(0.55 0.18 45)" }}>
                 Powered by SLR Community
               </span>
             </p>
@@ -586,14 +586,14 @@ export function HomePage() {
             className="absolute inset-0"
             style={{
               background:
-                "linear-gradient(to bottom, oklch(0.14 0.04 252 / 0.2) 0%, oklch(0.14 0.04 252 / 0.6) 70%, oklch(0.06 0.01 240) 100%)",
+                "linear-gradient(to bottom, oklch(0.14 0.04 252 / 0.2) 0%, oklch(0.14 0.04 252 / 0.6) 70%, oklch(0.98 0.005 240) 100%)",
             }}
           />
           <div
             className="absolute inset-0"
             style={{
               background:
-                "linear-gradient(to right, oklch(0.14 0.04 252 / 0.7) 0%, transparent 40%, transparent 60%, oklch(0.14 0.04 252 / 0.7) 100%)",
+                "linear-gradient(to right, oklch(0.14 0.04 252 / 0.5) 0%, transparent 40%, transparent 60%, oklch(0.14 0.04 252 / 0.5) 100%)",
             }}
           />
         </div>
@@ -601,7 +601,7 @@ export function HomePage() {
         <div className="absolute inset-0 flex flex-col items-center justify-center z-10 px-4">
           <h1
             className="font-display font-bold text-4xl md:text-5xl uppercase tracking-widest mb-2 text-glow"
-            style={{ color: "oklch(0.72 0.19 40)" }}
+            style={{ color: "oklch(0.55 0.18 45)" }}
           >
             SAY-GG
           </h1>
@@ -619,15 +619,15 @@ export function HomePage() {
               onClick={openAllBuilds}
               className="flex items-center gap-2 px-4 py-2 rounded text-sm font-bold transition-all hover:scale-105 active:scale-95"
               style={{
-                background: "oklch(0.10 0.015 240 / 0.9)",
+                background: "oklch(1 0 0 / 0.9)",
                 border: "1px solid oklch(0.72 0.19 40 / 0.5)",
-                color: "oklch(0.92 0.01 60)",
-                boxShadow: "0 0 12px oklch(0.72 0.19 40 / 0.2)",
+                color: "oklch(0.15 0.01 240)",
+                boxShadow: "0 2px 8px oklch(0 0 0 / 0.08)",
               }}
               data-ocid="builds.primary_button"
             >
-              <Swords size={14} style={{ color: "oklch(0.72 0.19 40)" }} />
-              <span style={{ color: "oklch(0.72 0.19 40)" }}>Сборок:</span>
+              <Swords size={14} style={{ color: "oklch(0.55 0.18 45)" }} />
+              <span style={{ color: "oklch(0.55 0.18 45)" }}>Сборок:</span>
               <span className="font-mono">{allBuildsRaw.length}</span>
             </button>
 
@@ -638,9 +638,9 @@ export function HomePage() {
               rel="noopener noreferrer"
               className="flex items-center gap-2 px-4 py-2 rounded text-sm font-bold transition-all hover:scale-105"
               style={{
-                background: "oklch(0.10 0.015 240 / 0.9)",
+                background: "oklch(1 0 0 / 0.9)",
                 border: "1px solid oklch(0.72 0.19 40 / 0.3)",
-                color: "oklch(0.92 0.01 60)",
+                color: "oklch(0.15 0.01 240)",
               }}
             >
               📱 Telegram
@@ -652,9 +652,9 @@ export function HomePage() {
                   size="sm"
                   className="gap-2 rounded font-bold uppercase tracking-wide"
                   style={{
-                    background: "oklch(0.72 0.19 40)",
-                    color: "oklch(0.06 0.01 240)",
-                    boxShadow: "0 0 16px oklch(0.72 0.19 40 / 0.4)",
+                    background: "oklch(0.55 0.18 45)",
+                    color: "oklch(1 0 0)",
+                    boxShadow: "0 4px 12px oklch(0.55 0.18 45 / 0.25)",
                   }}
                   onClick={() => setShowCreateBuild(true)}
                   data-ocid="builds.secondary_button"
@@ -668,8 +668,8 @@ export function HomePage() {
                   className="gap-2 rounded font-bold uppercase tracking-wide"
                   style={{
                     border: "1px solid oklch(0.72 0.19 40 / 0.5)",
-                    color: "oklch(0.72 0.19 40)",
-                    background: "oklch(0.72 0.19 40 / 0.08)",
+                    color: "oklch(0.55 0.18 45)",
+                    background: "oklch(0.55 0.18 45 / 0.06)",
                   }}
                   onClick={() => setShowRecordBuild(true)}
                 >
@@ -694,14 +694,14 @@ export function HomePage() {
               key={stat.label}
               className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold"
               style={{
-                background: "oklch(0.10 0.015 240 / 0.9)",
+                background: "oklch(1 0 0 / 0.9)",
                 border: "1px solid oklch(0.72 0.19 40 / 0.4)",
-                color: "oklch(0.92 0.01 60)",
+                color: "oklch(0.15 0.01 240)",
               }}
             >
               <span>{stat.icon}</span>
               <span
-                style={{ color: "oklch(0.72 0.19 40)" }}
+                style={{ color: "oklch(0.55 0.18 45)" }}
                 className="font-mono"
               >
                 {stat.count}
@@ -721,7 +721,7 @@ export function HomePage() {
             border: "1px solid oklch(0.72 0.19 40 / 0.2)",
           }}
         >
-          <span style={{ color: "oklch(0.72 0.19 40)" }} className="font-bold">
+          <span style={{ color: "oklch(0.55 0.18 45)" }} className="font-bold">
             SAY-GG —{" "}
           </span>
           фан-сайт со сборками для Skill Legends Royale. Все сборки добавлены
@@ -755,14 +755,14 @@ export function HomePage() {
               className="rounded overflow-hidden"
               style={{
                 border: "1px solid oklch(0.72 0.19 40 / 0.4)",
-                background: "oklch(0.10 0.015 240 / 0.9)",
+                background: "oklch(1 0 0 / 0.9)",
               }}
             >
               <button
                 type="button"
                 className="w-full flex items-center gap-2 px-4 py-2.5 text-left"
                 onClick={() => setTipExpanded((v) => !v)}
-                style={{ color: "oklch(0.72 0.19 40)" }}
+                style={{ color: "oklch(0.55 0.18 45)" }}
               >
                 <span className="text-base">💡</span>
                 <span className="font-bold text-sm uppercase tracking-widest flex-1">
@@ -795,12 +795,12 @@ export function HomePage() {
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
         className="fixed bottom-24 left-4 z-50 w-10 h-10 flex items-center justify-center rounded-full shadow-lg transition-all duration-200"
         style={{
-          background: "oklch(0.72 0.19 40)",
-          color: "oklch(0.06 0.01 240)",
+          background: "oklch(0.55 0.18 45)",
+          color: "oklch(1 0 0)",
           opacity: showScrollTop ? 1 : 0,
           pointerEvents: showScrollTop ? "auto" : "none",
           transform: showScrollTop ? "scale(1)" : "scale(0.8)",
-          boxShadow: "0 4px 16px oklch(0.72 0.19 40 / 0.4)",
+          boxShadow: "0 4px 16px oklch(0.55 0.18 45 / 0.35)",
         }}
         aria-label="Наверх"
         data-ocid="page.button"
@@ -895,8 +895,8 @@ export function HomePage() {
                         key={a.authorId.toString()}
                         className="flex items-center gap-3 px-4 py-3 rounded"
                         style={{
-                          background: "oklch(0.10 0.015 240)",
-                          border: `1px solid ${idx === 0 ? "oklch(0.72 0.19 40 / 0.7)" : "oklch(0.72 0.19 40 / 0.2)"}`,
+                          background: "oklch(1 0 0)",
+                          border: `1px solid ${idx === 0 ? "oklch(0.55 0.18 45 / 0.6)" : "oklch(0.55 0.18 45 / 0.15)"}`,
                         }}
                       >
                         <span
@@ -904,7 +904,7 @@ export function HomePage() {
                           style={{
                             color:
                               idx === 0
-                                ? "oklch(0.72 0.19 40)"
+                                ? "oklch(0.55 0.18 45)"
                                 : idx === 1
                                   ? "oklch(0.8 0.05 252)"
                                   : "oklch(0.6 0.05 252)",
@@ -915,9 +915,9 @@ export function HomePage() {
                         <div
                           className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold"
                           style={{
-                            background: "oklch(0.72 0.19 40 / 0.15)",
+                            background: "oklch(0.55 0.18 45 / 0.1)",
                             border: "1px solid oklch(0.72 0.19 40 / 0.4)",
-                            color: "oklch(0.72 0.19 40)",
+                            color: "oklch(0.55 0.18 45)",
                           }}
                         >
                           {a.authorName.slice(0, 2).toUpperCase()}
@@ -952,13 +952,13 @@ export function HomePage() {
                         onClick={() => setSelectedTopBuild(b)}
                         className="w-full flex items-center gap-3 px-4 py-3 rounded text-left transition-all hover:scale-[1.01]"
                         style={{
-                          background: "oklch(0.10 0.015 240)",
+                          background: "oklch(1 0 0)",
                           border: "1px solid oklch(0.72 0.19 40 / 0.2)",
                         }}
                       >
                         <span
                           className="text-base font-black w-6 text-center shrink-0"
-                          style={{ color: "oklch(0.72 0.19 40)" }}
+                          style={{ color: "oklch(0.55 0.18 45)" }}
                         >
                           #{idx + 1}
                         </span>
@@ -984,7 +984,7 @@ export function HomePage() {
                         <div className="flex-1 min-w-0">
                           <p
                             className="text-sm font-bold truncate"
-                            style={{ color: "oklch(0.72 0.19 40)" }}
+                            style={{ color: "oklch(0.55 0.18 45)" }}
                           >
                             {b.name}
                           </p>
@@ -1083,7 +1083,7 @@ export function HomePage() {
       {/* Footer */}
       <footer
         className="mt-16 border-t py-6 text-center text-xs text-muted-foreground"
-        style={{ borderColor: "oklch(0.72 0.19 40 / 0.2)" }}
+        style={{ borderColor: "oklch(0.88 0.01 240)" }}
       >
         <div className="flex flex-col items-center gap-3">
           <a
@@ -1124,7 +1124,7 @@ export function HomePage() {
               Built with ❤️ using caffeine.ai
             </a>
             {" · "}
-            <span style={{ color: "oklch(0.72 0.19 40)" }}>
+            <span style={{ color: "oklch(0.55 0.18 45)" }}>
               Powered by SLR Community
             </span>
           </p>
@@ -1180,13 +1180,13 @@ function TabButton({
       style={
         active
           ? {
-              background: "oklch(0.72 0.19 40)",
-              color: "oklch(0.06 0.01 240)",
-              boxShadow: "0 0 16px oklch(0.72 0.19 40 / 0.4)",
+              background: "oklch(0.55 0.18 45)",
+              color: "oklch(1 0 0)",
+              boxShadow: "0 4px 12px oklch(0.55 0.18 45 / 0.25)",
             }
           : {
-              background: "oklch(0.10 0.015 240)",
-              color: "oklch(0.50 0.02 60)",
+              background: "oklch(1 0 0)",
+              color: "oklch(0.5 0.02 240)",
               border: "1px solid oklch(0.72 0.19 40 / 0.2)",
             }
       }
@@ -1213,15 +1213,15 @@ function TopNavBtn({
       style={
         active
           ? {
-              background: "oklch(0.72 0.19 40 / 0.2)",
+              background: "oklch(0.55 0.18 45 / 0.15)",
               border: "1px solid oklch(0.72 0.19 40)",
-              color: "oklch(0.72 0.19 40)",
-              boxShadow: "0 0 10px oklch(0.72 0.19 40 / 0.3)",
+              color: "oklch(0.55 0.18 45)",
+              boxShadow: "0 2px 8px oklch(0.55 0.18 45 / 0.2)",
             }
           : {
-              background: "oklch(0.10 0.015 240)",
+              background: "oklch(1 0 0)",
               border: "1px solid oklch(0.72 0.19 40 / 0.2)",
-              color: "oklch(0.50 0.02 60)",
+              color: "oklch(0.5 0.02 240)",
             }
       }
     >
@@ -1251,15 +1251,15 @@ function SkillChip({
       style={
         selected
           ? {
-              background: "oklch(0.72 0.19 40 / 0.2)",
+              background: "oklch(0.55 0.18 45 / 0.15)",
               border: "1px solid oklch(0.72 0.19 40)",
-              color: "oklch(0.72 0.19 40)",
-              boxShadow: "0 0 10px oklch(0.72 0.19 40 / 0.3)",
+              color: "oklch(0.55 0.18 45)",
+              boxShadow: "0 2px 8px oklch(0.55 0.18 45 / 0.2)",
             }
           : {
-              background: "oklch(0.10 0.015 240)",
+              background: "oklch(1 0 0)",
               border: "1px solid oklch(0.72 0.19 40 / 0.15)",
-              color: "oklch(0.50 0.02 60)",
+              color: "oklch(0.5 0.02 240)",
             }
       }
     >
@@ -1288,7 +1288,7 @@ function SkillChip({
       {selected && (
         <div
           className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full"
-          style={{ background: "oklch(0.72 0.19 40)" }}
+          style={{ background: "oklch(0.55 0.18 45)" }}
         />
       )}
     </button>
@@ -1325,7 +1325,7 @@ function TopBuildCard({
       onClick={onClick}
       className="shrink-0 w-40 rounded p-3 text-left transition-all hover:scale-105 active:scale-95 cursor-pointer"
       style={{
-        background: "oklch(0.10 0.015 240)",
+        background: "oklch(1 0 0)",
         border: "1px solid oklch(0.71 0.16 75 / 0.35)",
         boxShadow: "0 2px 12px oklch(0.72 0.19 40 / 0.1)",
       }}
@@ -1347,7 +1347,7 @@ function TopBuildCard({
       </div>
       <p
         className="text-xs font-bold line-clamp-2 leading-tight mb-2"
-        style={{ color: "oklch(0.72 0.19 40)" }}
+        style={{ color: "oklch(0.55 0.18 45)" }}
       >
         {build.name}
       </p>

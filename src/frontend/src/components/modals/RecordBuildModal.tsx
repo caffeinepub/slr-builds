@@ -21,12 +21,12 @@ interface Props {
   onClose: () => void;
 }
 
-const CARD_BG = "oklch(0.06 0.01 240)";
+const CARD_BG = "oklch(0.98 0.005 240)";
 const CARD_BORDER = "oklch(0.72 0.19 40 / 0.3)";
-const GOLD = "oklch(0.72 0.19 40)";
-const INPUT_BG = "oklch(0.10 0.015 240)";
-const MUTED = "oklch(0.50 0.02 60)";
-const FG = "oklch(0.92 0.01 60)";
+const GOLD = "oklch(0.55 0.18 45)";
+const INPUT_BG = "oklch(1 0 0)";
+const MUTED = "oklch(0.5 0.02 240)";
+const FG = "oklch(0.15 0.01 240)";
 
 export function RecordBuildModal({ heroes, onClose }: Props) {
   const { t } = useLang();

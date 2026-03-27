@@ -258,7 +258,7 @@ export function ChatPanel() {
           style={{
             height: "460px",
             borderRadius: "1rem",
-            background: "oklch(0.09 0.012 240)",
+            background: "oklch(1 0 0)",
             border: "1px solid oklch(0.72 0.19 40 / 0.5)",
             boxShadow: "0 0 30px oklch(0.72 0.19 40 / 0.15)",
           }}
@@ -270,7 +270,7 @@ export function ChatPanel() {
             style={{
               borderBottom: "1px solid oklch(0.72 0.19 40 / 0.3)",
               borderRadius: "1rem 1rem 0 0",
-              background: "oklch(0.10 0.015 240)",
+              background: "oklch(1 0 0)",
             }}
           >
             <span className="text-xs font-bold uppercase tracking-widest neon-text">
@@ -317,7 +317,7 @@ export function ChatPanel() {
                   <div className="flex items-baseline gap-2">
                     <span
                       className="text-[10px] font-bold"
-                      style={{ color: "oklch(0.72 0.19 40)" }}
+                      style={{ color: "oklch(0.55 0.18 45)" }}
                     >
                       {msg.authorName}
                     </span>
@@ -388,7 +388,7 @@ export function ChatPanel() {
               className="grid grid-cols-10 gap-0.5 px-2 py-1 shrink-0"
               style={{
                 borderTop: "1px solid oklch(0.72 0.19 40 / 0.3)",
-                background: "oklch(0.10 0.015 240)",
+                background: "oklch(1 0 0)",
               }}
             >
               {EMOJIS.map((emoji) => (
@@ -415,11 +415,11 @@ export function ChatPanel() {
             >
               <div
                 className="w-2 h-2 rounded-full animate-pulse"
-                style={{ background: "oklch(0.72 0.19 40)" }}
+                style={{ background: "oklch(0.55 0.18 45)" }}
               />
               <span
                 className="text-xs font-mono"
-                style={{ color: "oklch(0.72 0.19 40)" }}
+                style={{ color: "oklch(0.55 0.18 45)" }}
               >
                 {formatTime(recordSecs)} / 1:00
               </span>
@@ -450,8 +450,8 @@ export function ChatPanel() {
               className="h-8 w-8 flex items-center justify-center transition-colors shrink-0"
               style={{
                 color: recording
-                  ? "oklch(0.72 0.19 40)"
-                  : "oklch(0.50 0.02 60)",
+                  ? "oklch(0.55 0.18 45)"
+                  : "oklch(0.5 0.02 240)",
               }}
               title={
                 recording ? t("Остановить", "Stop") : t("Голосовое", "Voice")
@@ -472,7 +472,7 @@ export function ChatPanel() {
                 disabled={recording}
                 className="text-xs h-8 rounded pr-10"
                 style={{
-                  background: "oklch(0.13 0.02 240)",
+                  background: "oklch(0.96 0.005 240)",
                   border: "1px solid oklch(0.72 0.19 40 / 0.3)",
                 }}
                 data-ocid="chat.input"
@@ -488,8 +488,8 @@ export function ChatPanel() {
               disabled={!text.trim() || sendMutation.isPending || recording}
               className="h-8 w-8 p-0 rounded"
               style={{
-                background: "oklch(0.72 0.19 40)",
-                color: "oklch(0.06 0.01 240)",
+                background: "oklch(0.55 0.18 45)",
+                color: "oklch(1 0 0)",
               }}
               data-ocid="chat.submit_button"
             >
@@ -505,11 +505,11 @@ export function ChatPanel() {
         onClick={() => setOpen((v) => !v)}
         className="relative w-12 h-12 flex items-center justify-center transition-all hover:scale-105"
         style={{
-          background: "oklch(0.10 0.015 240)",
+          background: "oklch(1 0 0)",
           border: "1px solid oklch(0.72 0.19 40 / 0.6)",
           borderRadius: "50%",
           boxShadow: "0 0 12px oklch(0.72 0.19 40 / 0.3)",
-          color: "oklch(0.72 0.19 40)",
+          color: "oklch(0.55 0.18 45)",
         }}
         data-ocid="chat.open_modal_button"
       >
@@ -518,8 +518,8 @@ export function ChatPanel() {
           <Badge
             className="absolute -top-2 -right-2 text-[9px] px-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full"
             style={{
-              background: "oklch(0.72 0.19 40)",
-              color: "oklch(0.06 0.01 240)",
+              background: "oklch(0.55 0.18 45)",
+              color: "oklch(1 0 0)",
               boxShadow: "0 0 8px oklch(0.72 0.19 40 / 0.6)",
             }}
           >

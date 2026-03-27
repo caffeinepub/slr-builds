@@ -33,11 +33,11 @@ interface ExclusionCondition {
   skill2Id: bigint;
 }
 
-const GOLD = "oklch(0.72 0.19 40)";
-const CARD_BG = "oklch(0.06 0.01 240)";
-const INPUT_BG = "oklch(0.10 0.015 240)";
-const MUTED = "oklch(0.50 0.02 60)";
-const FG = "oklch(0.92 0.01 60)";
+const GOLD = "oklch(0.55 0.18 45)";
+const CARD_BG = "oklch(0.98 0.005 240)";
+const INPUT_BG = "oklch(1 0 0)";
+const MUTED = "oklch(0.5 0.02 240)";
+const FG = "oklch(0.15 0.01 240)";
 const BORDER = "oklch(0.72 0.19 40 / 0.3)";
 
 export function CreateBuildModal({ heroes, skills, onClose }: Props) {
@@ -696,7 +696,7 @@ function SkillChip({
           ? "oklch(0.65 0.2 25)"
           : "oklch(0.65 0.2 25 / 0.2)"
         : selected
-          ? "oklch(0.72 0.19 40)"
+          ? "oklch(0.55 0.18 45)"
           : "oklch(0.72 0.19 40 / 0.2)";
 
   const textColor =
@@ -704,7 +704,7 @@ function SkillChip({
       ? "oklch(0.7 0.15 150)"
       : color === "red"
         ? "oklch(0.65 0.2 25)"
-        : "oklch(0.72 0.19 40)";
+        : "oklch(0.55 0.18 45)";
 
   return (
     <button
@@ -712,7 +712,7 @@ function SkillChip({
       onClick={onClick}
       className="flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium transition-all"
       style={{
-        background: selected ? `${textColor}18` : "oklch(0.10 0.015 240)",
+        background: selected ? `${textColor}18` : "oklch(1 0 0)",
         border: `1px solid ${borderColor}`,
         color: selected ? textColor : MUTED,
       }}

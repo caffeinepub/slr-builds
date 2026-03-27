@@ -30,8 +30,9 @@ export function Navbar({ onNavigate, currentPage }: Props) {
       <nav
         className="sticky top-0 z-50"
         style={{
-          background: "oklch(0.06 0.01 240)",
-          borderBottom: "1px solid oklch(0.72 0.19 40 / 0.4)",
+          background: "oklch(1 0 0)",
+          borderBottom: "1px solid oklch(0.88 0.01 240)",
+          boxShadow: "0 1px 6px oklch(0 0 0 / 0.06)",
         }}
       >
         <div className="container mx-auto px-4 h-14 flex items-center justify-between gap-4">
@@ -40,35 +41,35 @@ export function Navbar({ onNavigate, currentPage }: Props) {
             <button
               type="button"
               onClick={() => onNavigate("home")}
-              className="font-display font-bold text-xl uppercase tracking-widest text-primary transition-all hover:text-glow-orange"
+              className="font-display font-bold text-xl uppercase tracking-widest text-primary transition-all hover:opacity-80"
               data-ocid="nav.link"
             >
-              SAY<span className="text-foreground/70">-GG</span>
+              SAY<span className="text-foreground/40">-GG</span>
             </button>
-            {/* СИСТЕМА АКТИВНА chip */}
+            {/* Status chip */}
             <span
-              className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded"
+              className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded-full"
               style={{
                 background: isConnected
-                  ? "oklch(0.3 0.15 150 / 0.15)"
-                  : "oklch(0.3 0.1 30 / 0.15)",
-                border: `1px solid ${isConnected ? "oklch(0.55 0.2 150 / 0.4)" : "oklch(0.55 0.18 30 / 0.4)"}`,
+                  ? "oklch(0.95 0.06 150)"
+                  : "oklch(0.96 0.04 60)",
+                border: `1px solid ${isConnected ? "oklch(0.7 0.18 150 / 0.4)" : "oklch(0.7 0.2 60 / 0.4)"}`,
               }}
             >
               <span
                 className="w-1.5 h-1.5 rounded-full pulse-dot"
                 style={{
                   background: isConnected
-                    ? "oklch(0.7 0.22 150)"
-                    : "oklch(0.7 0.2 30)",
+                    ? "oklch(0.6 0.22 150)"
+                    : "oklch(0.65 0.2 60)",
                 }}
               />
               <span
                 className="font-mono text-[9px] uppercase tracking-widest"
                 style={{
                   color: isConnected
-                    ? "oklch(0.65 0.18 150)"
-                    : "oklch(0.65 0.18 30)",
+                    ? "oklch(0.45 0.18 150)"
+                    : "oklch(0.45 0.18 60)",
                 }}
               >
                 {isConnected ? "АКТИВНА" : "ЗАГРУЗКА"}
@@ -96,10 +97,10 @@ export function Navbar({ onNavigate, currentPage }: Props) {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="gap-1 text-foreground"
+                    className="gap-1"
                     style={{
-                      border: "1px solid oklch(0.72 0.19 40 / 0.5)",
-                      background: "oklch(0.72 0.19 40 / 0.08)",
+                      border: "1px solid oklch(0.88 0.01 240)",
+                      background: "oklch(0.97 0.005 240)",
                       borderRadius: "var(--radius)",
                     }}
                     data-ocid="nav.open_modal_button"
@@ -111,9 +112,10 @@ export function Navbar({ onNavigate, currentPage }: Props) {
                 <DropdownMenuContent
                   align="end"
                   style={{
-                    background: "oklch(0.10 0.015 240)",
-                    border: "1px solid oklch(0.72 0.19 40 / 0.4)",
+                    background: "oklch(1 0 0)",
+                    border: "1px solid oklch(0.88 0.01 240)",
                     borderRadius: "var(--radius)",
+                    boxShadow: "0 4px 16px oklch(0 0 0 / 0.1)",
                   }}
                 >
                   <DropdownMenuItem
@@ -123,9 +125,7 @@ export function Navbar({ onNavigate, currentPage }: Props) {
                     <User size={14} className="mr-2" />
                     Профиль / Мои сборки
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator
-                    style={{ background: "oklch(0.72 0.19 40 / 0.2)" }}
-                  />
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => onNavigate("admin")}>
                     <Shield size={14} className="mr-2" />
                     Админ панель
@@ -145,10 +145,10 @@ export function Navbar({ onNavigate, currentPage }: Props) {
                 onClick={login}
                 disabled={isLoggingIn}
                 size="sm"
-                className="font-bold uppercase tracking-wide glow-orange gap-2"
+                className="font-bold uppercase tracking-wide gap-2"
                 style={{
-                  background: "oklch(0.72 0.19 40)",
-                  color: "oklch(0.06 0.01 240)",
+                  background: "oklch(0.55 0.18 45)",
+                  color: "oklch(1 0 0)",
                   borderRadius: "var(--radius)",
                 }}
                 data-ocid="nav.primary_button"
@@ -184,8 +184,7 @@ function NavLink({
         <span
           className="absolute bottom-0 left-0 right-0 h-0.5"
           style={{
-            background: "oklch(0.72 0.19 40)",
-            boxShadow: "0 0 8px oklch(0.72 0.19 40 / 0.8)",
+            background: "oklch(0.55 0.18 45)",
           }}
         />
       )}

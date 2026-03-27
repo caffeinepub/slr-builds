@@ -60,7 +60,7 @@ export function OnlineCounter() {
           style={{
             border: "1px solid oklch(0.72 0.19 40 / 0.35)",
             background: "transparent",
-            color: "oklch(0.72 0.19 40)",
+            color: "oklch(0.55 0.18 45)",
             borderRadius: "var(--radius)",
           }}
           data-ocid="online.toggle"
@@ -77,7 +77,7 @@ export function OnlineCounter() {
         align="end"
         className="min-w-[160px]"
         style={{
-          background: "oklch(0.09 0.012 240)",
+          background: "oklch(1 0 0)",
           border: "1px solid oklch(0.72 0.19 40 / 0.4)",
           borderRadius: "var(--radius)",
         }}

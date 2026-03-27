@@ -39,6 +39,7 @@ const serviceEntries = {
   'createBuild': IDL.Func([Build], [IDL.Nat], []),
   'createRecordedBuild': IDL.Func([RecordedBuild], [IDL.Nat], []),
   'deleteAllTierLists': IDL.Func([], [], []),
+  'deleteAllBuilds': IDL.Func([], [], []),
   'deleteBranch': IDL.Func([IDL.Nat], [], []),
   'deleteBuildById': IDL.Func([IDL.Nat], [], []),
   'deleteHero': IDL.Func([IDL.Nat], [], []),

@@ -135,9 +135,9 @@ export function AdminPage() {
     return (
       <div className="flex items-center justify-center min-h-[70vh] bg-black">
         <div
-          className="w-full max-w-sm p-8 hud-panel"
+          className="w-full max-w-sm p-8"
           style={{
-            background: "oklch(0.09 0.012 240)",
+            background: "oklch(1 0 0)",
             border: "1px solid oklch(0.72 0.19 40 / 0.5)",
             borderRadius: "var(--radius)",
             boxShadow: "0 0 40px oklch(0.72 0.19 40 / 0.1)",
@@ -176,8 +176,8 @@ export function AdminPage() {
             onClick={handlePwSubmit}
             className="w-full mt-3 font-bold uppercase tracking-widest"
             style={{
-              background: "oklch(0.72 0.19 40)",
-              color: "oklch(0.06 0.01 240)",
+              background: "oklch(0.55 0.18 45)",
+              color: "oklch(1 0 0)",
             }}
             data-ocid="admin.submit_button"
           >
@@ -226,31 +226,34 @@ export function AdminPage() {
         </div>
         <div className="flex gap-2 flex-wrap">
           <Button
-            onClick={() => seedMutation.mutate()}
+            onClick={() => actor && seedMutation.mutate()}
+            disabled={seedMutation.isPending}
             variant="outline"
             className="gap-2 border-primary/50 text-primary hover:bg-primary/10 text-sm"
             data-ocid="admin.primary_button"
           >
-            {seedMutation.isPending ? (
+            {seedMutation.isPending || !actor ? (
               <Loader2 className="animate-spin" size={13} />
             ) : (
               <Database size={13} />
             )}
-            {seedMutation.isPending
-              ? seedStep === 1
-                ? "Шаг 1/6: Навыки..."
-                : seedStep === 2
-                  ? "Шаг 2/6: Герои..."
-                  : seedStep === 3
-                    ? "Шаг 3/6: Предметы (1/2)..."
-                    : seedStep === 4
-                      ? "Шаг 4/6: Предметы (2/2)..."
-                      : seedStep === 5
-                        ? "Шаг 5/6: Сборки (1/2)..."
-                        : seedStep === 6
-                          ? "Шаг 6/6: Сборки (2/2)..."
-                          : "Загрузка..."
-              : "Загрузить тест данные"}
+            {!actor
+              ? "Подключение..."
+              : seedMutation.isPending
+                ? seedStep === 1
+                  ? "Шаг 1/6: Навыки..."
+                  : seedStep === 2
+                    ? "Шаг 2/6: Герои..."
+                    : seedStep === 3
+                      ? "Шаг 3/6: Предметы (1/2)..."
+                      : seedStep === 4
+                        ? "Шаг 4/6: Предметы (2/2)..."
+                        : seedStep === 5
+                          ? "Шаг 5/6: Сборки (1/2)..."
+                          : seedStep === 6
+                            ? "Шаг 6/6: Сборки (2/2)..."
+                            : "Загрузка..."
+                : "Загрузить тест данные"}
           </Button>
           <Button
             onClick={handleLogout}
@@ -271,8 +274,8 @@ export function AdminPage() {
         <div
           className="flex gap-1 overflow-x-auto scrollbar-none"
           style={{
-            background: "oklch(0.08 0.01 240)",
-            borderBottom: "1px solid oklch(0.72 0.19 40 / 0.25)",
+            background: "oklch(0.97 0.005 240)",
+            borderBottom: "1px solid oklch(0.88 0.01 240)",
           }}
         >
           {SIDEBAR_TABS.map((item) => (
@@ -297,7 +300,7 @@ export function AdminPage() {
         <div
           className="p-5 min-h-[60vh]"
           style={{
-            background: "oklch(0.07 0.01 240)",
+            background: "oklch(0.97 0.005 240)",
             border: "1px solid oklch(0.72 0.19 40 / 0.15)",
             borderTop: "none",
           }}

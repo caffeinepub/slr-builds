@@ -94,13 +94,13 @@ export function BuildCard({
   const { data: votes, refetch: refetchVotes } = useQuery({
     queryKey: ["buildVotes", build.id.toString()],
     queryFn: () => actor!.getBuildVotes(build.id),
-    enabled: !!actor && expanded,
+    enabled: !!actor,
   });
 
   const { data: myVote, refetch: refetchMyVote } = useQuery<boolean | null>({
     queryKey: ["myVote", build.id.toString()],
     queryFn: () => actor!.getMyVoteOnBuild(build.id),
-    enabled: !!actor && !!identity && expanded,
+    enabled: !!actor && !!identity,
   });
 
   const { data: comments = [], isLoading: commentsLoading } = useQuery<
@@ -108,7 +108,7 @@ export function BuildCard({
   >({
     queryKey: ["comments", build.id.toString()],
     queryFn: () => actor!.getBuildComments(build.id),
-    enabled: !!actor && expanded,
+    enabled: !!actor,
   });
 
   const likeMutation = useMutation({
@@ -272,9 +272,9 @@ export function BuildCard({
         data-ocid={dataOcid}
         className="group relative cursor-pointer text-left w-full transition-all duration-200"
         style={{
-          background: "oklch(0.10 0.015 240)",
+          background: "oklch(1 0 0)",
           borderLeft: `3px solid ${borderColor}`,
-          border: "1px solid oklch(0.72 0.19 40 / 0.12)",
+          border: "1px solid oklch(0.88 0.01 240)",
           borderLeftWidth: "3px",
           borderLeftColor: borderColor,
           borderRadius: "var(--radius)",
@@ -282,7 +282,7 @@ export function BuildCard({
         }}
         onMouseEnter={(e) => {
           const el = e.currentTarget as HTMLButtonElement;
-          el.style.borderLeftColor = "oklch(0.72 0.19 40)";
+          el.style.borderLeftColor = "oklch(0.55 0.18 45)";
           el.style.borderLeftWidth = "3px";
           el.style.boxShadow = "0 2px 12px oklch(0.72 0.19 40 / 0.15)";
         }}
@@ -304,7 +304,7 @@ export function BuildCard({
               data-ocid="build.secondary_button"
               title="Поделиться"
               className="flex-shrink-0 p-0.5 opacity-40 hover:opacity-80 transition-opacity"
-              style={{ color: "oklch(0.72 0.19 40)" }}
+              style={{ color: "oklch(0.55 0.18 45)" }}
               onClick={(e) => {
                 e.stopPropagation();
                 navigator.clipboard.writeText(build.name).then(() => {
@@ -328,8 +328,8 @@ export function BuildCard({
                     key={h.id.toString()}
                     className="flex items-center gap-1 text-xs px-1.5 py-0.5 text-foreground"
                     style={{
-                      background: "oklch(0.13 0.02 240)",
-                      border: "1px solid oklch(0.72 0.19 40 / 0.15)",
+                      background: "oklch(0.96 0.005 240)",
+                      border: "1px solid oklch(0.88 0.01 240)",
                       borderRadius: "var(--radius)",
                     }}
                   >
@@ -426,7 +426,7 @@ export function BuildCard({
             build.costBasic > 0n) && (
             <div
               className="flex items-center gap-1 text-[10px] text-muted-foreground mt-2 pt-2"
-              style={{ borderTop: "1px solid oklch(0.72 0.19 40 / 0.1)" }}
+              style={{ borderTop: "1px solid oklch(0.88 0.01 240)" }}
             >
               <Coins size={9} className="text-primary" />
               {build.costLegendary > 0n && (
@@ -462,7 +462,7 @@ export function BuildCard({
       {expanded && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ backgroundColor: "oklch(0.04 0.01 240 / 0.92)" }}
+          style={{ backgroundColor: "oklch(0.15 0.01 240 / 0.6)" }}
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setExpanded(false);
@@ -478,10 +478,10 @@ export function BuildCard({
           role="presentation"
         >
           <div
-            className="relative w-full max-w-lg overflow-y-auto max-h-[90vh] modal-glitch hud-panel hud-scan"
+            className="relative w-full max-w-lg overflow-y-auto max-h-[90vh] modal-in"
             style={{
-              background: "oklch(0.09 0.012 240)",
-              border: "1px solid oklch(0.72 0.19 40 / 0.5)",
+              background: "oklch(1 0 0)",
+              border: "1px solid oklch(0.55 0.18 45 / 0.4)",
               borderRadius: "var(--radius)",
               boxShadow:
                 "0 0 40px oklch(0.72 0.19 40 / 0.2), 0 0 80px oklch(0.72 0.19 40 / 0.08)",
@@ -491,8 +491,8 @@ export function BuildCard({
               {/* Header */}
               <div className="flex items-start justify-between mb-4">
                 <h2
-                  className="font-display text-lg font-bold uppercase tracking-widest pr-4 text-glow-orange"
-                  style={{ color: "oklch(0.72 0.19 40)" }}
+                  className="font-display text-lg font-bold uppercase tracking-widest pr-4 text-primary"
+                  style={{ color: "oklch(0.55 0.18 45)" }}
                 >
                   {build.name}
                 </h2>
@@ -540,8 +540,8 @@ export function BuildCard({
                         onClick={() => handleHeroChipClick(h.id)}
                         className="flex items-center gap-1.5 px-2 py-1 transition-all hover:scale-105"
                         style={{
-                          background: "oklch(0.13 0.02 240)",
-                          border: "1px solid oklch(0.72 0.19 40 / 0.2)",
+                          background: "oklch(0.96 0.005 240)",
+                          border: "1px solid oklch(0.88 0.01 240)",
                           borderRadius: "var(--radius)",
                           cursor: onHeroClick ? "pointer" : "default",
                         }}
@@ -549,12 +549,12 @@ export function BuildCard({
                           if (onHeroClick)
                             (
                               e.currentTarget as HTMLButtonElement
-                            ).style.borderColor = "oklch(0.72 0.19 40)";
+                            ).style.borderColor = "oklch(0.55 0.18 45)";
                         }}
                         onMouseLeave={(e) => {
                           (
                             e.currentTarget as HTMLButtonElement
-                          ).style.borderColor = "oklch(0.72 0.19 40 / 0.2)";
+                          ).style.borderColor = "oklch(0.88 0.01 240)";
                         }}
                       >
                         {h.imageUrl && (
@@ -653,7 +653,7 @@ export function BuildCard({
                 build.costBasic > 0n) && (
                 <div
                   className="mt-3 pt-3"
-                  style={{ borderTop: "1px solid oklch(0.72 0.19 40 / 0.12)" }}
+                  style={{ borderTop: "1px solid oklch(0.88 0.01 240)" }}
                 >
                   <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
                     <Coins size={10} className="inline mr-1 text-primary" />
@@ -687,26 +687,34 @@ export function BuildCard({
               {/* Votes */}
               <div
                 className="mt-4 pt-3"
-                style={{ borderTop: "1px solid oklch(0.72 0.19 40 / 0.12)" }}
+                style={{ borderTop: "1px solid oklch(0.88 0.01 240)" }}
               >
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
-                    onClick={() => likeMutation.mutate()}
-                    disabled={!identity || likeMutation.isPending}
+                    onClick={() => {
+                      if (!identity) {
+                        import("sonner").then((m) =>
+                          m.toast.error("Войдите в аккаунт чтобы голосовать"),
+                        );
+                        return;
+                      }
+                      likeMutation.mutate();
+                    }}
+                    disabled={likeMutation.isPending}
                     className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold transition-all"
                     style={{
                       borderRadius: "var(--radius)",
                       ...(myVote === true
                         ? {
                             border: "1px solid oklch(0.72 0.19 40)",
-                            color: "oklch(0.72 0.19 40)",
+                            color: "oklch(0.55 0.18 45)",
                             background: "oklch(0.72 0.19 40 / 0.1)",
-                            boxShadow: "0 0 8px oklch(0.72 0.19 40 / 0.3)",
+                            boxShadow: "none",
                           }
                         : {
-                            border: "1px solid oklch(0.72 0.19 40 / 0.2)",
-                            color: "oklch(0.50 0.02 60)",
+                            border: "1px solid oklch(0.88 0.01 240)",
+                            color: "oklch(0.5 0.02 240)",
                             background: "transparent",
                           }),
                     }}
@@ -717,8 +725,16 @@ export function BuildCard({
                   </button>
                   <button
                     type="button"
-                    onClick={() => dislikeMutation.mutate()}
-                    disabled={!identity || dislikeMutation.isPending}
+                    onClick={() => {
+                      if (!identity) {
+                        import("sonner").then((m) =>
+                          m.toast.error("Войдите в аккаунт чтобы голосовать"),
+                        );
+                        return;
+                      }
+                      dislikeMutation.mutate();
+                    }}
+                    disabled={dislikeMutation.isPending}
                     className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold transition-all"
                     style={{
                       borderRadius: "var(--radius)",
@@ -729,8 +745,8 @@ export function BuildCard({
                             background: "oklch(0.55 0.22 20 / 0.1)",
                           }
                         : {
-                            border: "1px solid oklch(0.72 0.19 40 / 0.2)",
-                            color: "oklch(0.50 0.02 60)",
+                            border: "1px solid oklch(0.88 0.01 240)",
+                            color: "oklch(0.5 0.02 240)",
                             background: "transparent",
                           }),
                     }}
@@ -750,7 +766,7 @@ export function BuildCard({
               {/* Comments */}
               <div
                 className="mt-4 pt-3"
-                style={{ borderTop: "1px solid oklch(0.72 0.19 40 / 0.12)" }}
+                style={{ borderTop: "1px solid oklch(0.88 0.01 240)" }}
               >
                 <p className="text-[10px] font-bold uppercase tracking-widest mb-3 flex items-center gap-1 text-primary">
                   <MessageSquare size={10} />
@@ -773,8 +789,8 @@ export function BuildCard({
                           key={c.id.toString()}
                           className="p-2"
                           style={{
-                            background: "oklch(0.13 0.02 240)",
-                            border: "1px solid oklch(0.72 0.19 40 / 0.12)",
+                            background: "oklch(0.96 0.005 240)",
+                            border: "1px solid oklch(0.88 0.01 240)",
                             borderRadius: "var(--radius)",
                           }}
                         >
@@ -827,14 +843,14 @@ export function BuildCard({
                       <div
                         className="flex items-center gap-2 px-2 py-1"
                         style={{
-                          background: "oklch(0.72 0.19 40 / 0.06)",
-                          border: "1px solid oklch(0.72 0.19 40 / 0.3)",
+                          background: "oklch(0.55 0.18 45 / 0.06)",
+                          border: "1px solid oklch(0.55 0.18 45 / 0.3)",
                           borderRadius: "var(--radius)",
                         }}
                       >
                         <div
                           className="w-2 h-2 rounded-full animate-pulse"
-                          style={{ background: "oklch(0.72 0.19 40)" }}
+                          style={{ background: "oklch(0.55 0.18 45)" }}
                         />
                         <span className="text-[10px] font-mono text-primary">
                           {formatVoiceTime(voiceRecordSecs)} / 1:00
@@ -861,12 +877,12 @@ export function BuildCard({
                         }
                         className="h-8 w-8 flex items-center justify-center shrink-0 transition-colors"
                         style={{
-                          border: "1px solid oklch(0.72 0.19 40 / 0.4)",
+                          border: "1px solid oklch(0.55 0.18 45 / 0.35)",
                           background: voiceRecording
                             ? "oklch(0.72 0.19 40 / 0.1)"
                             : "transparent",
                           color: voiceRecording
-                            ? "oklch(0.72 0.19 40)"
+                            ? "oklch(0.55 0.18 45)"
                             : "oklch(0.50 0.02 60)",
                           borderRadius: "var(--radius)",
                         }}
@@ -897,8 +913,8 @@ export function BuildCard({
                         disabled={voiceRecording}
                         className="text-xs h-8 flex-1"
                         style={{
-                          background: "oklch(0.13 0.02 240)",
-                          border: "1px solid oklch(0.72 0.19 40 / 0.3)",
+                          background: "oklch(0.96 0.005 240)",
+                          border: "1px solid oklch(0.55 0.18 45 / 0.3)",
                           borderRadius: "var(--radius)",
                         }}
                         data-ocid="builds.input"
@@ -915,8 +931,8 @@ export function BuildCard({
                         }
                         className="h-8 text-xs font-bold"
                         style={{
-                          background: "oklch(0.72 0.19 40)",
-                          color: "oklch(0.06 0.01 240)",
+                          background: "oklch(0.55 0.18 45)",
+                          color: "oklch(1 0 0)",
                           borderRadius: "var(--radius)",
                         }}
                         data-ocid="builds.submit_button"
@@ -942,8 +958,8 @@ export function BuildCard({
                   variant="outline"
                   className="text-xs"
                   style={{
-                    border: "1px solid oklch(0.72 0.19 40 / 0.4)",
-                    color: "oklch(0.72 0.19 40)",
+                    border: "1px solid oklch(0.55 0.18 45 / 0.35)",
+                    color: "oklch(0.55 0.18 45)",
                     background: "transparent",
                     borderRadius: "var(--radius)",
                   }}

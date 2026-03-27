@@ -91,8 +91,8 @@ function AvatarDisplay({
       style={{
         width: size,
         height: size,
-        background: "oklch(0.72 0.19 40)",
-        color: "oklch(0.06 0.01 240)",
+        background: "oklch(0.55 0.18 45)",
+        color: "oklch(1 0 0)",
         fontSize: size * 0.35,
       }}
     >
@@ -359,8 +359,8 @@ export function ProfileModal({ onClose }: Props) {
                         : "border-border"
                     }`}
                     style={{
-                      background: "oklch(0.72 0.19 40)",
-                      color: "oklch(0.06 0.01 240)",
+                      background: "oklch(0.55 0.18 45)",
+                      color: "oklch(1 0 0)",
                     }}
                     title="Инициалы"
                   >

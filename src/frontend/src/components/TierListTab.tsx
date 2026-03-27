@@ -291,7 +291,7 @@ export function TierListTab({ heroes, items, branches }: Props) {
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <h2
           className="font-display text-2xl font-bold uppercase tracking-wide"
-          style={{ color: "oklch(0.72 0.19 40)" }}
+          style={{ color: "oklch(0.55 0.18 45)" }}
         >
           {t("ТИР-ЛИСТ", "TIER LIST")}
         </h2>
@@ -304,7 +304,7 @@ export function TierListTab({ heroes, items, branches }: Props) {
             className="gap-1 text-xs"
             style={{
               border: "1px solid oklch(0.72 0.19 40 / 0.4)",
-              color: "oklch(0.72 0.19 40)",
+              color: "oklch(0.55 0.18 45)",
             }}
             data-ocid="tierlist.secondary_button"
           >
@@ -319,7 +319,7 @@ export function TierListTab({ heroes, items, branches }: Props) {
             className="gap-1 text-xs"
             style={{
               border: "1px solid oklch(0.72 0.19 40 / 0.3)",
-              color: "oklch(0.50 0.02 60)",
+              color: "oklch(0.5 0.02 240)",
             }}
             data-ocid="tierlist.delete_button"
           >
@@ -338,8 +338,8 @@ export function TierListTab({ heroes, items, branches }: Props) {
             }
             className="gap-1 text-xs"
             style={{
-              background: "oklch(0.72 0.19 40)",
-              color: "oklch(0.06 0.01 240)",
+              background: "oklch(0.55 0.18 45)",
+              color: "oklch(1 0 0)",
               fontWeight: 700,
             }}
             data-ocid="tierlist.save_button"
@@ -354,7 +354,7 @@ export function TierListTab({ heroes, items, branches }: Props) {
       <div className="mb-3 flex items-center gap-3">
         <p className="text-xs text-muted-foreground">
           {selectedItem ? (
-            <span style={{ color: "oklch(0.72 0.19 40)" }}>
+            <span style={{ color: "oklch(0.55 0.18 45)" }}>
               ✓ Выбран: <strong>{selectedItem.name}</strong> — нажмите на тир
               чтобы добавить
             </span>
@@ -379,7 +379,7 @@ export function TierListTab({ heroes, items, branches }: Props) {
         style={{
           background: "oklch(0.72 0.19 40 / 0.08)",
           border: "1px solid oklch(0.72 0.19 40 / 0.3)",
-          color: "oklch(0.72 0.19 40)",
+          color: "oklch(0.55 0.18 45)",
         }}
       >
         💡 Нажмите иконку снизу, затем строку тира — добавить. Перетаскивание
@@ -405,7 +405,7 @@ export function TierListTab({ heroes, items, branches }: Props) {
       <div
         className="rounded p-4"
         style={{
-          background: "oklch(0.10 0.015 240)",
+          background: "oklch(1 0 0)",
           border: "1px solid oklch(0.72 0.19 40 / 0.2)",
         }}
       >
@@ -421,11 +421,11 @@ export function TierListTab({ heroes, items, branches }: Props) {
               className="px-4 py-2 text-xs font-bold uppercase tracking-widest border-b-2 transition-colors"
               style={{
                 borderColor:
-                  poolTab === pt ? "oklch(0.72 0.19 40)" : "transparent",
+                  poolTab === pt ? "oklch(0.55 0.18 45)" : "transparent",
                 color:
                   poolTab === pt
-                    ? "oklch(0.72 0.19 40)"
-                    : "oklch(0.50 0.02 60)",
+                    ? "oklch(0.55 0.18 45)"
+                    : "oklch(0.5 0.02 240)",
               }}
               data-ocid={`tierlist.${pt}.tab`}
             >
@@ -489,7 +489,7 @@ function TierRow({
       }`}
       style={{
         border: draggingOver
-          ? "1px solid oklch(0.72 0.19 40)"
+          ? "1px solid oklch(0.55 0.18 45)"
           : hasSelectedItem
             ? "1px solid oklch(0.72 0.19 40 / 0.5)"
             : "1px solid oklch(0.72 0.19 40 / 0.15)",
@@ -523,7 +523,7 @@ function TierRow({
       </div>
       <div
         className="flex-1 flex flex-wrap gap-2 p-2 overflow-hidden"
-        style={{ background: "oklch(0.06 0.01 240)" }}
+        style={{ background: "oklch(0.98 0.005 240)" }}
       >
         {items.map((item) => (
           <ImageTile
@@ -566,7 +566,7 @@ function PoolItem({
       title={item.name}
       style={
         selected
-          ? { outline: "2px solid oklch(0.72 0.19 40)", outlineOffset: "2px" }
+          ? { outline: "2px solid oklch(0.55 0.18 45)", outlineOffset: "2px" }
           : {}
       }
     >
