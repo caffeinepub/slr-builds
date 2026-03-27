@@ -34,7 +34,6 @@ interface Props {
   onHeroClick?: (heroId: bigint) => void;
 }
 
-// Fallback mapping for skill IDs to correct Russian names
 const SKILL_ID_NAMES: Record<string, string> = {
   "9": "ХП",
   "10": "УЛЬТ",
@@ -188,7 +187,7 @@ export function BuildCard({
       toast.info(
         t(
           "Чтобы отправить — нажмите кнопку ещё раз и выключите микрофон",
-          "To send — press the button again to stop and turn off microphone",
+          "To send \u2014 press the button again to stop and turn off microphone",
         ),
         { duration: 4000 },
       );
@@ -242,7 +241,6 @@ export function BuildCard({
     onHeroClick?.(heroId);
   };
 
-  // Rarity border based on top required skill
   const LEGENDARY_SKILLS = ["УЛЬТ", "ЯРОСТЬ", "КРИТ", "ULT", "RAGE", "CRIT"];
   const RARE_SKILLS = [
     "ЗАМОРОЗКА",
@@ -259,11 +257,13 @@ export function BuildCard({
   const topSkillName = requiredSkills[0]
     ? parseSkillName(requiredSkills[0].name, "ru", requiredSkills[0].id)
     : "";
-  const rarityBorder = LEGENDARY_SKILLS.includes(topSkillName)
-    ? "#f0c230"
-    : RARE_SKILLS.includes(topSkillName)
-      ? "#a78bfa"
-      : "oklch(0.71 0.16 75 / 0.25)";
+  const isLegendary = LEGENDARY_SKILLS.includes(topSkillName);
+  const isRare = RARE_SKILLS.includes(topSkillName);
+  const borderColor = isLegendary
+    ? "oklch(0.72 0.19 40 / 0.7)"
+    : isRare
+      ? "oklch(0.6 0.2 290 / 0.5)"
+      : "oklch(0.72 0.19 40 / 0.15)";
 
   return (
     <>
@@ -272,51 +272,39 @@ export function BuildCard({
         data-ocid={dataOcid}
         className="group relative cursor-pointer text-left w-full transition-all duration-200"
         style={{
-          background: "oklch(0.19 0.046 252)",
-          border: `1px solid ${rarityBorder}`,
-          borderRadius: "0.75rem",
+          background: "oklch(0.10 0.015 240)",
+          borderLeft: `3px solid ${borderColor}`,
+          border: "1px solid oklch(0.72 0.19 40 / 0.12)",
+          borderLeftWidth: "3px",
+          borderLeftColor: borderColor,
+          borderRadius: "var(--radius)",
           overflow: "hidden",
         }}
         onMouseEnter={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.borderColor =
-            "oklch(0.71 0.16 75 / 0.7)";
-          (e.currentTarget as HTMLButtonElement).style.boxShadow =
-            "0 4px 20px oklch(0.71 0.16 75 / 0.25)";
-          (e.currentTarget as HTMLButtonElement).style.transform =
-            "scale(1.02)";
+          const el = e.currentTarget as HTMLButtonElement;
+          el.style.borderLeftColor = "oklch(0.72 0.19 40)";
+          el.style.borderLeftWidth = "3px";
+          el.style.boxShadow = "0 2px 12px oklch(0.72 0.19 40 / 0.15)";
         }}
         onMouseLeave={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.borderColor =
-            "oklch(0.71 0.16 75 / 0.25)";
-          (e.currentTarget as HTMLButtonElement).style.boxShadow = "";
-          (e.currentTarget as HTMLButtonElement).style.transform = "";
+          const el = e.currentTarget as HTMLButtonElement;
+          el.style.borderLeftColor = borderColor;
+          el.style.boxShadow = "";
         }}
         onClick={() => setExpanded(true)}
       >
-        {/* Top accent bar */}
-        <div
-          className="h-0.5 w-full"
-          style={{
-            background:
-              "linear-gradient(to right, oklch(0.71 0.16 75), oklch(0.62 0.14 80))",
-          }}
-        />
-
-        <div className="p-4">
+        <div className="p-3">
           {/* Name + Share */}
-          <div className="flex items-start justify-between gap-2 mb-3">
-            <h3
-              className="font-display font-bold text-base uppercase tracking-wide line-clamp-1 flex-1"
-              style={{ color: "oklch(0.71 0.16 75)" }}
-            >
+          <div className="flex items-start justify-between gap-2 mb-2">
+            <h3 className="font-display font-bold text-sm uppercase tracking-wide line-clamp-1 flex-1 text-primary">
               {build.name}
             </h3>
             <button
               type="button"
               data-ocid="build.secondary_button"
               title="Поделиться"
-              className="flex-shrink-0 p-0.5 rounded opacity-50 hover:opacity-100 transition-opacity"
-              style={{ color: "oklch(0.71 0.16 75)" }}
+              className="flex-shrink-0 p-0.5 opacity-40 hover:opacity-80 transition-opacity"
+              style={{ color: "oklch(0.72 0.19 40)" }}
               onClick={(e) => {
                 e.stopPropagation();
                 navigator.clipboard.writeText(build.name).then(() => {
@@ -324,33 +312,34 @@ export function BuildCard({
                 });
               }}
             >
-              <Copy size={12} />
+              <Copy size={11} />
             </button>
           </div>
 
           {/* Heroes */}
           {buildHeroes.length > 0 && (
-            <div className="mb-3">
-              <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+            <div className="mb-2">
+              <div className="text-[9px] text-muted-foreground uppercase tracking-widest mb-1">
                 {t("Герои", "Heroes")}
               </div>
-              <div className="flex flex-wrap gap-1.5 overflow-hidden">
+              <div className="flex flex-wrap gap-1 overflow-hidden">
                 {buildHeroes.map((h) => (
                   <span
                     key={h.id.toString()}
-                    className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-lg text-foreground"
+                    className="flex items-center gap-1 text-xs px-1.5 py-0.5 text-foreground"
                     style={{
-                      background: "oklch(0.22 0.052 252)",
-                      border: "1px solid oklch(0.71 0.16 75 / 0.2)",
+                      background: "oklch(0.13 0.02 240)",
+                      border: "1px solid oklch(0.72 0.19 40 / 0.15)",
+                      borderRadius: "var(--radius)",
                     }}
                   >
                     {h.imageUrl && (
                       <img
                         src={h.imageUrl}
                         alt={h.name}
-                        width={20}
-                        height={20}
-                        className="w-5 h-5 rounded-full object-cover flex-shrink-0"
+                        width={16}
+                        height={16}
+                        className="w-4 h-4 rounded-full object-cover flex-shrink-0"
                         onError={(e) => {
                           (e.target as HTMLImageElement).style.display = "none";
                         }}
@@ -365,9 +354,9 @@ export function BuildCard({
 
           {/* Required skills */}
           {requiredSkills.length > 0 && (
-            <div className="mb-2">
-              <div className="flex items-center gap-1 text-xs text-green-400 uppercase tracking-wide mb-1">
-                <Sword size={10} />
+            <div className="mb-1.5">
+              <div className="flex items-center gap-1 text-[9px] text-green-400/80 uppercase tracking-widest mb-1">
+                <Sword size={8} />
                 {t("Нужны", "Required")}
               </div>
               <div className="flex flex-wrap gap-1">
@@ -375,15 +364,16 @@ export function BuildCard({
                   <Badge
                     key={s.id.toString()}
                     variant="outline"
-                    className="flex items-center gap-1 text-xs border-green-400/30 text-green-400 px-1.5 py-0 rounded-lg"
+                    className="flex items-center gap-1 text-[10px] border-green-400/25 text-green-400 px-1.5 py-0"
+                    style={{ borderRadius: "var(--radius)" }}
                   >
                     {s.imageUrl && (
                       <img
                         src={s.imageUrl}
                         alt=""
-                        width={12}
-                        height={12}
-                        className="w-3 h-3 object-contain"
+                        width={10}
+                        height={10}
+                        className="w-2.5 h-2.5 object-contain"
                         onError={(e) => {
                           (e.target as HTMLImageElement).style.display = "none";
                         }}
@@ -398,9 +388,9 @@ export function BuildCard({
 
           {/* Forbidden skills */}
           {forbiddenSkills.length > 0 && (
-            <div className="mb-2">
-              <div className="flex items-center gap-1 text-xs text-destructive uppercase tracking-wide mb-1">
-                <Shield size={10} />
+            <div className="mb-1.5">
+              <div className="flex items-center gap-1 text-[9px] text-destructive/80 uppercase tracking-widest mb-1">
+                <Shield size={8} />
                 {t("Запрет", "Forbidden")}
               </div>
               <div className="flex flex-wrap gap-1">
@@ -408,15 +398,16 @@ export function BuildCard({
                   <Badge
                     key={s.id.toString()}
                     variant="outline"
-                    className="flex items-center gap-1 text-xs border-destructive/30 text-destructive px-1.5 py-0 rounded-lg"
+                    className="flex items-center gap-1 text-[10px] border-destructive/25 text-destructive px-1.5 py-0"
+                    style={{ borderRadius: "var(--radius)" }}
                   >
                     {s.imageUrl && (
                       <img
                         src={s.imageUrl}
                         alt=""
-                        width={12}
-                        height={12}
-                        className="w-3 h-3 object-contain"
+                        width={10}
+                        height={10}
+                        className="w-2.5 h-2.5 object-contain"
                         onError={(e) => {
                           (e.target as HTMLImageElement).style.display = "none";
                         }}
@@ -434,10 +425,10 @@ export function BuildCard({
             build.costRare > 0n ||
             build.costBasic > 0n) && (
             <div
-              className="flex items-center gap-1 text-xs text-muted-foreground mt-3 pt-3"
-              style={{ borderTop: "1px solid oklch(0.71 0.16 75 / 0.15)" }}
+              className="flex items-center gap-1 text-[10px] text-muted-foreground mt-2 pt-2"
+              style={{ borderTop: "1px solid oklch(0.72 0.19 40 / 0.1)" }}
             >
-              <Coins size={10} className="text-primary" />
+              <Coins size={9} className="text-primary" />
               {build.costLegendary > 0n && (
                 <span className="text-yellow-400">
                   {build.costLegendary.toString()}L
@@ -459,9 +450,8 @@ export function BuildCard({
             </div>
           )}
 
-          {/* Hint */}
           {build.hint && (
-            <p className="mt-2 text-xs text-muted-foreground italic line-clamp-2">
+            <p className="mt-1.5 text-[10px] text-muted-foreground italic line-clamp-1">
               {build.hint}
             </p>
           )}
@@ -472,73 +462,71 @@ export function BuildCard({
       {expanded && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ backgroundColor: "oklch(0.10 0.03 252 / 0.9)" }}
+          style={{ backgroundColor: "oklch(0.04 0.01 240 / 0.92)" }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setExpanded(false);
+              onClose?.();
+            }
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              setExpanded(false);
+              onClose?.();
+            }
+          }}
+          role="presentation"
         >
           <div
-            className="relative w-full max-w-lg overflow-y-auto max-h-[90vh]"
+            className="relative w-full max-w-lg overflow-y-auto max-h-[90vh] modal-glitch hud-panel hud-scan"
             style={{
-              background: "oklch(0.17 0.043 252)",
-              border: "1px solid oklch(0.71 0.16 75 / 0.5)",
-              borderRadius: "1rem",
-              boxShadow: "0 0 60px oklch(0.71 0.16 75 / 0.2)",
+              background: "oklch(0.09 0.012 240)",
+              border: "1px solid oklch(0.72 0.19 40 / 0.5)",
+              borderRadius: "var(--radius)",
+              boxShadow:
+                "0 0 40px oklch(0.72 0.19 40 / 0.2), 0 0 80px oklch(0.72 0.19 40 / 0.08)",
             }}
           >
-            {/* Accent top bar */}
-            <div
-              className="h-1 w-full"
-              style={{
-                background:
-                  "linear-gradient(to right, oklch(0.71 0.16 75), oklch(0.62 0.14 80), oklch(0.71 0.16 75))",
-                borderRadius: "1rem 1rem 0 0",
-              }}
-            />
-
-            <div className="p-6">
+            <div className="p-5">
               {/* Header */}
-              <div className="flex items-start justify-between mb-5">
+              <div className="flex items-start justify-between mb-4">
                 <h2
-                  className="font-display text-xl font-bold uppercase tracking-widest pr-4"
-                  style={{
-                    color: "oklch(0.71 0.16 75)",
-                    textShadow: "0 0 10px oklch(0.71 0.16 75 / 0.5)",
-                  }}
+                  className="font-display text-lg font-bold uppercase tracking-widest pr-4 text-glow-orange"
+                  style={{ color: "oklch(0.72 0.19 40)" }}
                 >
                   {build.name}
                 </h2>
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground rounded-lg"
+                  className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+                  style={{ borderRadius: "var(--radius)" }}
                   onClick={() => {
                     setExpanded(false);
                     onClose?.();
                   }}
                   data-ocid="builds.close_button"
                 >
-                  <X size={16} />
+                  <X size={14} />
                 </Button>
               </div>
 
-              {/* Hint */}
               {build.hint && (
                 <p
-                  className="text-sm text-muted-foreground italic mb-5 pl-3"
-                  style={{ borderLeft: "2px solid oklch(0.71 0.16 75 / 0.4)" }}
+                  className="text-sm text-muted-foreground italic mb-4 pl-3"
+                  style={{ borderLeft: "2px solid oklch(0.72 0.19 40 / 0.4)" }}
                 >
                   {build.hint}
                 </p>
               )}
 
-              {/* Heroes — clickable to filter */}
+              {/* Heroes */}
               {buildHeroes.length > 0 && (
-                <div className="mb-5">
-                  <p
-                    className="text-xs font-bold uppercase tracking-widest mb-2"
-                    style={{ color: "oklch(0.71 0.16 75)" }}
-                  >
+                <div className="mb-4">
+                  <p className="text-[10px] font-bold uppercase tracking-widest mb-2 text-primary">
                     {t("Герои", "Heroes")}
                     {onHeroClick && (
-                      <span className="ml-2 text-[10px] font-normal text-muted-foreground normal-case">
+                      <span className="ml-2 text-[9px] font-normal text-muted-foreground normal-case">
                         (нажмите чтобы найти сборки)
                       </span>
                     )}
@@ -550,38 +538,39 @@ export function BuildCard({
                         type="button"
                         title={`Сборки с ${h.name}`}
                         onClick={() => handleHeroChipClick(h.id)}
-                        className="flex items-center gap-2 px-2 py-1 rounded-lg transition-all hover:scale-105"
+                        className="flex items-center gap-1.5 px-2 py-1 transition-all hover:scale-105"
                         style={{
-                          background: "oklch(0.22 0.052 252)",
-                          border: "1px solid oklch(0.71 0.16 75 / 0.2)",
+                          background: "oklch(0.13 0.02 240)",
+                          border: "1px solid oklch(0.72 0.19 40 / 0.2)",
+                          borderRadius: "var(--radius)",
                           cursor: onHeroClick ? "pointer" : "default",
                         }}
                         onMouseEnter={(e) => {
                           if (onHeroClick)
                             (
                               e.currentTarget as HTMLButtonElement
-                            ).style.borderColor = "oklch(0.71 0.16 75)";
+                            ).style.borderColor = "oklch(0.72 0.19 40)";
                         }}
                         onMouseLeave={(e) => {
                           (
                             e.currentTarget as HTMLButtonElement
-                          ).style.borderColor = "oklch(0.71 0.16 75 / 0.2)";
+                          ).style.borderColor = "oklch(0.72 0.19 40 / 0.2)";
                         }}
                       >
                         {h.imageUrl && (
                           <img
                             src={h.imageUrl}
                             alt={h.name}
-                            width={28}
-                            height={28}
-                            className="w-7 h-7 rounded-full object-cover flex-shrink-0"
+                            width={24}
+                            height={24}
+                            className="w-6 h-6 rounded-full object-cover flex-shrink-0"
                             onError={(e) => {
                               (e.target as HTMLImageElement).style.display =
                                 "none";
                             }}
                           />
                         )}
-                        <span className="text-sm font-medium">{h.name}</span>
+                        <span className="text-xs font-medium">{h.name}</span>
                       </button>
                     ))}
                   </div>
@@ -590,9 +579,9 @@ export function BuildCard({
 
               {/* Required skills */}
               {requiredSkills.length > 0 && (
-                <div className="mb-4">
-                  <p className="text-xs font-bold uppercase tracking-widest text-green-400 mb-2 flex items-center gap-1">
-                    <Sword size={12} />{" "}
+                <div className="mb-3">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-green-400 mb-2 flex items-center gap-1">
+                    <Sword size={10} />{" "}
                     {t("Обязательные навыки", "Required Skills")}
                   </p>
                   <div className="flex flex-wrap gap-1.5">
@@ -600,15 +589,16 @@ export function BuildCard({
                       <Badge
                         key={s.id.toString()}
                         variant="outline"
-                        className="flex items-center gap-1 border-green-400/30 text-green-400 text-xs rounded-lg"
+                        className="flex items-center gap-1 border-green-400/30 text-green-400 text-xs"
+                        style={{ borderRadius: "var(--radius)" }}
                       >
                         {s.imageUrl && (
                           <img
                             src={s.imageUrl}
                             alt=""
-                            width={14}
-                            height={14}
-                            className="w-3.5 h-3.5 object-contain"
+                            width={12}
+                            height={12}
+                            className="w-3 h-3 object-contain"
                             onError={(e) => {
                               (e.target as HTMLImageElement).style.display =
                                 "none";
@@ -624,9 +614,9 @@ export function BuildCard({
 
               {/* Forbidden skills */}
               {forbiddenSkills.length > 0 && (
-                <div className="mb-4">
-                  <p className="text-xs font-bold uppercase tracking-widest text-destructive mb-2 flex items-center gap-1">
-                    <Shield size={12} />{" "}
+                <div className="mb-3">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-destructive mb-2 flex items-center gap-1">
+                    <Shield size={10} />{" "}
                     {t("Запрещённые навыки", "Forbidden Skills")}
                   </p>
                   <div className="flex flex-wrap gap-1.5">
@@ -634,15 +624,16 @@ export function BuildCard({
                       <Badge
                         key={s.id.toString()}
                         variant="outline"
-                        className="flex items-center gap-1 border-destructive/30 text-destructive text-xs rounded-lg"
+                        className="flex items-center gap-1 border-destructive/30 text-destructive text-xs"
+                        style={{ borderRadius: "var(--radius)" }}
                       >
                         {s.imageUrl && (
                           <img
                             src={s.imageUrl}
                             alt=""
-                            width={14}
-                            height={14}
-                            className="w-3.5 h-3.5 object-contain"
+                            width={12}
+                            height={12}
+                            className="w-3 h-3 object-contain"
                             onError={(e) => {
                               (e.target as HTMLImageElement).style.display =
                                 "none";
@@ -661,14 +652,14 @@ export function BuildCard({
                 build.costRare > 0n ||
                 build.costBasic > 0n) && (
                 <div
-                  className="mt-4 pt-4"
-                  style={{ borderTop: "1px solid oklch(0.71 0.16 75 / 0.15)" }}
+                  className="mt-3 pt-3"
+                  style={{ borderTop: "1px solid oklch(0.72 0.19 40 / 0.12)" }}
                 >
-                  <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
-                    <Coins size={12} className="inline mr-1 text-primary" />
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
+                    <Coins size={10} className="inline mr-1 text-primary" />
                     {t("Стоимость", "Cost")}
                   </p>
-                  <div className="flex gap-3 text-sm">
+                  <div className="flex gap-3 text-xs">
                     {build.costLegendary > 0n && (
                       <span className="text-yellow-400">
                         {build.costLegendary.toString()} {t("Легенд.", "Leg.")}
@@ -695,59 +686,61 @@ export function BuildCard({
 
               {/* Votes */}
               <div
-                className="mt-5 pt-4"
-                style={{ borderTop: "1px solid oklch(0.71 0.16 75 / 0.15)" }}
+                className="mt-4 pt-3"
+                style={{ borderTop: "1px solid oklch(0.72 0.19 40 / 0.12)" }}
               >
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={() => likeMutation.mutate()}
                     disabled={!identity || likeMutation.isPending}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold transition-all"
-                    style={
-                      myVote === true
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold transition-all"
+                    style={{
+                      borderRadius: "var(--radius)",
+                      ...(myVote === true
                         ? {
-                            border: "1px solid oklch(0.71 0.16 75)",
-                            color: "oklch(0.71 0.16 75)",
-                            background: "oklch(0.71 0.16 75 / 0.1)",
-                            boxShadow: "0 0 8px oklch(0.71 0.16 75 / 0.3)",
+                            border: "1px solid oklch(0.72 0.19 40)",
+                            color: "oklch(0.72 0.19 40)",
+                            background: "oklch(0.72 0.19 40 / 0.1)",
+                            boxShadow: "0 0 8px oklch(0.72 0.19 40 / 0.3)",
                           }
                         : {
-                            border: "1px solid oklch(0.71 0.16 75 / 0.25)",
-                            color: "oklch(0.55 0.02 252)",
+                            border: "1px solid oklch(0.72 0.19 40 / 0.2)",
+                            color: "oklch(0.50 0.02 60)",
                             background: "transparent",
-                          }
-                    }
+                          }),
+                    }}
                     data-ocid="builds.toggle"
                   >
-                    <ThumbsUp size={14} />
+                    <ThumbsUp size={12} />
                     <span>{Number(votes?.likes ?? 0)}</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => dislikeMutation.mutate()}
                     disabled={!identity || dislikeMutation.isPending}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold transition-all"
-                    style={
-                      myVote === false
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold transition-all"
+                    style={{
+                      borderRadius: "var(--radius)",
+                      ...(myVote === false
                         ? {
                             border: "1px solid oklch(0.55 0.22 20)",
                             color: "oklch(0.55 0.22 20)",
                             background: "oklch(0.55 0.22 20 / 0.1)",
                           }
                         : {
-                            border: "1px solid oklch(0.71 0.16 75 / 0.25)",
-                            color: "oklch(0.55 0.02 252)",
+                            border: "1px solid oklch(0.72 0.19 40 / 0.2)",
+                            color: "oklch(0.50 0.02 60)",
                             background: "transparent",
-                          }
-                    }
+                          }),
+                    }}
                     data-ocid="builds.secondary_button"
                   >
-                    <ThumbsDown size={14} />
+                    <ThumbsDown size={12} />
                     <span>{Number(votes?.dislikes ?? 0)}</span>
                   </button>
                   {!identity && (
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-[10px] text-muted-foreground">
                       {t("Войдите чтобы голосовать", "Login to vote")}
                     </span>
                   )}
@@ -756,42 +749,37 @@ export function BuildCard({
 
               {/* Comments */}
               <div
-                className="mt-5 pt-4"
-                style={{ borderTop: "1px solid oklch(0.71 0.16 75 / 0.15)" }}
+                className="mt-4 pt-3"
+                style={{ borderTop: "1px solid oklch(0.72 0.19 40 / 0.12)" }}
               >
-                <p
-                  className="text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-1"
-                  style={{ color: "oklch(0.71 0.16 75)" }}
-                >
-                  <MessageSquare size={12} />
+                <p className="text-[10px] font-bold uppercase tracking-widest mb-3 flex items-center gap-1 text-primary">
+                  <MessageSquare size={10} />
                   {t("Комментарии", "Comments")} ({comments.length})
                 </p>
 
                 {commentsLoading ? (
                   <div className="flex justify-center py-4">
-                    <Loader2 className="animate-spin text-primary" size={18} />
+                    <Loader2 className="animate-spin text-primary" size={16} />
                   </div>
                 ) : comments.length === 0 ? (
                   <p className="text-xs text-muted-foreground py-2">
                     {t("Нет комментариев", "No comments yet")}
                   </p>
                 ) : (
-                  <ScrollArea className="max-h-40 mb-3">
+                  <ScrollArea className="max-h-36 mb-3">
                     <div className="space-y-2">
                       {comments.map((c) => (
                         <div
                           key={c.id.toString()}
-                          className="p-2 rounded-lg"
+                          className="p-2"
                           style={{
-                            background: "oklch(0.22 0.052 252)",
-                            border: "1px solid oklch(0.71 0.16 75 / 0.15)",
+                            background: "oklch(0.13 0.02 240)",
+                            border: "1px solid oklch(0.72 0.19 40 / 0.12)",
+                            borderRadius: "var(--radius)",
                           }}
                         >
                           <div className="flex items-center justify-between mb-1">
-                            <span
-                              className="text-[10px] font-bold"
-                              style={{ color: "oklch(0.71 0.16 75)" }}
-                            >
+                            <span className="text-[10px] font-bold text-primary">
                               {c.authorName}
                             </span>
                             <div className="flex items-center gap-1">
@@ -809,7 +797,7 @@ export function BuildCard({
                                     }
                                     className="text-muted-foreground hover:text-destructive transition-colors ml-1"
                                   >
-                                    <Trash2 size={10} />
+                                    <Trash2 size={9} />
                                   </button>
                                 )}
                             </div>
@@ -837,23 +825,21 @@ export function BuildCard({
                   <div className="space-y-1">
                     {voiceRecording && (
                       <div
-                        className="flex items-center gap-2 px-2 py-1 rounded-lg"
+                        className="flex items-center gap-2 px-2 py-1"
                         style={{
-                          background: "oklch(0.71 0.16 75 / 0.08)",
-                          border: "1px solid oklch(0.71 0.16 75 / 0.3)",
+                          background: "oklch(0.72 0.19 40 / 0.06)",
+                          border: "1px solid oklch(0.72 0.19 40 / 0.3)",
+                          borderRadius: "var(--radius)",
                         }}
                       >
                         <div
                           className="w-2 h-2 rounded-full animate-pulse"
-                          style={{ background: "oklch(0.71 0.16 75)" }}
+                          style={{ background: "oklch(0.72 0.19 40)" }}
                         />
-                        <span
-                          className="text-xs font-mono"
-                          style={{ color: "oklch(0.71 0.16 75)" }}
-                        >
+                        <span className="text-[10px] font-mono text-primary">
                           {formatVoiceTime(voiceRecordSecs)} / 1:00
                         </span>
-                        <span className="text-xs text-muted-foreground ml-auto">
+                        <span className="text-[10px] text-muted-foreground ml-auto">
                           {t(
                             "Нажмите ещё раз чтобы отправить",
                             "Press again to send",
@@ -873,23 +859,24 @@ export function BuildCard({
                             ? t("Остановить и отправить", "Stop and send")
                             : t("Голосовой комментарий", "Voice comment")
                         }
-                        className="h-8 w-8 flex items-center justify-center shrink-0 transition-colors rounded-lg"
+                        className="h-8 w-8 flex items-center justify-center shrink-0 transition-colors"
                         style={{
-                          border: "1px solid oklch(0.71 0.16 75 / 0.4)",
+                          border: "1px solid oklch(0.72 0.19 40 / 0.4)",
                           background: voiceRecording
-                            ? "oklch(0.71 0.16 75 / 0.1)"
+                            ? "oklch(0.72 0.19 40 / 0.1)"
                             : "transparent",
                           color: voiceRecording
-                            ? "oklch(0.71 0.16 75)"
-                            : "oklch(0.55 0.02 252)",
+                            ? "oklch(0.72 0.19 40)"
+                            : "oklch(0.50 0.02 60)",
+                          borderRadius: "var(--radius)",
                         }}
                       >
                         {addVoiceCommentMutation.isPending ? (
-                          <Loader2 size={12} className="animate-spin" />
+                          <Loader2 size={11} className="animate-spin" />
                         ) : voiceRecording ? (
-                          <MicOff size={13} />
+                          <MicOff size={11} />
                         ) : (
-                          <Mic size={13} />
+                          <Mic size={11} />
                         )}
                       </button>
                       <Input
@@ -908,10 +895,11 @@ export function BuildCard({
                             : t("Ваш комментарий...", "Your comment...")
                         }
                         disabled={voiceRecording}
-                        className="text-xs h-8 flex-1 rounded-lg"
+                        className="text-xs h-8 flex-1"
                         style={{
-                          background: "oklch(0.22 0.052 252)",
-                          border: "1px solid oklch(0.71 0.16 75 / 0.3)",
+                          background: "oklch(0.13 0.02 240)",
+                          border: "1px solid oklch(0.72 0.19 40 / 0.3)",
+                          borderRadius: "var(--radius)",
                         }}
                         data-ocid="builds.input"
                       />
@@ -925,15 +913,16 @@ export function BuildCard({
                           addCommentMutation.isPending ||
                           voiceRecording
                         }
-                        className="h-8 rounded-lg text-xs font-bold"
+                        className="h-8 text-xs font-bold"
                         style={{
-                          background: "oklch(0.71 0.16 75)",
-                          color: "oklch(0.14 0.04 252)",
+                          background: "oklch(0.72 0.19 40)",
+                          color: "oklch(0.06 0.01 240)",
+                          borderRadius: "var(--radius)",
                         }}
                         data-ocid="builds.submit_button"
                       >
                         {addCommentMutation.isPending ? (
-                          <Loader2 size={12} className="animate-spin" />
+                          <Loader2 size={11} className="animate-spin" />
                         ) : (
                           t("Отправить", "Send")
                         )}
@@ -948,14 +937,15 @@ export function BuildCard({
               </div>
 
               {/* Close */}
-              <div className="mt-6 flex justify-end">
+              <div className="mt-5 flex justify-end">
                 <Button
                   variant="outline"
-                  className="rounded-xl"
+                  className="text-xs"
                   style={{
-                    border: "1px solid oklch(0.71 0.16 75 / 0.4)",
-                    color: "oklch(0.71 0.16 75)",
-                    background: "oklch(0.71 0.16 75 / 0.05)",
+                    border: "1px solid oklch(0.72 0.19 40 / 0.4)",
+                    color: "oklch(0.72 0.19 40)",
+                    background: "transparent",
+                    borderRadius: "var(--radius)",
                   }}
                   onClick={() => {
                     setExpanded(false);

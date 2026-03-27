@@ -21,12 +21,12 @@ interface Props {
   onClose: () => void;
 }
 
-const CARD_BG = "oklch(0.14 0.04 252)";
-const CARD_BORDER = "oklch(0.71 0.16 75 / 0.3)";
-const GOLD = "oklch(0.71 0.16 75)";
-const INPUT_BG = "oklch(0.19 0.046 252)";
-const MUTED = "oklch(0.55 0.02 252)";
-const FG = "oklch(0.93 0.008 252)";
+const CARD_BG = "oklch(0.06 0.01 240)";
+const CARD_BORDER = "oklch(0.72 0.19 40 / 0.3)";
+const GOLD = "oklch(0.72 0.19 40)";
+const INPUT_BG = "oklch(0.10 0.015 240)";
+const MUTED = "oklch(0.50 0.02 60)";
+const FG = "oklch(0.92 0.01 60)";
 
 export function RecordBuildModal({ heroes, onClose }: Props) {
   const { t } = useLang();
@@ -201,7 +201,7 @@ export function RecordBuildModal({ heroes, onClose }: Props) {
               placeholder="Поиск героя..."
               value={heroSearch}
               onChange={(e) => setHeroSearch(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl text-sm mb-2 outline-none"
+              className="w-full px-3 py-2 rounded text-sm mb-2 outline-none"
               style={{
                 background: INPUT_BG,
                 border: `1px solid ${CARD_BORDER}`,
@@ -224,7 +224,7 @@ export function RecordBuildModal({ heroes, onClose }: Props) {
                     type="button"
                     onClick={() => setHeroId(active ? null : hero.id)}
                     title={hero.name}
-                    className="flex flex-col items-center gap-1 p-1 rounded-xl transition-all"
+                    className="flex flex-col items-center gap-1 p-1 rounded transition-all"
                     style={{
                       background: active ? `${GOLD}22` : INPUT_BG,
                       border: active
@@ -281,7 +281,7 @@ export function RecordBuildModal({ heroes, onClose }: Props) {
                   <img
                     src={mainScreenshot}
                     alt="main"
-                    className="h-24 rounded-lg object-cover"
+                    className="h-24 rounded object-cover"
                     style={{ border: `1px solid ${CARD_BORDER}` }}
                   />
                   <button
@@ -297,7 +297,7 @@ export function RecordBuildModal({ heroes, onClose }: Props) {
                 <button
                   type="button"
                   onClick={() => mainRef.current?.click()}
-                  className="w-full py-4 rounded-xl text-sm border-dashed text-center transition-colors"
+                  className="w-full py-4 rounded text-sm border-dashed text-center transition-colors"
                   style={{ border: `2px dashed ${CARD_BORDER}`, color: MUTED }}
                   data-ocid="record_build.upload_button"
                 >
@@ -329,7 +329,7 @@ export function RecordBuildModal({ heroes, onClose }: Props) {
                   <img
                     src={src}
                     alt={`branch-${i}`}
-                    className="w-16 h-16 rounded-lg object-cover"
+                    className="w-16 h-16 rounded object-cover"
                     style={{ border: `1px solid ${CARD_BORDER}` }}
                   />
                   <button
@@ -350,7 +350,7 @@ export function RecordBuildModal({ heroes, onClose }: Props) {
                 <button
                   type="button"
                   onClick={() => branchRef.current?.click()}
-                  className="w-16 h-16 rounded-xl flex items-center justify-center text-xl border-dashed transition-colors"
+                  className="w-16 h-16 rounded flex items-center justify-center text-xl border-dashed transition-colors"
                   style={{ border: `2px dashed ${CARD_BORDER}`, color: MUTED }}
                 >
                   +
@@ -382,7 +382,7 @@ export function RecordBuildModal({ heroes, onClose }: Props) {
                   <img
                     src={src}
                     alt={`item-${i}`}
-                    className="w-16 h-16 rounded-lg object-cover"
+                    className="w-16 h-16 rounded object-cover"
                     style={{ border: `1px solid ${CARD_BORDER}` }}
                   />
                   <button
@@ -403,7 +403,7 @@ export function RecordBuildModal({ heroes, onClose }: Props) {
                 <button
                   type="button"
                   onClick={() => itemRef.current?.click()}
-                  className="w-16 h-16 rounded-xl flex items-center justify-center text-xl border-dashed transition-colors"
+                  className="w-16 h-16 rounded flex items-center justify-center text-xl border-dashed transition-colors"
                   style={{ border: `2px dashed ${CARD_BORDER}`, color: MUTED }}
                 >
                   +

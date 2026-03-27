@@ -135,16 +135,23 @@ export function AdminPage() {
     return (
       <div className="flex items-center justify-center min-h-[70vh] bg-black">
         <div
-          className="w-full max-w-sm p-8 bg-black border border-yellow-600/60 rounded"
-          style={{ boxShadow: "0 0 40px rgba(212,168,67,0.15)" }}
+          className="w-full max-w-sm p-8 hud-panel"
+          style={{
+            background: "oklch(0.09 0.012 240)",
+            border: "1px solid oklch(0.72 0.19 40 / 0.5)",
+            borderRadius: "var(--radius)",
+            boxShadow: "0 0 40px oklch(0.72 0.19 40 / 0.1)",
+          }}
         >
           <div className="flex items-center gap-3 mb-6">
-            <Lock className="text-yellow-400" size={20} />
-            <h2 className="font-display text-xl font-bold uppercase tracking-widest text-yellow-400">
+            <Lock className="text-primary" size={20} />
+            <h2 className="font-display text-xl font-bold uppercase tracking-widest text-primary">
               ВХОД В АДМИНКУ
             </h2>
           </div>
-          <Label className="text-xs uppercase text-yellow-600/80">Пароль</Label>
+          <Label className="text-xs uppercase tracking-widest text-muted-foreground">
+            Пароль
+          </Label>
           <Input
             type="password"
             value={pwInput}
@@ -153,7 +160,7 @@ export function AdminPage() {
               setPwError(false);
             }}
             onKeyDown={(e) => e.key === "Enter" && handlePwSubmit()}
-            className="mt-2 mb-1 bg-zinc-900 border-yellow-700/50 focus:border-yellow-500 text-white"
+            className="mt-2 mb-1"
             placeholder="••••••••"
             data-ocid="admin.input"
           />
@@ -167,7 +174,11 @@ export function AdminPage() {
           )}
           <Button
             onClick={handlePwSubmit}
-            className="w-full mt-3 bg-yellow-600 hover:bg-yellow-500 text-black font-bold uppercase tracking-widest"
+            className="w-full mt-3 font-bold uppercase tracking-widest"
+            style={{
+              background: "oklch(0.72 0.19 40)",
+              color: "oklch(0.06 0.01 240)",
+            }}
             data-ocid="admin.submit_button"
           >
             Войти в панель
@@ -257,7 +268,13 @@ export function AdminPage() {
       {/* Main layout: horizontal tabs + content */}
       <div className="min-h-[70vh]">
         {/* Horizontal Tab Bar */}
-        <div className="flex gap-1 overflow-x-auto scrollbar-none bg-black/40 border border-yellow-700/30 rounded-t">
+        <div
+          className="flex gap-1 overflow-x-auto scrollbar-none"
+          style={{
+            background: "oklch(0.08 0.01 240)",
+            borderBottom: "1px solid oklch(0.72 0.19 40 / 0.25)",
+          }}
+        >
           {SIDEBAR_TABS.map((item) => (
             <button
               type="button"
@@ -266,8 +283,8 @@ export function AdminPage() {
               data-ocid="admin.tab"
               className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold uppercase tracking-wide whitespace-nowrap transition-all ${
                 tab === item.key
-                  ? "text-yellow-400 border-b-2 border-yellow-400 bg-yellow-400/5"
-                  : "text-gray-400 hover:text-yellow-300 hover:bg-white/5"
+                  ? "text-primary border-b-2 border-primary"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               {item.icon}
@@ -277,7 +294,14 @@ export function AdminPage() {
         </div>
 
         {/* Content */}
-        <div className="border border-t-0 border-yellow-700/30 rounded-b bg-black/30 p-5 min-h-[60vh]">
+        <div
+          className="p-5 min-h-[60vh]"
+          style={{
+            background: "oklch(0.07 0.01 240)",
+            border: "1px solid oklch(0.72 0.19 40 / 0.15)",
+            borderTop: "none",
+          }}
+        >
           {tab === "heroes" && <HeroesPanel />}
           {tab === "skills" && <SkillsPanel />}
           {tab === "items" && <ItemsPanel />}
@@ -1967,12 +1991,15 @@ function StatsPanel() {
           {statCards.map((card) => (
             <div
               key={card.label}
-              className="bg-card border border-border rounded-lg p-5 flex flex-col items-center gap-2 hover:border-primary/50 transition-colors"
+              className="bg-card border border-border rounded p-5 flex flex-col items-center gap-2 hover:border-primary/50 transition-colors"
             >
               <span className="text-3xl">{card.icon}</span>
-              <span className="text-3xl font-bold text-primary font-mono">
-                {String(card.value)}
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary pulse-dot flex-shrink-0" />
+                <span className="text-3xl font-bold text-primary font-mono">
+                  {String(card.value)}
+                </span>
+              </div>
               <span className="text-xs text-muted-foreground uppercase tracking-wider text-center">
                 {card.label}
               </span>

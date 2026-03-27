@@ -40,7 +40,6 @@ export function OnlineCounter() {
     refetchInterval: 15000,
   });
 
-  // Heartbeat every 60s
   useEffect(() => {
     if (!actor) return;
     actor.onlineHeartbeat(displayName).catch(() => {});
@@ -57,50 +56,41 @@ export function OnlineCounter() {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-lg transition-all hover:scale-105 focus:outline-none"
+          className="flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1.5 transition-all hover:opacity-80 focus:outline-none"
           style={{
-            border: "1px solid oklch(0.71 0.16 75 / 0.6)",
-            background: "oklch(0.71 0.16 75 / 0.08)",
-            color: "oklch(0.71 0.16 75)",
-            boxShadow: "0 0 10px oklch(0.71 0.16 75 / 0.12)",
+            border: "1px solid oklch(0.72 0.19 40 / 0.35)",
+            background: "transparent",
+            color: "oklch(0.72 0.19 40)",
+            borderRadius: "var(--radius)",
           }}
           data-ocid="online.toggle"
         >
-          <Users size={12} />
-          <span className="hidden sm:inline">Кто онлайн</span>
-          <span
-            className="flex items-center gap-1"
-            style={{ color: "#4ade80" }}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-            {count}
+          <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+          <Users size={10} />
+          <span className="hidden sm:inline uppercase tracking-widest">
+            Онлайн
           </span>
+          <span className="font-mono">{count}</span>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="min-w-[180px] rounded-xl"
+        className="min-w-[160px]"
         style={{
-          background: "oklch(0.17 0.043 252)",
-          border: "1px solid oklch(0.71 0.16 75 / 0.4)",
-          boxShadow: "0 8px 32px oklch(0.14 0.04 252 / 0.8)",
+          background: "oklch(0.09 0.012 240)",
+          border: "1px solid oklch(0.72 0.19 40 / 0.4)",
+          borderRadius: "var(--radius)",
         }}
         data-ocid="online.dropdown_menu"
       >
-        <DropdownMenuLabel
-          className="text-xs font-bold uppercase tracking-widest"
-          style={{ color: "oklch(0.71 0.16 75)" }}
-        >
+        <DropdownMenuLabel className="text-[10px] font-bold uppercase tracking-widest text-primary">
           Онлайн: {count}
         </DropdownMenuLabel>
         <DropdownMenuSeparator
-          style={{ background: "oklch(0.71 0.16 75 / 0.2)" }}
+          style={{ background: "oklch(0.72 0.19 40 / 0.2)" }}
         />
         {count === 0 ? (
-          <DropdownMenuItem
-            className="text-xs"
-            style={{ color: "oklch(0.6 0.03 252)" }}
-          >
+          <DropdownMenuItem className="text-xs text-muted-foreground">
             Никого нет онлайн
           </DropdownMenuItem>
         ) : (
@@ -108,9 +98,8 @@ export function OnlineCounter() {
             <DropdownMenuItem
               key={`${u.displayName}-${i}`}
               className="text-xs gap-2 cursor-default"
-              style={{ color: "oklch(0.9 0.02 252)" }}
             >
-              <span className="w-2 h-2 rounded-full bg-green-400 flex-shrink-0" />
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400 flex-shrink-0" />
               {u.displayName || "Гость"}
             </DropdownMenuItem>
           ))

@@ -1,28 +1,44 @@
-# SLR Builds
+# SLR Builds — v38 Grand Patch: Warframe Techno Redesign + Bugfix
 
 ## Current State
-AdminPage.tsx has a left sidebar with 11 navigation tabs and a top header with seed + logout buttons. The seed button shows 'Подключение...' and is disabled when `actor` is null, causing UI to hang visually until the anonymous actor resolves (~1-3 seconds). The layout uses sidebar + content panel side by side.
+The app is a Russian-language Skill Legends Royale fan site with builds, heroes, skills, tier list, chat, admin panel, and profile system. Current design uses navy-blue background with gold accents. Light theme CSS exists but button was removed. Several bugs persist: LangContext `t()` calls dual-lang strings throughout, admin panel still complex, pages visually cluttered.
 
 ## Requested Changes (Diff)
 
 ### Add
-- Horizontal top navigation bar inside admin panel (replacing left sidebar) with tab buttons styled as classic black/gold pill or underline tabs
-- Loading spinner overlay on admin content while actor is null
-- `isFetching` from useActor used to show proper 'Подключение...' state as overlay, not blocking the nav
+- Warframe-style techno/futuristic design: pure black (#000) background, orange/gold neon accents (OKLCH orange ~0.72 0.19 40)
+- Glitch animation effect on modals opening (CSS keyframes: brief horizontal clip/shift flicker)
+- Neon border glow on modals and panels (orange glow)
+- Corner bracket decorations on panels (HUD sci-fi style, CSS ::before/::after)
+- Hexagonal dot-grid or scanline background texture (CSS, very subtle)
+- Animated scanning border on key modals
+- HUD-style stat labels (uppercase tracking-widest, smaller, dimmer)
+- Particle-like animated glow on navbar logo
+- "СИСТЕМА АКТИВНА" style status indicators
+- Better build card micro-interactions with orange glow
 
 ### Modify
-- Replace left sidebar with horizontal scrollable top nav tabs
-- Admin panel redesign: darker header, gold accent borders, classic table styles, better spacing, mobile-first
-- Seed button enabled immediately, throws error inside mutationFn if actor still null
-- Connection state shown as banner/badge rather than disabling the button
+- index.css: Replace navy-blue OKLCH values with pure black + orange neon palette. Remove light theme block entirely.
+- All pages: Reduce visual noise — fewer decorative borders on every element, more whitespace, cleaner grid
+- Navbar: Slimmer, black + orange accent line at bottom, glitch logo effect
+- Modals (BuildCard expanded, CreateBuild, Profile, Admin): Add glitch-open animation + neon orange border
+- AdminPage: Cleaner tab navigation, better mobile layout
+- ChatPanel: Cleaner bubble design with orange accents
+- BuildCard: Simplified card layout — less cramped, cleaner skill chips
+- HomePage: Less cluttered dashboard — top sections more card-based, cleaner grid
 
 ### Remove
-- Left sidebar (aside element)
-- `border-l-0` content panel style
+- Light theme CSS variables block (already disabled, remove dead code)
+- Redundant duplicate border/shadow inline styles across components
+- LangContext `t(ru, en)` pattern — simplify to direct Russian strings where feasible (leave hook in place to avoid breaking imports, just use Russian-only in display)
 
 ## Implementation Plan
-1. Replace SIDEBAR_TABS + aside with horizontal nav tabs row (scrollable on mobile)
-2. Restyle admin panel: black bg, gold (#d4a843) borders/accents, sharp classic style buttons
-3. Fix seed button: always enabled when isAuthed, check actor inside mutationFn
-4. Add actor loading indicator as small status badge in header
-5. Mobile: tabs wrap/scroll horizontally
+1. Rewrite index.css with pure black + orange/gold OKLCH palette, glitch keyframes, scanline background, corner-bracket utility classes, neon glow utilities
+2. Update Navbar: slick orange-accent bottom bar, glitch logo animation on hover
+3. Restyle all modals with glitch-open animation class, orange neon border
+4. Simplify BuildCard: cleaner layout, HUD-style labels, orange glow on expand
+5. Simplify HomePage: cleaner grid, less decorative clutter, better top-section cards
+6. AdminPage: better mobile nav, cleaner panels
+7. ChatPanel: cleaner bubbles, orange accents
+8. Fix bugs: remove dead light-theme CSS, ensure all useQuery guards are correct, fix any console errors from dual-lang strings
+9. Validate: lint + typecheck + build

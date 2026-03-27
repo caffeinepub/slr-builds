@@ -33,12 +33,12 @@ interface ExclusionCondition {
   skill2Id: bigint;
 }
 
-const GOLD = "oklch(0.71 0.16 75)";
-const CARD_BG = "oklch(0.14 0.04 252)";
-const INPUT_BG = "oklch(0.19 0.046 252)";
-const MUTED = "oklch(0.55 0.02 252)";
-const FG = "oklch(0.93 0.008 252)";
-const BORDER = "oklch(0.71 0.16 75 / 0.3)";
+const GOLD = "oklch(0.72 0.19 40)";
+const CARD_BG = "oklch(0.06 0.01 240)";
+const INPUT_BG = "oklch(0.10 0.015 240)";
+const MUTED = "oklch(0.50 0.02 60)";
+const FG = "oklch(0.92 0.01 60)";
+const BORDER = "oklch(0.72 0.19 40 / 0.3)";
 
 export function CreateBuildModal({ heroes, skills, onClose }: Props) {
   const { t } = useLang();
@@ -297,7 +297,7 @@ export function CreateBuildModal({ heroes, skills, onClose }: Props) {
               placeholder="Поиск героя..."
               value={heroSearch}
               onChange={(e) => setHeroSearch(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl text-sm mb-2 outline-none"
+              className="w-full px-3 py-2 rounded text-sm mb-2 outline-none"
               style={{
                 background: INPUT_BG,
                 border: `1px solid ${GOLD}33`,
@@ -321,7 +321,7 @@ export function CreateBuildModal({ heroes, skills, onClose }: Props) {
                     onClick={() => !disabled && toggleHero(hero.id)}
                     disabled={disabled}
                     title={hero.name}
-                    className="flex flex-col items-center gap-1 p-1 rounded-xl transition-all"
+                    className="flex flex-col items-center gap-1 p-1 rounded transition-all"
                     style={{
                       background: active ? `${GOLD}22` : INPUT_BG,
                       border: active
@@ -481,7 +481,7 @@ export function CreateBuildModal({ heroes, skills, onClose }: Props) {
 
           {/* Условия навыков */}
           <div
-            className="rounded-xl overflow-hidden"
+            className="rounded overflow-hidden"
             style={{ border: `1px solid ${GOLD}26` }}
           >
             <button
@@ -548,7 +548,7 @@ export function CreateBuildModal({ heroes, skills, onClose }: Props) {
                   type="button"
                   onClick={addCondition}
                   disabled={skills.length < 2}
-                  className="text-xs px-3 py-1.5 rounded-lg transition-colors"
+                  className="text-xs px-3 py-1.5 rounded transition-colors"
                   style={{
                     background: `${GOLD}1a`,
                     color: GOLD,
@@ -563,7 +563,7 @@ export function CreateBuildModal({ heroes, skills, onClose }: Props) {
 
           {/* Нельзя вместе */}
           <div
-            className="rounded-xl overflow-hidden"
+            className="rounded overflow-hidden"
             style={{ border: "1px solid oklch(0.65 0.2 25 / 0.25)" }}
           >
             <button
@@ -630,7 +630,7 @@ export function CreateBuildModal({ heroes, skills, onClose }: Props) {
                   type="button"
                   onClick={addExclusion}
                   disabled={skills.length < 2}
-                  className="text-xs px-3 py-1.5 rounded-lg transition-colors"
+                  className="text-xs px-3 py-1.5 rounded transition-colors"
                   style={{
                     background: "oklch(0.65 0.2 25 / 0.1)",
                     color: "oklch(0.7 0.15 25)",
@@ -696,23 +696,23 @@ function SkillChip({
           ? "oklch(0.65 0.2 25)"
           : "oklch(0.65 0.2 25 / 0.2)"
         : selected
-          ? "oklch(0.71 0.16 75)"
-          : "oklch(0.71 0.16 75 / 0.2)";
+          ? "oklch(0.72 0.19 40)"
+          : "oklch(0.72 0.19 40 / 0.2)";
 
   const textColor =
     color === "green"
       ? "oklch(0.7 0.15 150)"
       : color === "red"
         ? "oklch(0.65 0.2 25)"
-        : "oklch(0.71 0.16 75)";
+        : "oklch(0.72 0.19 40)";
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium transition-all"
+      className="flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium transition-all"
       style={{
-        background: selected ? `${textColor}18` : "oklch(0.19 0.046 252)",
+        background: selected ? `${textColor}18` : "oklch(0.10 0.015 240)",
         border: `1px solid ${borderColor}`,
         color: selected ? textColor : MUTED,
       }}
